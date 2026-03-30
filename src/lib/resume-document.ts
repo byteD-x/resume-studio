@@ -178,6 +178,11 @@ export function createEmptyResumeDocument(
       focusKeywords: [],
       notes: "",
     },
+    ai: {
+      provider: "openai-compatible",
+      model: "qwen/qwen3-32b",
+      baseUrl: "https://api.groq.com/openai/v1",
+    },
     layout: getResumeTemplateLayoutPreset(template),
     sections: createBlankSections(writerProfile),
     importTrace: {
@@ -185,6 +190,15 @@ export function createEmptyResumeDocument(
       pdfImportedAt: "",
       unmapped: [],
       pendingReview: [],
+      snapshots: [],
+      fieldSuggestions: [],
+      reviewState: {
+        completedTaskIds: [],
+        reviewedPendingItems: [],
+        reviewedSnapshotIds: [],
+        reviewedFieldSuggestionIds: [],
+        reviewedUnmappedItems: [],
+      },
     },
   };
 

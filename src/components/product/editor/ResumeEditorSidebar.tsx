@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Bot,
   BriefcaseBusiness,
   Code2,
   GraduationCap,
@@ -17,6 +18,7 @@ export type EditorPanel =
   | "education"
   | "skills"
   | "targeting"
+  | "ai"
   | "markdown";
 
 export interface EditorPanelItem {
@@ -43,6 +45,7 @@ export function ResumeEditorSidebar({
     education: GraduationCap,
     skills: Sparkles,
     targeting: Target,
+    ai: Bot,
     markdown: Code2,
   } satisfies Record<EditorPanel, typeof UserRound>;
 

@@ -1,42 +1,43 @@
-# Resume Studio / 简历工坊
+# Resume Studio
 
-一个专门用来写简历的本地优先项目。它把“结构化起稿、旧简历重建、岗位定制、预览导出”整合进同一套工作流，让这套仓库只服务于简历写作这件事。
+一个围绕“导入旧材料、在编辑器内打磨、按岗位定制、导出 PDF”的本地优先简历工作台。
 
-## 能力
+## 主要能力
 
-- 从空白草稿开始写简历，并按岗位或公司复制出多个定制版本
-- 支持按 `校招 / 应届`、`有经验求职`、`转岗 / 跨行业` 三种写作档案起稿
-- 从 `../portfolio/src/data.ts` 提取内容，生成待编辑简历草稿
-- 读取已有 PDF，抽取文字并重建为可编辑文档
-- 导入后会汇总待确认内容和未映射信息，方便先清理再继续写
-- 支持表单编辑、Markdown 编辑、多级标题、列表、标签和 section/item 排序
-- 支持结构化写作诊断，区分阻止导出的必填项、建议优化和导出风险
-- 支持首页直接创建、搜索、复制、删除草稿
-- 支持为每份草稿记录目标岗位、目标公司、JD 摘要和 focus keywords，并实时查看关键词覆盖缺口
-- 支持根据目标岗位/JD 自动生成一份新的 tailored variant，按关键词优先保留更相关的 sections/items
-- 编辑中的草稿会自动保存，并在离开页面前对未落盘内容给出提示
-- 支持独立预览页，可集中查看导出状态、检查项和建议优化
-- 支持导出前检查，集中确认姓名和职位、联系方式、自我介绍、核心经历与版式状态
-- 通过同一份 `data/resumes/<id>/document.json` 同时支持 Codex CLI/App 和人工编辑
-- 通过 Playwright 生成最终 PDF
+- 从空白草稿开始创建简历，并支持按岗位或公司复制出多个定制版本
+- 导入网站链接、Markdown、纯文本和 PDF，并转换成可编辑草稿
+- 在编辑器里完成摘要、经历、技能、岗位信息和 Markdown 源码编辑
+- 基于目标岗位 / JD 做关键词覆盖分析，并生成 tailored variant
+- 支持导入后的 review 流程，核对未映射内容、待确认字段和原始摘录
+- 提供独立预览页和 PDF 导出
 
-## 产品定位
+## AI 能力
 
-- 首页是“简历写作入口”，不是通用后台
-- `Studio` 是“写简历工作台”，不是泛用文档编辑器
-- 所有本地数据和导出都围绕简历草稿组织
-- 首期聚焦纯本地写作增强，不依赖外部 AI 服务
+AI 只围绕两个核心场景定制开发：
 
-## 目录
+- 编辑器：摘要助手、经历写作助手、技能整理助手、岗位定制版生成
+- 网站链接导入：优先做 AI 结构化抽取，失败自动回退到规则导入
 
-- `src/app/studio/[id]`：编辑工作台
-- `src/app/api`：导入、保存、导出接口
-- `src/lib`：schema、存储、写作诊断、portfolio 导入、PDF 导入、HTML 预览、PDF 导出
-- `scripts`：CLI 命令
-- `data/resumes`：本地简历数据、导入产物和导出 PDF 留档
-- `docs`：架构与写作工作流说明
+默认优先使用免费模型。
 
-## 快速开始
+## 默认模型
+
+当前内置的免费模型预设：
+
+- `Groq + qwen/qwen3-32b`
+- `OpenRouter + openrouter/free`
+- `Ollama + qwen3:4b`（本地备选）
+
+默认 Base URL：
+
+- `https://api.groq.com/openai/v1`
+
+这两套预设会同时用于：
+
+- 编辑器内 AI 设置
+- 网站链接导入页的 AI 配置
+
+## 本地开发
 
 ```bash
 npm install
@@ -46,45 +47,69 @@ npm run dev
 
 访问 `http://localhost:3000`。
 
-首页支持先选择写作档案，再创建草稿、管理多个岗位定制版本；编辑页可打开 `/studio/<id>/preview` 作为独立预览页。
-`/resumes` 与 `/studio/<id>` 默认可直接访问，不依赖登录；`/auth` 仅用于给当前浏览器设置一个演示身份。
+如果你想在本地自托管模型，也可以切回 Ollama：
 
-## 写作工作流
+```bash
+ollama serve
+ollama pull qwen3:4b
+# 可选：更稳一些
+# ollama pull qwen3:8b
+```
 
-1. 在 Dashboard 选择写作档案，创建引导草稿或导入已有材料。
-2. 在 Studio 中先补齐页眉、摘要和核心经历，再处理岗位定制信息。
-3. 使用工作台总览与质量诊断，优先处理必填项，再决定哪些建议需要继续优化。
-4. 通过导出前检查后，再进入预览和 PDF 导出。
+现在编辑器和网站链接导入页都内置了“测试连接”，可以直接检查：
 
-## 管理能力
+- 服务是否可达
+- 当前模型是否已安装
 
-- Dashboard 用于集中管理多份简历草稿，适合按岗位、语言或公司复制出不同版本
-- Dashboard 搜索会同时检索目标岗位、目标公司和 focus keywords，方便管理多份定制版本
-- 每份简历都保存在 `data/resumes/<id>`，其中 `document.json` 为主文档
-- 演示身份只影响顶部状态显示，不会把 `data/resumes` 按账号隔离
-- `document.json` 会记录 `schemaVersion` 和 `writerProfile`，旧文档会自动按默认值兼容
-- 导出的 PDF 会额外留档到 `data/resumes/<id>/exports`
-- Studio 的 `Auto-Tailor Variant` 面板会先展示保留/丢弃计划，再生成新的本地草稿，不会覆盖当前编辑中的版本
+## 远程部署
+
+部署到服务器后，有两种方式：
+
+1. 服务器预置环境变量
+
+```bash
+RESUME_STUDIO_AI_API_KEY=...
+# 或 OPENAI_COMPATIBLE_API_KEY=...
+# 或 OPENAI_API_KEY=...
+```
+
+2. 不预置服务端模型配置，直接让用户自己填写
+
+用户可以在以下位置自行配置：
+
+- 编辑器的 `AI` 面板
+- 网站链接导入页
+
+可配置项：
+
+- `Base URL`
+- `Model`
+- `API Key`
+
+默认推荐让用户使用 Groq 或 OpenRouter 这类云服务免费模型；如果是内网或私有化部署，再切回本地 Ollama。
+
+## 安全边界
+
+- `API Key` 只保存在当前浏览器
+- `API Key` 不会写入 `data/resumes/<id>/document.json`
+- 导入后生成的简历文档也不会落盘保存 `API Key`
+
+## 目录
+
+- `src/app/studio/[id]`：编辑器工作台
+- `src/app/api`：导入、保存、导出与 AI 路由
+- `src/components`：编辑器、导入页和通用 UI
+- `src/lib`：schema、存储、导入解析、AI、预览与导出逻辑
+- `data/resumes`：本地简历文档和导出产物
 
 ## CLI
 
 ```bash
-# 从 portfolio 生成半成品简历
 npm run import:portfolio
-
-# 导入旧 PDF 并重建为可编辑草稿
 npm run import:pdf -- ./old-resume.pdf
-
-# 校验当前草稿
 npm run validate:resume
-
-# 导出 PDF
 npm run export:pdf
-
-# 导出整份简历 markdown
 npm run export:markdown
-
-# 从 markdown 文件导入整份简历
 npm run import:markdown -- ./resume.md
 ```
 
@@ -96,5 +121,3 @@ npm run test:unit
 npm run test:e2e
 npm run build
 ```
-
-CI 会执行同一组质量门禁。

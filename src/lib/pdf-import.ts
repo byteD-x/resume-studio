@@ -1,5 +1,6 @@
 import { getDocument } from "pdfjs-dist/legacy/build/pdf.mjs";
 import { createEmptyResumeDocument, validateResumeDocument } from "@/lib/resume-document";
+import { buildBasicsImportFieldSuggestions } from "@/lib/resume-import-review";
 import { createId, nowIso, textToHtml } from "@/lib/utils";
 import type { ResumeDocument, ResumeSection, ResumeSectionItem } from "@/types/resume";
 
@@ -1158,6 +1159,8 @@ export function buildResumeFromPdfLines(
     unmapped.push("部分内容未识别为标准章节，已作为自定义内容导入。");
   }
 
+  const fieldSuggestions = buildBasicsImportFieldSuggestions(baseDocument.basics, extracted.basics, "PDF 导入");
+
   return validateResumeDocument({
     ...baseDocument,
     basics: extracted.basics,
@@ -1169,10 +1172,19 @@ export function buildResumeFromPdfLines(
     },
     sections: mappedSections.length > 0 ? mappedSections : baseDocument.sections,
     importTrace: {
+      ...baseDocument.importTrace,
       portfolioImportedAt: baseDocument.importTrace.portfolioImportedAt,
       pdfImportedAt: importedAt,
       unmapped,
       pendingReview,
+      snapshots: [],
+      fieldSuggestions,
+      reviewState: {
+        completedTaskIds: [],
+        reviewedPendingItems: [],
+        reviewedSnapshotIds: [],
+        reviewedFieldSuggestionIds: [],
+      },
     },
   });
 }

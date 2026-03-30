@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { createEmptyResumeDocument, createGuidedResumeDocument } from "@/lib/resume-document";
+import { analyzeResumeTargeting } from "@/lib/resume-targeting";
 import { buildResumeWorkbenchReport } from "@/lib/resume-workbench";
 
 describe("resume workbench", () => {
@@ -88,5 +89,21 @@ describe("resume workbench", () => {
         ? workflowTask.action.workflowState
         : null,
     ).toBe("ready");
+  });
+
+  it("suggests applying extracted keywords when a JD exists without manual keywords", () => {
+    const document = createGuidedResumeDocument("jd-only", "JD Only");
+    document.basics.name = "Jane Doe";
+    document.basics.headline = "Frontend Engineer";
+    document.targeting.role = "Frontend Engineer";
+    document.targeting.jobDescription =
+      "We are hiring a frontend engineer with React, Next.js, TypeScript, and design systems experience.";
+
+    const report = buildResumeWorkbenchReport(document, {
+      targetingAnalysis: analyzeResumeTargeting(document),
+    });
+    const task = report.openTasks.find((item) => item.id === "apply-suggested-keywords");
+
+    expect(task?.action.type).toBe("apply-suggested-keywords");
   });
 });

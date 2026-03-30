@@ -45,6 +45,17 @@ export const resumeTargetingSchema = z.object({
   notes: z.string().default(""),
 });
 
+export const resumeAiProviderSchema = z.enum([
+  "local",
+  "openai-compatible",
+]);
+
+export const resumeAiSettingsSchema = z.object({
+  provider: resumeAiProviderSchema.default("local"),
+  model: z.string().default(""),
+  baseUrl: z.string().default(""),
+});
+
 export const resumeSectionItemSchema = z.object({
   id: z.string().trim().min(1),
   title: z.string().default(""),
@@ -65,6 +76,41 @@ export const resumeSectionSchema = z.object({
   layout: z.enum(["rich-text", "stacked-list", "tag-grid"]).default("stacked-list"),
   contentHtml: z.string().default(""),
   items: z.array(resumeSectionItemSchema).default([]),
+});
+
+export const resumeImportSnapshotSchema = z.object({
+  id: z.string().trim().min(1),
+  label: z.string().default(""),
+  source: z.string().default(""),
+  excerpt: z.string().default(""),
+  mappedTo: z.string().default(""),
+});
+
+export const resumeImportFieldSchema = z.enum([
+  "name",
+  "headline",
+  "location",
+  "email",
+  "phone",
+  "website",
+  "summaryHtml",
+]);
+
+export const resumeImportFieldSuggestionSchema = z.object({
+  id: z.string().trim().min(1),
+  field: resumeImportFieldSchema,
+  label: z.string().default(""),
+  importedValue: z.string().default(""),
+  previousValue: z.string().default(""),
+  sourceLabel: z.string().default(""),
+});
+
+export const resumeImportReviewStateSchema = z.object({
+  completedTaskIds: z.array(z.string().trim().min(1)).default([]),
+  reviewedPendingItems: z.array(z.string()).default([]),
+  reviewedSnapshotIds: z.array(z.string().trim().min(1)).default([]),
+  reviewedFieldSuggestionIds: z.array(z.string().trim().min(1)).default([]),
+  reviewedUnmappedItems: z.array(z.string()).default([]),
 });
 
 export const resumeDocumentSchema = z.object({
@@ -97,6 +143,11 @@ export const resumeDocumentSchema = z.object({
     focusKeywords: [],
     notes: "",
   }),
+  ai: resumeAiSettingsSchema.default({
+    provider: "openai-compatible",
+    model: "qwen/qwen3-32b",
+    baseUrl: "https://api.groq.com/openai/v1",
+  }),
   layout: z.object({
     accentColor: z.string().default("#3559b7"),
     bodyFont: z.string().default("Aptos"),
@@ -112,6 +163,15 @@ export const resumeDocumentSchema = z.object({
     pdfImportedAt: z.string().default(""),
     unmapped: z.array(z.string()).default([]),
     pendingReview: z.array(z.string()).default([]),
+    snapshots: z.array(resumeImportSnapshotSchema).default([]),
+    fieldSuggestions: z.array(resumeImportFieldSuggestionSchema).default([]),
+    reviewState: resumeImportReviewStateSchema.default({
+      completedTaskIds: [],
+      reviewedPendingItems: [],
+      reviewedSnapshotIds: [],
+      reviewedFieldSuggestionIds: [],
+      reviewedUnmappedItems: [],
+    }),
   }),
 });
 
@@ -122,4 +182,10 @@ export type ResumeSectionType = z.infer<typeof resumeSectionTypeSchema>;
 export type ResumeTemplate = z.infer<typeof resumeTemplateSchema>;
 export type ResumeWorkflowState = z.infer<typeof resumeWorkflowStateSchema>;
 export type ResumeTargeting = z.infer<typeof resumeTargetingSchema>;
+export type ResumeAiProvider = z.infer<typeof resumeAiProviderSchema>;
+export type ResumeAiSettings = z.infer<typeof resumeAiSettingsSchema>;
 export type ResumeWriterProfile = z.infer<typeof resumeWriterProfileSchema>;
+export type ResumeImportSnapshot = z.infer<typeof resumeImportSnapshotSchema>;
+export type ResumeImportField = z.infer<typeof resumeImportFieldSchema>;
+export type ResumeImportFieldSuggestion = z.infer<typeof resumeImportFieldSuggestionSchema>;
+export type ResumeImportReviewState = z.infer<typeof resumeImportReviewStateSchema>;

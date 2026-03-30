@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { validateResumeDocument } from "@/lib/resume-document";
+import { applySummaryText, canUseRemoteResumeAi, generateRemoteResumeSummary } from "@/lib/resume-ai";
 import {
   buildTailoredVariantPlan,
   createTailoredVariantDocument,
@@ -20,6 +21,7 @@ export async function POST(
   const body = (await request.json().catch(() => ({}))) as {
     title?: string;
     document?: unknown;
+    apiKey?: string;
   };
 
   const sourceInput = body.document
@@ -43,16 +45,32 @@ export async function POST(
 
   const nextTitle = body.title?.trim() || plan.titleSuggestion;
   const created = await createResumeDocument(nextTitle);
-  const tailoredDocument = createTailoredVariantDocument(sourceDocument, {
+  let tailoredDocument = createTailoredVariantDocument(sourceDocument, {
     nextId: created.meta.id,
     nextTitle,
   });
+
+  let remoteSummaryApplied = false;
+  let remoteSummaryError: string | null = null;
+
+  if (canUseRemoteResumeAi(tailoredDocument.ai)) {
+    try {
+      const generatedSummary = await generateRemoteResumeSummary(tailoredDocument, body.apiKey);
+      tailoredDocument = applySummaryText(tailoredDocument, generatedSummary);
+      remoteSummaryApplied = true;
+    } catch (error) {
+      remoteSummaryError = error instanceof Error ? error.message : "Remote summary failed.";
+    }
+  }
+
   const savedDocument = await writeResumeDocument(tailoredDocument);
 
   return Response.json(
     {
       document: savedDocument,
       plan,
+      remoteSummaryApplied,
+      remoteSummaryError,
     },
     { status: 201 },
   );

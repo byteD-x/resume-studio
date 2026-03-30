@@ -1,6 +1,11 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+import { ResumeAssistPanel } from "@/components/product/editor/ResumeAssistPanel";
+import { readClientAiConfig } from "@/lib/client-ai-config";
 import { handleSanitizedPaste } from "@/lib/editor-input";
+import { buildBasicsAssistPack } from "@/lib/resume-assistant";
+import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
 import type { ResumeDocument } from "@/types/resume";
 
 export function ResumeBasicsPanel({
@@ -11,6 +16,56 @@ export function ResumeBasicsPanel({
   onBasicsChange: (field: keyof ResumeDocument["basics"], value: string) => void;
 }) {
   const linksValue = document.basics.links.map((link) => `${link.label} ${link.url}`).join("\n");
+  const assistPack = useMemo(() => buildBasicsAssistPack(document), [document]);
+  const [remoteSuggestions, setRemoteSuggestions] = useState<ResumeAssistSuggestion[]>([]);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const usesRemoteProvider = document.ai.provider === "openai-compatible";
+  const combinedSuggestions =
+    remoteSuggestions.length > 0 ? [...remoteSuggestions, ...assistPack.suggestions] : assistPack.suggestions;
+
+  useEffect(() => {
+    setRemoteSuggestions([]);
+    setRemoteError(null);
+  }, [
+    document.ai.provider,
+    document.ai.model,
+    document.ai.baseUrl,
+    document.basics.headline,
+    document.basics.summaryHtml,
+    document.targeting.role,
+    document.targeting.company,
+    document.targeting.jobDescription,
+    document.targeting.focusKeywords.join("|"),
+  ]);
+
+  async function handleGenerateRemoteAssist() {
+    setRemoteLoading(true);
+    setRemoteError(null);
+
+    try {
+      const response = await fetch("/api/ai/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "summary",
+          document,
+          apiKey: readClientAiConfig().apiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error((await response.text()) || "远程摘要建议生成失败");
+      }
+
+      const result = (await response.json()) as { suggestions?: ResumeAssistSuggestion[] };
+      setRemoteSuggestions(Array.isArray(result.suggestions) ? result.suggestions : []);
+    } catch (error) {
+      setRemoteError(error instanceof Error ? error.message : "远程摘要建议生成失败");
+    } finally {
+      setRemoteLoading(false);
+    }
+  }
 
   return (
     <section className="resume-editor-panel">
@@ -48,21 +103,18 @@ export function ResumeBasicsPanel({
                 className="input-control"
                 inputMode={field === "website" ? "url" : "text"}
                 name={field}
-                placeholder={placeholder}
-                spellCheck={field === "website" ? false : undefined}
-                type={field === "website" ? "url" : "text"}
-                value={document.basics[field as keyof ResumeDocument["basics"]] as string}
-                onChange={(event) =>
-                  onBasicsChange(field as keyof ResumeDocument["basics"], event.target.value)
-                }
+                onChange={(event) => onBasicsChange(field as keyof ResumeDocument["basics"], event.target.value)}
                 onPaste={(event) =>
                   handleSanitizedPaste(event, {
                     currentValue: (document.basics[field as keyof ResumeDocument["basics"]] as string) ?? "",
                     mode: "single-line",
-                    onValueChange: (nextValue) =>
-                      onBasicsChange(field as keyof ResumeDocument["basics"], nextValue),
+                    onValueChange: (nextValue) => onBasicsChange(field as keyof ResumeDocument["basics"], nextValue),
                   })
                 }
+                placeholder={placeholder}
+                spellCheck={field === "website" ? false : undefined}
+                type={field === "website" ? "url" : "text"}
+                value={document.basics[field as keyof ResumeDocument["basics"]] as string}
               />
             </label>
           ))}
@@ -86,21 +138,18 @@ export function ResumeBasicsPanel({
                 className="input-control"
                 inputMode={field === "email" ? "email" : "tel"}
                 name={field}
-                placeholder={placeholder}
-                spellCheck={field === "email" ? false : undefined}
-                type={field === "email" ? "email" : "tel"}
-                value={document.basics[field as keyof ResumeDocument["basics"]] as string}
-                onChange={(event) =>
-                  onBasicsChange(field as keyof ResumeDocument["basics"], event.target.value)
-                }
+                onChange={(event) => onBasicsChange(field as keyof ResumeDocument["basics"], event.target.value)}
                 onPaste={(event) =>
                   handleSanitizedPaste(event, {
                     currentValue: (document.basics[field as keyof ResumeDocument["basics"]] as string) ?? "",
                     mode: "single-line",
-                    onValueChange: (nextValue) =>
-                      onBasicsChange(field as keyof ResumeDocument["basics"], nextValue),
+                    onValueChange: (nextValue) => onBasicsChange(field as keyof ResumeDocument["basics"], nextValue),
                   })
                 }
+                placeholder={placeholder}
+                spellCheck={field === "email" ? false : undefined}
+                type={field === "email" ? "email" : "tel"}
+                value={document.basics[field as keyof ResumeDocument["basics"]] as string}
               />
             </label>
           ))}
@@ -118,8 +167,6 @@ export function ResumeBasicsPanel({
             autoComplete="off"
             className="textarea-control min-h-44"
             name="summary"
-            placeholder="例如：5 年前端经验，主导过中后台与设计系统建设。"
-            value={document.basics.summaryHtml.replace(/<[^>]+>/g, "\n").replace(/\n+/g, "\n").trim()}
             onChange={(event) => onBasicsChange("summaryHtml", event.target.value)}
             onPaste={(event) =>
               handleSanitizedPaste(event, {
@@ -128,8 +175,28 @@ export function ResumeBasicsPanel({
                 onValueChange: (nextValue) => onBasicsChange("summaryHtml", nextValue),
               })
             }
+            placeholder="例如：5 年前端经验，主导过中后台与设计系统建设。"
+            value={document.basics.summaryHtml.replace(/<[^>]+>/g, "\n").replace(/\n+/g, "\n").trim()}
           />
         </label>
+
+        <ResumeAssistPanel
+          description=""
+          issues={assistPack.issues}
+          onApply={(suggestion) => {
+            if (typeof suggestion.nextValue === "string") {
+              onBasicsChange("summaryHtml", suggestion.nextValue);
+            }
+          }}
+          onGenerateRemote={() => void handleGenerateRemoteAssist()}
+          remoteDisabled={!usesRemoteProvider || remoteLoading}
+          remoteError={remoteError}
+          remoteHint={usesRemoteProvider ? "使用当前配置。" : "先配置 AI 模型。"}
+          remoteLabel="生成远程摘要"
+          remoteLoading={remoteLoading}
+          suggestions={combinedSuggestions}
+          title="AI 摘要助手"
+        />
       </div>
 
       <div className="resume-editor-group">
@@ -143,9 +210,6 @@ export function ResumeBasicsPanel({
             autoComplete="off"
             className="textarea-control min-h-28"
             name="links"
-            placeholder={"GitHub https://github.com/your-name\n作品集 https://your-site.com"}
-            spellCheck={false}
-            value={linksValue}
             onChange={(event) => onBasicsChange("links", event.target.value)}
             onPaste={(event) =>
               handleSanitizedPaste(event, {
@@ -154,6 +218,9 @@ export function ResumeBasicsPanel({
                 onValueChange: (nextValue) => onBasicsChange("links", nextValue),
               })
             }
+            placeholder={"GitHub https://github.com/your-name\n作品集 https://your-site.com"}
+            spellCheck={false}
+            value={linksValue}
           />
         </label>
       </div>

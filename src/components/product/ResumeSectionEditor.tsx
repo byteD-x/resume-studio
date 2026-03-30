@@ -1,11 +1,15 @@
-"use client";
+﻿"use client";
 
 import { ChevronDown, ChevronUp, Copy, Eye, EyeOff, Files, GripVertical, Plus, Trash2 } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { ResumeAssistPanel } from "@/components/product/editor/ResumeAssistPanel";
+import { readClientAiConfig } from "@/lib/client-ai-config";
 import type { EditorSectionDefinition } from "@/lib/resume-editor";
 import { htmlFieldToText } from "@/lib/resume-editor";
 import { handleSanitizedPaste } from "@/lib/editor-input";
-import type { ResumeSection, ResumeSectionItem } from "@/types/resume";
+import { buildItemAssistPack } from "@/lib/resume-assistant";
+import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
+import type { ResumeDocument, ResumeSection, ResumeSectionItem, ResumeWriterProfile } from "@/types/resume";
 
 function toSummaryHtml(value: string) {
   return value.trim() ? `<p>${value.trim().replace(/\n/g, "<br />")}</p>` : "";
@@ -26,6 +30,8 @@ function ItemCard({
   onDuplicate,
   onCopy,
   registerTitleInput,
+  writerProfile,
+  document,
 }: {
   item: ResumeSectionItem;
   index: number;
@@ -41,9 +47,70 @@ function ItemCard({
   onDuplicate: () => void;
   onCopy: () => void;
   registerTitleInput: (element: HTMLInputElement | null) => void;
+  writerProfile: ResumeWriterProfile;
+  document: ResumeDocument;
 }) {
   const metaSummary = [item.subtitle, item.dateRange, item.location].filter(Boolean).join(" · ");
   const summaryValue = htmlFieldToText(item.summaryHtml);
+  const assistPack = useMemo(
+    () => buildItemAssistPack(sectionType, item, writerProfile),
+    [item, sectionType, writerProfile],
+  );
+  const [remoteSuggestions, setRemoteSuggestions] = useState<ResumeAssistSuggestion[]>([]);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const usesRemoteProvider = document.ai.provider === "openai-compatible";
+  const combinedSuggestions =
+    remoteSuggestions.length > 0 ? [...remoteSuggestions, ...assistPack.suggestions] : assistPack.suggestions;
+
+  useEffect(() => {
+    setRemoteSuggestions([]);
+    setRemoteError(null);
+  }, [
+    document.ai.provider,
+    document.ai.model,
+    document.ai.baseUrl,
+    document.targeting.role,
+    document.targeting.jobDescription,
+    document.targeting.focusKeywords.join("|"),
+    item.id,
+    item.title,
+    item.subtitle,
+    item.meta,
+    item.summaryHtml,
+    item.bulletPoints.join("|"),
+    item.tags.join("|"),
+  ]);
+
+  async function handleGenerateRemoteAssist() {
+    setRemoteLoading(true);
+    setRemoteError(null);
+
+    try {
+      const response = await fetch("/api/ai/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "section",
+          document,
+          sectionType,
+          item,
+          apiKey: readClientAiConfig().apiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error((await response.text()) || "远程写作建议生成失败");
+      }
+
+      const result = (await response.json()) as { suggestions?: ResumeAssistSuggestion[] };
+      setRemoteSuggestions(Array.isArray(result.suggestions) ? result.suggestions : []);
+    } catch (error) {
+      setRemoteError(error instanceof Error ? error.message : "远程写作建议生成失败");
+    } finally {
+      setRemoteLoading(false);
+    }
+  }
 
   return (
     <article
@@ -60,10 +127,10 @@ function ItemCard({
         </button>
 
         <div className="editor-item-actions">
-          <button className="icon-button" onClick={onCopy} title="复制条目内容" type="button">
+            <button className="icon-button" onClick={onCopy} title="复制条目内容" type="button">
             <Copy className="size-4" />
           </button>
-          <button className="icon-button" onClick={onDuplicate} title="克隆条目" type="button">
+            <button className="icon-button" onClick={onDuplicate} title="克隆条目" type="button">
             <Files className="size-4" />
           </button>
           <button className="icon-button" disabled={index === 0} onClick={() => onMove("up")} title="上移" type="button">
@@ -259,6 +326,41 @@ function ItemCard({
               />
             </label>
           )}
+
+          <ResumeAssistPanel
+            description=""
+            issues={assistPack.issues}
+            onGenerateRemote={() => void handleGenerateRemoteAssist()}
+            onApply={(suggestion) => {
+              if (suggestion.target === "summary" && typeof suggestion.nextValue === "string") {
+                onChange({
+                  ...item,
+                  summaryHtml: toSummaryHtml(suggestion.nextValue),
+                });
+              }
+
+              if (suggestion.target === "bullets" && Array.isArray(suggestion.nextValue)) {
+                onChange({
+                  ...item,
+                  bulletPoints: suggestion.nextValue,
+                });
+              }
+
+              if (suggestion.target === "tags" && Array.isArray(suggestion.nextValue)) {
+                onChange({
+                  ...item,
+                  tags: suggestion.nextValue,
+                });
+              }
+            }}
+            remoteDisabled={!usesRemoteProvider || remoteLoading}
+            remoteError={remoteError}
+            remoteHint={usesRemoteProvider ? "\u7ed3\u5408\u5f53\u524d\u6761\u76ee\u751f\u6210\u3002" : "\u5148\u914d\u7f6e AI \u6a21\u578b\u3002"}
+            remoteLoading={remoteLoading}
+            remoteLabel={sectionType === "skills" ? "生成远程技能整理" : "生成远程写作建议"}
+            suggestions={combinedSuggestions}
+            title={sectionType === "skills" ? "AI 技能整理助手" : "AI 经历写作助手"}
+          />
         </>
       ) : null}
     </article>
@@ -266,6 +368,7 @@ function ItemCard({
 }
 
 export function ResumeSectionEditor({
+  document,
   definition,
   section,
   activeItemId,
@@ -277,7 +380,9 @@ export function ResumeSectionEditor({
   onCopyItem,
   onMoveItem,
   onActiveItemChange,
+  writerProfile,
 }: {
+  document: ResumeDocument;
   definition: EditorSectionDefinition;
   section: ResumeSection;
   activeItemId: string | null;
@@ -289,6 +394,7 @@ export function ResumeSectionEditor({
   onCopyItem: (itemId: string) => void;
   onMoveItem: (itemId: string, direction: "up" | "down") => void;
   onActiveItemChange: (itemId: string | null) => void;
+  writerProfile: ResumeWriterProfile;
 }) {
   const [expandedItemId, setExpandedItemId] = useState<string | null>(section.items[0]?.id ?? null);
   const titleInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
@@ -381,6 +487,7 @@ export function ResumeSectionEditor({
             section.items.map((item, index) => (
               <ItemCard
                 active={activeItemId === item.id}
+                document={document}
                 expanded={activeExpandedItemId === item.id}
                 index={index}
                 item={item}
@@ -412,6 +519,7 @@ export function ResumeSectionEditor({
                 }}
                 sectionType={definition.type}
                 total={section.items.length}
+                writerProfile={writerProfile}
               />
             ))
           ) : (
@@ -431,3 +539,4 @@ export function ResumeSectionEditor({
     </section>
   );
 }
+

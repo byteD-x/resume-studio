@@ -253,7 +253,7 @@ export function buildResumeWorkbenchReport(
       [
         !!source.targeting.role.trim(),
         !!source.targeting.company.trim() || !!source.targeting.postingUrl.trim(),
-        source.targeting.focusKeywords.length > 0,
+        evaluatedKeywords > 0,
         !!source.targeting.jobDescription.trim() || !!source.targeting.notes.trim(),
         evaluatedKeywords > 0 ? matchedKeywords > 0 : false,
       ].filter(Boolean).length,
@@ -368,23 +368,29 @@ export function buildResumeWorkbenchReport(
     });
   }
 
-  if (source.targeting.focusKeywords.length === 0 && !source.targeting.jobDescription.trim()) {
+  if (source.targeting.focusKeywords.length === 0 && suggestedKeywordCount > 0) {
+    openTasks.push({
+      id: "apply-suggested-keywords",
+      title: "Apply suggested keywords",
+      detail: "Apply the keywords extracted from the JD so matching analysis and tailored variants can run on saved data.",
+      area: "targeting",
+      status: "todo",
+      action: {
+        type: "apply-suggested-keywords",
+        label: "Apply suggested keywords",
+      },
+    });
+  } else if (source.targeting.focusKeywords.length === 0 && !source.targeting.jobDescription.trim()) {
     openTasks.push({
       id: "set-keywords",
       title: "补充关键词或 JD",
       detail: "至少填写一组 focus keywords，或粘贴 JD，让匹配分析和定制版生成可用。",
       area: "targeting",
       status: "todo",
-      action:
-        suggestedKeywordCount > 0
-          ? {
-              type: "apply-suggested-keywords",
-              label: "应用建议关键词",
-            }
-          : {
-              type: "focus-targeting",
-              label: "定位到岗位定制",
-            },
+      action: {
+        type: "focus-targeting",
+        label: "定位到岗位定制",
+      },
     });
   }
 

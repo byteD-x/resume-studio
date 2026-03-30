@@ -124,6 +124,7 @@ export async function listResumeSummaries() {
     meta: document.meta,
     basics: document.basics,
     targeting: document.targeting,
+    ai: document.ai,
     layout: document.layout,
     sections: document.sections,
     importTrace: document.importTrace,

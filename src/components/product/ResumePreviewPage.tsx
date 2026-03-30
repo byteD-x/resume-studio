@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { buildResumeExportChecklist, buildResumeQualityReport } from "@/lib/resume-analysis";
 import { buildResumePreviewHtml } from "@/lib/resume-preview";
+import { analyzeResumeTargeting } from "@/lib/resume-targeting";
 import { buildResumeWorkbenchReport } from "@/lib/resume-workbench";
 import type { ResumeDocument } from "@/types/resume";
 
@@ -27,12 +28,18 @@ export function ResumePreviewPage({
   initialDocument: ResumeDocument;
 }) {
   const qualityReport = useMemo(() => buildResumeQualityReport(initialDocument), [initialDocument]);
-  const workbenchReport = useMemo(() => buildResumeWorkbenchReport(initialDocument), [initialDocument]);
+  const targetingAnalysis = useMemo(() => analyzeResumeTargeting(initialDocument), [initialDocument]);
+  const workbenchReport = useMemo(
+    () =>
+      buildResumeWorkbenchReport(initialDocument, {
+        qualityReport,
+        targetingAnalysis,
+      }),
+    [initialDocument, qualityReport, targetingAnalysis],
+  );
   const hasBlockingIssues = qualityReport.blockingIssues.length > 0;
   const [status, setStatus] = useState(
-    hasBlockingIssues
-      ? "先补齐必填项。"
-      : "检查通过，可导出。",
+    hasBlockingIssues ? "先补齐必填项。" : "检查通过，可导出。",
   );
   const [busyAction, setBusyAction] = useState<"export" | null>(null);
   const html = useMemo(() => buildResumePreviewHtml(initialDocument), [initialDocument]);
@@ -155,6 +162,57 @@ export function ResumePreviewPage({
               ))}
             </div>
           </div>
+
+          {targetingAnalysis.active ? (
+            <div className="preview-sidebar-section">
+              <p className="workspace-sidebar-label">岗位匹配</p>
+              <div className="mt-4 space-y-3">
+                <div className="workspace-check-row">
+                  <div>
+                    <p>关键词来源</p>
+                    <span>
+                      {targetingAnalysis.keywordSource === "manual"
+                        ? "手动关键词"
+                        : targetingAnalysis.keywordSource === "job-description"
+                          ? "从 JD 提取"
+                          : "暂无"}
+                    </span>
+                  </div>
+                  <span className="workspace-check-tag">
+                    {targetingAnalysis.coveragePercent == null
+                      ? "等待分析"
+                      : `${targetingAnalysis.coveragePercent}%`}
+                  </span>
+                </div>
+                <div className="workspace-check-row">
+                  <div>
+                    <p>已命中关键词</p>
+                    <span>
+                      {targetingAnalysis.matchedKeywords.length > 0
+                        ? targetingAnalysis.matchedKeywords.join(" · ")
+                        : "当前还没有命中的关键词"}
+                    </span>
+                  </div>
+                  <span className="workspace-check-tag workspace-check-tag-done">
+                    {targetingAnalysis.matchedKeywords.length}
+                  </span>
+                </div>
+                <div className="workspace-check-row">
+                  <div>
+                    <p>待补齐关键词</p>
+                    <span>
+                      {targetingAnalysis.missingKeywords.length > 0
+                        ? targetingAnalysis.missingKeywords.join(" · ")
+                        : "当前没有缺口关键词"}
+                    </span>
+                  </div>
+                  <span className="workspace-check-tag">
+                    {targetingAnalysis.missingKeywords.length}
+                  </span>
+                </div>
+              </div>
+            </div>
+          ) : null}
 
           {requiredPendingItems.length > 0 ? (
             <div className="preview-sidebar-section">

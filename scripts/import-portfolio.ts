@@ -1,3 +1,4 @@
+import { readFile } from "node:fs/promises";
 import { importPortfolioToResume } from "../src/lib/portfolio-import";
 import { ensureResumeDocument, writeImportArtifact, writeResumeDocument } from "../src/lib/storage";
 
@@ -11,10 +12,13 @@ async function main() {
   const resumeId = getArgValue("--resume") ?? "default";
   const portfolioPath = getArgValue("--portfolio");
   const existing = await ensureResumeDocument(resumeId, "Primary Resume");
+  const source = portfolioPath?.startsWith("http://") || portfolioPath?.startsWith("https://") ? "url" : "text";
+  const payload = portfolioPath ? (source === "url" ? portfolioPath : await readFile(portfolioPath, "utf8")) : undefined;
   const result = await importPortfolioToResume({
     existingDocument: existing,
-    portfolioPath,
+    payload,
     resumeId,
+    source,
   });
 
   await writeImportArtifact(resumeId, "portfolio.raw.json", result.rawPortfolio);
