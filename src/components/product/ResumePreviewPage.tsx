@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { buildResumeExportChecklist, buildResumeQualityReport } from "@/lib/resume-analysis";
 import { buildResumePreviewHtml } from "@/lib/resume-preview";
+import { buildResumeWorkbenchReport } from "@/lib/resume-workbench";
 import type { ResumeDocument } from "@/types/resume";
 
 async function downloadBlob(response: Response, fallbackName: string) {
@@ -26,9 +27,12 @@ export function ResumePreviewPage({
   initialDocument: ResumeDocument;
 }) {
   const qualityReport = useMemo(() => buildResumeQualityReport(initialDocument), [initialDocument]);
+  const workbenchReport = useMemo(() => buildResumeWorkbenchReport(initialDocument), [initialDocument]);
   const hasBlockingIssues = qualityReport.blockingIssues.length > 0;
   const [status, setStatus] = useState(
-    hasBlockingIssues ? "导出前还有必填项未完成，请先回到编辑页补齐。" : "已通过必填检查，可直接导出。",
+    hasBlockingIssues
+      ? "先补齐必填项。"
+      : "检查通过，可导出。",
   );
   const [busyAction, setBusyAction] = useState<"export" | null>(null);
   const html = useMemo(() => buildResumePreviewHtml(initialDocument), [initialDocument]);
@@ -40,11 +44,11 @@ export function ResumePreviewPage({
   const completedChecklistCount = checklist.filter((item) => item.done).length;
   const optionalPendingItems = checklist.filter((item) => !item.done && !item.required);
   const requiredPendingItems = checklist.filter((item) => !item.done && item.required);
-  const exportReadinessLabel = hasBlockingIssues ? "需要补充内容" : "可直接导出";
+  const exportReadinessLabel = hasBlockingIssues ? "需要补充内容" : "可以直接导出";
 
   const exportPdf = async () => {
     setBusyAction("export");
-    setStatus("导出中");
+    setStatus("正在导出…");
 
     try {
       const response = await fetch(`/api/resumes/${initialDocument.meta.id}/export-pdf`, {
@@ -58,7 +62,7 @@ export function ResumePreviewPage({
       }
 
       await downloadBlob(response, `${initialDocument.meta.id}.pdf`);
-      setStatus("已导出");
+      setStatus("导出完成。");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "导出失败");
     } finally {
@@ -70,16 +74,17 @@ export function ResumePreviewPage({
     <main className="preview-page">
       <section className="preview-toolbar">
         <div>
+          <p className="section-kicker">预览与导出</p>
           <h1 className="workspace-title">{initialDocument.meta.title}</h1>
-          <p className="workspace-copy">{status}</p>
+          <p aria-live="polite" className="sr-only">
+            {status}
+          </p>
           <div className="preview-toolbar-badges">
             <Badge tone={hasBlockingIssues ? "warning" : "success"}>{exportReadinessLabel}</Badge>
             <Badge tone="neutral">
               检查项 {completedChecklistCount}/{checklist.length}
             </Badge>
-            <Badge tone="neutral">
-              {qualityReport.warnings.length > 0 ? `${qualityReport.warnings.length} 项建议优化` : "无额外风险"}
-            </Badge>
+            <Badge tone="accent">{workbenchReport.workflow.currentLabel}</Badge>
           </div>
         </div>
 
@@ -188,7 +193,7 @@ export function ResumePreviewPage({
           {!hasBlockingIssues && optionalPendingItems.length === 0 && qualityReport.warnings.length === 0 ? (
             <div className="preview-sidebar-section">
               <p className="workspace-sidebar-label">当前状态</p>
-              <p className="preview-sidebar-note">必填项已完成，当前没有额外风险，可直接导出 PDF。</p>
+              <p className="preview-sidebar-note">可以直接生成 PDF。</p>
             </div>
           ) : null}
         </section>

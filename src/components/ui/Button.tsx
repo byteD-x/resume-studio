@@ -1,6 +1,7 @@
 "use client";
 
 import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from "react";
+import type { Route } from "next";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -44,7 +45,7 @@ export function ButtonLink({
   ...props
 }: ButtonLinkProps) {
   return (
-    <Link className={cn(buttonVariants[variant], className)} href={href} {...props}>
+    <Link className={cn(buttonVariants[variant], className)} href={href as Route} {...props}>
       {children}
     </Link>
   );

@@ -6,7 +6,7 @@ export default function NotFound() {
     <PageState
       badge="未找到"
       title="页面不存在"
-      description="请返回首页或重新选择。"
+      description="返回首页，或直接去模板页开始。"
       actions={
         <>
           <ButtonLink href="/" variant="secondary">

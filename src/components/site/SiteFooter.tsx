@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -13,10 +14,10 @@ export function SiteFooter() {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
-        <p className="site-footer-copy">简历工坊</p>
+        <p className="site-footer-copy">Resume Studio</p>
         <div className="site-footer-links">
-          <Link href="/templates">模板</Link>
-          <Link href="/resumes">我的简历</Link>
+          <Link href={"/templates" as Route}>模板中心</Link>
+          <Link href={"/resumes" as Route}>草稿库</Link>
         </div>
       </div>
     </footer>

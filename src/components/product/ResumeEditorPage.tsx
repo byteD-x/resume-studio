@@ -1,7 +1,7 @@
 "use client";
 
 import { RotateCcw } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { startTransition, useDeferredValue, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { ResumeSectionEditor } from "@/components/product/ResumeSectionEditor";
 import { ResumeBasicsPanel } from "@/components/product/editor/ResumeBasicsPanel";
@@ -15,6 +15,7 @@ import { ResumeEditorToolbar } from "@/components/product/editor/ResumeEditorToo
 import { ResumeMarkdownPanel } from "@/components/product/editor/ResumeMarkdownPanel";
 import { ResumePreviewPanel } from "@/components/product/editor/ResumePreviewPanel";
 import { ResumeTargetingPanel } from "@/components/product/editor/ResumeTargetingPanel";
+import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { hasResumeRenderableContent } from "@/lib/resume-content";
 import { createEmptyResumeDocument } from "@/lib/resume-document";
@@ -32,11 +33,13 @@ import {
 } from "@/lib/resume-editor";
 import { parseResumeFromMarkdown, serializeResumeToMarkdown } from "@/lib/resume-markdown";
 import { buildResumePreviewHtml } from "@/lib/resume-preview";
+import { buildResumeWorkbenchReport } from "@/lib/resume-workbench";
 import type { ResumeDocument, ResumeSectionItem } from "@/types/resume";
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
 type FormPanel = Exclude<EditorPanel, "markdown">;
 type SectionPanel = (typeof editorSectionDefinitions)[number]["type"];
+type ImportReviewKind = "pdf" | "portfolio";
 
 interface ResumeEditorSnapshot {
   document: ResumeDocument;
@@ -192,21 +195,107 @@ function isSectionPanel(panel: EditorPanel): panel is SectionPanel {
   return editorSectionDefinitions.some((definition) => definition.type === panel);
 }
 
+function resolveInitialEditorPanel(focus: string | null): EditorPanel {
+  switch (focus) {
+    case "targeting":
+      return "targeting";
+    case "content":
+      return "experience";
+    default:
+      return "basics";
+  }
+}
+
+function resolveLatestImportKind(document: ResumeDocument): ImportReviewKind | null {
+  const { pdfImportedAt, portfolioImportedAt } = document.importTrace;
+
+  if (pdfImportedAt && portfolioImportedAt) {
+    return portfolioImportedAt > pdfImportedAt ? "portfolio" : "pdf";
+  }
+
+  if (portfolioImportedAt) return "portfolio";
+  if (pdfImportedAt) return "pdf";
+  return null;
+}
+
+function resolveImportSourcePath(document: ResumeDocument) {
+  return document.meta.sourceRefs.find((entry) => /[\\/]/.test(entry)) ?? null;
+}
+
+function resolveImportStatusMessage(kind: ImportReviewKind) {
+  if (kind === "pdf") {
+    return "先核对 PDF 导入结果。";
+  }
+
+  return "先核对作品集导入结果。";
+}
+
+function buildImportReview(document: ResumeDocument) {
+  const kind = resolveLatestImportKind(document);
+  if (!kind) return null;
+
+  return {
+    kind,
+    title: kind === "pdf" ? "PDF 导入已完成" : "作品集导入已完成",
+    description:
+      kind === "pdf"
+        ? "先看抬头信息、章节归类和待核对项。"
+        : "先看基础信息、经历映射和待核对项。",
+    primaryActionLabel: kind === "pdf" ? "核对基本信息" : "先看基础信息",
+    secondaryActionLabel: kind === "pdf" ? "继续核对内容" : "继续整理内容",
+    pendingItems: document.importTrace.pendingReview.slice(0, 3),
+    sourcePath: kind === "portfolio" ? resolveImportSourcePath(document) : null,
+  };
+}
+
+function resolveInitialStatusMessage(document: ResumeDocument, focus: string | null, onboarding: string | null) {
+  const importedKind = resolveLatestImportKind(document);
+  if (importedKind) {
+    return resolveImportStatusMessage(importedKind);
+  }
+
+  if (onboarding === "pdf") {
+    return "先核对 PDF 导入结果。";
+  }
+
+  if (onboarding === "portfolio") {
+    return "先核对作品集导入结果。";
+  }
+
+  if (focus === "summary") {
+    return "先补摘要。";
+  }
+
+  if (focus === "targeting") {
+    return "先定岗位和关键词。";
+  }
+
+  if (focus === "content") {
+    return "先补经历和结果。";
+  }
+
+  return hasResumeRenderableContent(document) ? "继续编辑" : "开始填写";
+}
+
 export function ResumeEditorPage({
   initialDocument,
 }: {
   initialDocument: ResumeDocument;
 }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const focusParam = searchParams.get("focus");
+  const onboardingParam = searchParams.get("onboarding");
   const seededDocument = ensureEditorDocument(initialDocument);
   const seededMarkdown = serializeResumeToMarkdown(seededDocument);
-  const initialStatusMessage = hasResumeRenderableContent(seededDocument) ? "自动保存" : "开始填写";
+  const initialPanel = resolveInitialEditorPanel(focusParam);
+  const seededStatusMessage = resolveInitialStatusMessage(seededDocument, focusParam, onboardingParam);
   const [document, setDocument] = useState(seededDocument);
-  const [activePanel, setActivePanel] = useState<EditorPanel>("basics");
+  const [activePanel, setActivePanel] = useState<EditorPanel>(initialPanel);
   const [activeSectionItemId, setActiveSectionItemId] = useState<string | null>(null);
   const [focusItemId, setFocusItemId] = useState<string | null>(null);
   const [saveState, setSaveState] = useState<SaveState>("saved");
-  const [statusMessage, setStatusMessage] = useState(initialStatusMessage);
+  const [statusMessage, setStatusMessage] = useState(seededStatusMessage);
   const [markdownDraft, setMarkdownDraft] = useState(seededMarkdown);
   const [markdownError, setMarkdownError] = useState<string | null>(null);
   const [recentDeletion, setRecentDeletion] = useState<RecentDeletion | null>(null);
@@ -215,7 +304,7 @@ export function ResumeEditorPage({
   const latestMarkdownRef = useRef(seededMarkdown);
   const latestMarkdownErrorRef = useRef<string | null>(null);
   const lastSavedRef = useRef(JSON.stringify(seededDocument));
-  const lastFormPanelRef = useRef<FormPanel>("basics");
+  const lastFormPanelRef = useRef<FormPanel>(initialPanel === "targeting" ? "targeting" : "basics");
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const deferredDocument = useDeferredValue(document);
   const editorMode = activePanel === "markdown" ? "markdown" : "form";
@@ -228,6 +317,9 @@ export function ResumeEditorPage({
 
   const markdownStarter = useMemo(() => createMarkdownStarter(document), [document]);
   const sidebarItems = useMemo(() => buildSidebarItems(document, markdownDraft), [document, markdownDraft]);
+  const importReview = useMemo(() => buildImportReview(document), [document]);
+  const workbenchReport = useMemo(() => buildResumeWorkbenchReport(document), [document]);
+  const nextTask = workbenchReport.openTasks[0] ?? null;
 
   const previewHtml = useMemo(
     () =>
@@ -841,6 +933,95 @@ export function ResumeEditorPage({
     handlePanelSelect(lastFormPanelRef.current);
   };
 
+  const handleFocusImportedBasics = () => {
+    setActivePanel("basics");
+    lastFormPanelRef.current = "basics";
+    setStatusMessage("先核对基本信息。");
+  };
+
+  const handleFocusImportedContent = () => {
+    setActivePanel("experience");
+    lastFormPanelRef.current = "experience";
+    setStatusMessage("继续整理导入内容。");
+  };
+
+  /* eslint-disable react-hooks/set-state-in-effect */
+  useEffect(() => {
+    const focus = searchParams.get("focus");
+    const onboarding = searchParams.get("onboarding");
+
+    if (focus === "basics" || focus === "summary") {
+      setActivePanel("basics");
+      if (focus === "summary") setStatusMessage("先补摘要。");
+    } else if (focus === "targeting") {
+      setActivePanel("targeting");
+      setStatusMessage("先定岗位和关键词。");
+    } else if (focus === "content") {
+      setActivePanel("experience");
+      lastFormPanelRef.current = "experience";
+      setStatusMessage("先补经历和结果。");
+    }
+
+    const importedKind = resolveLatestImportKind(latestDocumentRef.current);
+    if (importedKind) {
+      setStatusMessage(resolveImportStatusMessage(importedKind));
+    } else if (onboarding === "pdf") {
+      setStatusMessage("先核对 PDF 导入结果。");
+    } else if (onboarding === "portfolio") {
+      setStatusMessage("先核对作品集导入结果。");
+    }
+  }, [searchParams]);
+  /* eslint-enable react-hooks/set-state-in-effect */
+
+  const handleJumpToNextTask = () => {
+    if (!nextTask) {
+      void handleOpenPreview();
+      return;
+    }
+
+    switch (nextTask.action.type) {
+      case "focus-basics":
+      case "focus-summary":
+        setActivePanel("basics");
+        lastFormPanelRef.current = "basics";
+        break;
+      case "focus-targeting":
+      case "apply-suggested-keywords":
+        setActivePanel("targeting");
+        lastFormPanelRef.current = "targeting";
+        break;
+      case "focus-export":
+        void handleOpenPreview();
+        return;
+      case "ensure-experience":
+      case "ensure-bullet":
+        setActivePanel("experience");
+        lastFormPanelRef.current = "experience";
+        break;
+      case "set-workflow":
+        const workflowState = nextTask.action.workflowState;
+        updateDocument(
+          (current) => ({
+            ...current,
+            meta: {
+              ...current.meta,
+              workflowState,
+            },
+          }),
+          {
+            historyLabel: "更新工作流阶段",
+            clearDeletion: true,
+            message: `已切换到“${workbenchReport.workflow.suggestedLabel}”阶段`,
+          },
+        );
+        return;
+      default:
+        return;
+    }
+
+    setStatusMessage(nextTask.title);
+  };
+
   const renderCurrentPanel = () => {
     if (activePanel === "basics") {
       return <ResumeBasicsPanel document={document} onBasicsChange={updateBasicsField} />;
@@ -917,6 +1098,85 @@ export function ResumeEditorPage({
         statusMessage={statusMessage}
         title={document.meta.title}
       />
+
+      {importReview ? (
+        <section className="resume-editor-import-banner">
+          <div>
+            <p className="editor-workflow-kicker">导入校对</p>
+            <div className="editor-workflow-head">
+              <strong>{importReview.title}</strong>
+              <span>
+                {document.importTrace.pendingReview.length > 0
+                  ? `${document.importTrace.pendingReview.length} 个待核对项`
+                  : "已进入整理阶段"}
+              </span>
+            </div>
+            <p className="editor-workflow-copy">{importReview.description}</p>
+            {importReview.sourcePath ? (
+              <p className="resume-editor-import-meta">来源路径：{importReview.sourcePath}</p>
+            ) : null}
+            <div className="resume-editor-import-badges">
+              <Badge tone="accent">{importReview.kind === "pdf" ? "PDF 导入" : "作品集导入"}</Badge>
+              {document.importTrace.pendingReview.length > 0 ? (
+                <Badge tone="neutral">{document.importTrace.pendingReview.length} 个待核对项</Badge>
+              ) : (
+                <Badge tone="success">已完成首轮导入</Badge>
+              )}
+              {document.importTrace.unmapped.length > 0 ? (
+                <Badge tone="warning">{document.importTrace.unmapped.length} 个未映射提示</Badge>
+              ) : null}
+            </div>
+          </div>
+
+          <div className="resume-editor-import-list">
+            {(importReview.pendingItems.length > 0
+              ? importReview.pendingItems
+              : ["没有额外待核对项。"]).map((item) => (
+              <div className="resume-editor-import-item" key={item}>
+                {item}
+              </div>
+            ))}
+          </div>
+
+          <div className="editor-workflow-actions">
+            <Button onClick={handleFocusImportedBasics} variant="secondary">
+              {importReview.primaryActionLabel}
+            </Button>
+            <Button onClick={handleFocusImportedContent}>
+              {importReview.secondaryActionLabel}
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="editor-workflow-strip">
+        <div>
+          <p className="editor-workflow-kicker">当前阶段</p>
+          <div className="editor-workflow-head">
+            <strong>{workbenchReport.workflow.currentLabel}</strong>
+            <span>{workbenchReport.score} / 100</span>
+          </div>
+          <p className="editor-workflow-copy">{workbenchReport.workflow.currentDescription}</p>
+        </div>
+        <div>
+          <p className="editor-workflow-kicker">下一步</p>
+          <div className="editor-workflow-head">
+            <strong>{nextTask?.title ?? "可以进入预览导出"}</strong>
+            <span>{nextTask ? "下一项" : "可去预览"}</span>
+          </div>
+          <p className="editor-workflow-copy">
+            {nextTask?.detail ?? "继续检查版式与导出风险，确认后再导出 PDF。"}
+          </p>
+        </div>
+        <div className="editor-workflow-actions">
+          <Button onClick={() => handleJumpToNextTask()} variant="secondary">
+            {nextTask?.action.label ?? "进入预览导出"}
+          </Button>
+          <Button onClick={() => void handleOpenPreview()}>
+            预览导出
+          </Button>
+        </div>
+      </section>
 
       {recentDeletion ? (
         <section className="resume-editor-notice">

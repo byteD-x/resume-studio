@@ -1,15 +1,17 @@
 "use client";
 
-import { FileArchive, LoaderCircle, Upload } from "lucide-react";
-import { useRouter } from "next/navigation";
+import type { Route } from "next";
+import { FileArchive, LoaderCircle } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import {
   templateCatalog,
   templateCategories,
   type TemplateCatalogItem,
 } from "@/data/template-catalog";
-import { cn } from "@/lib/utils";
+
 import type { ResumeDocument, ResumeWriterProfile } from "@/types/resume";
 
 const writerProfiles: Array<{
@@ -20,30 +22,26 @@ const writerProfiles: Array<{
   {
     value: "experienced",
     label: "有经验求职",
-    description: "突出业务影响、职责范围和结果。",
+    description: "突出业务影响、职责范围和结果表达。",
   },
   {
     value: "campus",
     label: "校招 / 应届",
-    description: "教育、项目和实习更靠前。",
+    description: "教育、项目和实习应该更靠前展示。",
   },
   {
     value: "career-switch",
     label: "转岗 / 跨行业",
-    description: "强调相关经历和可迁移能力。",
+    description: "强调相关经历、迁移能力和转向动机。",
   },
 ];
 
-const cardClassName =
-  "rounded-[1.5rem] border border-[color:var(--line)] bg-white/92 shadow-[0_16px_36px_rgba(15,23,42,0.05)]";
-const labelClassName =
-  "text-[0.72rem] font-semibold uppercase tracking-[0.14em] text-[color:var(--ink-muted)]";
+const cardClassName = "rounded-[0.75rem] border border-[color:var(--line)] bg-white/92 shadow-sm";
 
 async function getJson<T>(response: Response): Promise<T> {
   if (!response.ok) {
     throw new Error((await response.text()) || `Request failed: ${response.status}`);
   }
-
   return (await response.json()) as T;
 }
 
@@ -78,14 +76,30 @@ function TemplatePreview({ template }: { template: TemplateCatalogItem }) {
 
 export function TemplateGalleryPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
-  const [activeCategory, setActiveCategory] = useState<(typeof templateCategories)[number]>("全部");
-  const [writerProfile, setWriterProfile] = useState<ResumeWriterProfile>("experienced");
   const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [busyImport, setBusyImport] = useState<"pdf" | "portfolio" | null>(null);
-  const [status, setStatus] = useState("选择模板后会直接进入编辑页。");
+  const [status, setStatus] = useState("");
 
-  const currentWriterProfile = writerProfiles.find((profile) => profile.value === writerProfile)!;
+  const activeCategory =
+    templateCategories.find((category) => category === searchParams.get("category")) ?? "全部";
+  const writerProfile =
+    searchParams.get("profile") === "campus" || searchParams.get("profile") === "career-switch"
+      ? (searchParams.get("profile") as ResumeWriterProfile)
+      : "experienced";
+
+  const updateTemplateRoute = (updates: Partial<Record<"category" | "profile", string | null>>) => {
+    const params = new URLSearchParams(searchParams.toString());
+    (Object.entries(updates) as Array<["category" | "profile", string | null]>).forEach(
+      ([key, value]) => {
+        if (!value) params.delete(key);
+        else params.set(key, value);
+      },
+    );
+    const query = params.toString();
+    const href = (query ? `/templates?${query}` : "/templates") as Route;
+    router.replace(href, { scroll: false });
+  };
 
   const templates = useMemo(() => {
     const filtered =
@@ -102,7 +116,7 @@ export function TemplateGalleryPage() {
 
   const createResume = async (template: TemplateCatalogItem) => {
     setSelectedId(template.id);
-    setStatus(`正在创建 ${template.name}`);
+    setStatus(`正在创建 ${template.name}...`);
 
     try {
       const document = await getJson<ResumeDocument>(
@@ -127,128 +141,73 @@ export function TemplateGalleryPage() {
     }
   };
 
-  const startImport = async (onboarding: "pdf" | "portfolio") => {
-    setBusyImport(onboarding);
-    setStatus("正在创建草稿…");
-
-    try {
-      const document = await getJson<ResumeDocument>(
-        await fetch("/api/resumes", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            title: "未命名简历",
-            starter: "blank",
-          }),
-        }),
-      );
-
-      startTransition(() => {
-        router.push(`/studio/${document.meta.id}?onboarding=${onboarding}`);
-      });
-    } catch (error) {
-      setStatus(error instanceof Error ? error.message : "创建失败。");
-      setBusyImport(null);
-    }
-  };
-
   return (
     <main className="page-wrap">
-      <section className={cardClassName}>
-        <div className="flex flex-col gap-6 p-7 sm:p-8 lg:flex-row lg:items-end lg:justify-between">
-          <div className="max-w-3xl">
-            <p className={labelClassName}>模板</p>
-            <h1 className="mt-3 text-[clamp(2rem,4vw,3rem)] font-semibold tracking-[-0.05em] text-[color:var(--ink-strong)]">
-              选择模板开始
-            </h1>
-            <p className="mt-3 text-base leading-8 text-[color:var(--ink-soft)]">
-              模板是默认起点。先选适合的版式，再进入编辑器补齐内容；如果你已经有旧简历，也可以直接从这里导入。
-            </p>
-          </div>
-
-          <div className="flex flex-wrap gap-3">
-            <button
-              className="btn btn-secondary"
-              disabled={busyImport !== null}
-              onClick={() => void startImport("pdf")}
-              type="button"
-            >
-              <FileArchive aria-hidden="true" className="size-4" />
-              {busyImport === "pdf" ? "正在创建…" : "导入旧 PDF"}
-            </button>
-            <button
-              className="btn btn-secondary"
-              disabled={busyImport !== null}
-              onClick={() => void startImport("portfolio")}
-              type="button"
-            >
-              <Upload aria-hidden="true" className="size-4" />
-              {busyImport === "portfolio" ? "正在创建…" : "导入作品集"}
-            </button>
-            <ButtonLink href="/resumes" variant="ghost">
-              我的简历
-            </ButtonLink>
-          </div>
+      <section className="flex flex-col sm:flex-row items-start sm:items-end justify-between border-b border-[color:var(--line)] pb-5 mb-5 gap-4">
+        <div>
+          <h1 className="text-[1.8rem] font-bold tracking-tight text-[color:var(--ink-strong)]">
+            新建简历
+          </h1>
+          <p className="mt-1.5 text-[0.92rem] text-[color:var(--ink-soft)]">
+            直接挑选一个版式开始。
+          </p>
+          <p aria-live="polite" className="mt-2 text-[0.85rem] text-[color:var(--accent-strong)] empty:hidden">
+            {status}
+          </p>
+        </div>
+        
+        <div className="flex flex-wrap gap-3">
+          <ButtonLink
+            href="/import"
+            variant="secondary"
+          >
+            <FileArchive aria-hidden="true" className="size-4" />
+            解析源文件或导入线上经历
+          </ButtonLink>
         </div>
       </section>
 
-      <section className={cn(cardClassName, "mt-6 p-7 sm:p-8")}>
-        <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-          <div>
-            <p className={labelClassName}>求职类型</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {writerProfiles.map((profile) => {
-                const active = writerProfile === profile.value;
-
-                return (
-                  <button
-                    className={`filter-chip ${active ? "filter-chip-active" : ""}`}
-                    key={profile.value}
-                    onClick={() => setWriterProfile(profile.value)}
-                    type="button"
-                  >
-                    {profile.label}
-                  </button>
-                );
-              })}
-            </div>
-
-            <p className={labelClassName + " mt-6"}>模板分类</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {templateCategories.map((category) => (
+      <section className="flex flex-col sm:flex-row gap-5 mb-7 items-start sm:items-center bg-[color:var(--paper-soft)] p-3 px-4 rounded-[0.75rem] border border-[color:var(--line)]">
+        <div className="flex items-center gap-3">
+          <span className="text-[0.75rem] font-bold uppercase tracking-wider text-[color:var(--ink-muted)] shrink-0">求职语境</span>
+          <div className="flex flex-wrap gap-2">
+            {writerProfiles.map((profile) => {
+              const active = writerProfile === profile.value;
+              return (
                 <button
-                  className={`filter-chip ${activeCategory === category ? "filter-chip-active" : ""}`}
-                  key={category}
-                  onClick={() => setActiveCategory(category)}
+                  key={profile.value}
+                  className={`filter-chip ${active ? "filter-chip-active" : ""}`}
+                  onClick={() => updateTemplateRoute({ profile: profile.value })}
                   type="button"
                 >
-                  {category}
+                  {profile.label}
                 </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-[1.2rem] border border-[color:var(--line)] bg-[color:var(--paper-soft)] p-5">
-            <p className={labelClassName}>当前选择</p>
-            <p className="mt-3 text-lg font-semibold text-[color:var(--ink-strong)]">
-              {currentWriterProfile.label}
-            </p>
-            <p className="mt-2 text-sm leading-7 text-[color:var(--ink-soft)]">
-              {currentWriterProfile.description}
-            </p>
-            <p className="mt-4 text-sm leading-7 text-[color:var(--ink-soft)]">
-              当前可选 {templates.length} 个模板。
-            </p>
+              );
+            })}
           </div>
         </div>
 
-        <p aria-live="polite" className="mt-5 text-sm text-[color:var(--ink-soft)]">
-          {status}
-        </p>
+        <div className="hidden sm:block w-px h-5 bg-[color:var(--line)]" />
+
+        <div className="flex items-center gap-3">
+          <span className="text-[0.75rem] font-bold uppercase tracking-wider text-[color:var(--ink-muted)] shrink-0">排版分类</span>
+          <div className="flex flex-wrap gap-2">
+            {templateCategories.map((category) => (
+              <button
+                key={category}
+                className={`filter-chip ${activeCategory === category ? "filter-chip-active" : ""}`}
+                onClick={() => updateTemplateRoute({ category: category === "全部" ? null : category })}
+                type="button"
+              >
+                {category}
+              </button>
+            ))}
+          </div>
+        </div>
       </section>
 
       {templates.length > 0 ? (
-        <section className="mt-6 grid gap-5 lg:grid-cols-2">
+        <section className="grid gap-5 lg:grid-cols-3">
           {templates.map((template) => {
             const recommended = template.recommendedProfiles.includes(writerProfile);
 
@@ -256,24 +215,28 @@ export function TemplateGalleryPage() {
               <article className={cardClassName} key={template.id}>
                 <TemplatePreview template={template} />
 
-                <div className="p-6">
+                <div className="p-5">
                   <div className="flex flex-wrap items-center gap-2">
-                    <span className="filter-chip filter-chip-active">{template.category}</span>
-                    <span className="filter-chip">{template.subtitle}</span>
-                    {recommended ? <span className="filter-chip">推荐当前类型</span> : null}
+                    <Badge tone="accent">{template.category}</Badge>
+                    {recommended ? <Badge tone="success">当前适配</Badge> : null}
                   </div>
 
-                  <h2 className="mt-4 text-[1.5rem] font-semibold tracking-[-0.04em] text-[color:var(--ink-strong)]">
+                  <h2 className="mt-4 text-[1.12rem] font-bold tracking-tight text-[color:var(--ink-strong)]">
                     {template.name}
                   </h2>
-                  <p className="mt-2 text-sm leading-7 text-[color:var(--ink-soft)]">
+                  <p className="mt-1.5 text-[0.88rem] leading-relaxed text-[color:var(--ink-soft)] h-[2.5rem] line-clamp-2">
                     {template.summary}
                   </p>
-                  <p className="mt-3 text-sm leading-7 text-[color:var(--ink-soft)]">
-                    {template.highlights.join(" · ")}
-                  </p>
+                  
+                  <div className="mt-4 flex flex-wrap gap-1.5">
+                    {template.highlights.slice(0, 3).map((highlight) => (
+                      <span className="filter-chip text-[0.72rem] px-2 py-0.5" key={highlight}>
+                        {highlight}
+                      </span>
+                    ))}
+                  </div>
 
-                  <div className="mt-6">
+                  <div className="mt-5">
                     <Button
                       className="w-full justify-center"
                       disabled={isPending}
@@ -283,7 +246,7 @@ export function TemplateGalleryPage() {
                       {selectedId === template.id && isPending ? (
                         <LoaderCircle className="size-4 animate-spin" />
                       ) : null}
-                      用这个模板开始
+                      {selectedId === template.id ? "准备进入工作区..." : "选择此排版"}
                     </Button>
                   </div>
                 </div>
@@ -293,8 +256,8 @@ export function TemplateGalleryPage() {
         </section>
       ) : (
         <section className="mt-6 empty-surface">
-          <p className="empty-surface-title">没有匹配的模板</p>
-          <p className="empty-surface-text">换一个求职类型或模板分类试试。</p>
+          <p className="empty-surface-title">没有匹配的排版</p>
+          <p className="empty-surface-text">换一个分类试试。</p>
         </section>
       )}
     </main>

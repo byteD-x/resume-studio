@@ -26,6 +26,17 @@
 .DS_Store
 *.pem
 
+# local skill installers / editor-specific agent folders
+.agents/
+.claude/
+.continue/
+.kiro/
+.qoder/
+.trae/
+.windsurf/
+skills/
+skills-lock.json
+
 # debug
 npm-debug.log*
 yarn-debug.log*

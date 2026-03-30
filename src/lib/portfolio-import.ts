@@ -1,12 +1,8 @@
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import vm from "node:vm";
-import ts from "typescript";
 import { createEmptyResumeDocument, validateResumeDocument } from "@/lib/resume-document";
 import { nowIso, stripHtml, textToHtml, createId } from "@/lib/utils";
 import type { ResumeDocument } from "@/types/resume";
 
-interface PortfolioExperience {
+export interface PortfolioExperience {
   id: string;
   year: string;
   role?: string;
@@ -18,13 +14,13 @@ interface PortfolioExperience {
   keyOutcomes?: string[];
 }
 
-interface PortfolioSkillCategory {
+export interface PortfolioSkillCategory {
   category: string;
   description?: string;
   items: string[];
 }
 
-interface PortfolioData {
+export interface PortfolioData {
   hero: {
     name: string;
     title: string;
@@ -45,56 +41,121 @@ interface PortfolioData {
   };
 }
 
-export const DEFAULT_PORTFOLIO_PATH = path.resolve(
-  process.cwd(),
-  "../portfolio/src/data.ts",
-);
+export function parseTextPortfolio(content: string): PortfolioData {
+  const lines = content.split('\n').map(l => l.trim()).filter(Boolean);
+  
+  const emailMatch = content.match(/[\w-\.]+@([\w-]+\.)+[\w-]{2,4}/);
+  const phoneMatch = content.match(/1[3-9]\d{9}/);
+  const urlMatches = content.match(/https?:\/\/[^\s]+/g) || [];
+  
+  const github = urlMatches.find(u => u.includes('github.com')) || "";
+  const otherLinks = urlMatches.filter(u => !u.includes('github.com')).map(u => ({ label: "Website", url: u }));
 
-async function loadPortfolioModule(filePath: string) {
-  const source = await fs.readFile(filePath, "utf8");
-  const transpiled = ts.transpileModule(source.replace(/^\uFEFF/, ""), {
-    compilerOptions: {
-      module: ts.ModuleKind.CommonJS,
-      target: ts.ScriptTarget.ES2022,
-      importsNotUsedAsValues: ts.ImportsNotUsedAsValues.Remove,
-      esModuleInterop: true,
-    },
-  }).outputText;
+  let name = "未命名";
+  let title = "求职者";
+  let subtitle = "";
+  
+  if (lines.length > 0) name = lines[0].substring(0, 30).replace(/#+\s*/g, '');
+  if (lines.length > 1) title = lines[1].substring(0, 50).replace(/#+\s*/g, '');
+  if (lines.length > 2) subtitle = lines.slice(2, 5).join(' ').substring(0, 200);
 
-  const cjsModule = { exports: {} as Record<string, unknown> };
-  const sandbox = {
-    module: cjsModule,
-    exports: cjsModule.exports,
-    require: () => {
-      throw new Error("Portfolio importer only supports type-only imports.");
-    },
-  };
+  const timeline: PortfolioExperience[] = [];
+  const projects: PortfolioExperience[] = [];
+  
+  // A heuristic to split content into blocks based on blank lines or common headers
+  const contentBlocks: string[][] = [];
+  let currentBlock: string[] = [];
+  for (const line of lines.slice(2)) {
+    if (line.match(/^(项目|经历|工作|Project|Experience|#)/)) {
+      if (currentBlock.length > 0) {
+        contentBlocks.push(currentBlock);
+        currentBlock = [];
+      }
+    }
+    currentBlock.push(line);
+  }
+  if (currentBlock.length > 0) contentBlocks.push(currentBlock);
 
-  vm.runInNewContext(transpiled, sandbox, { filename: filePath });
-  return cjsModule.exports;
-}
+  // Distribute blocks
+  contentBlocks.forEach((block, index) => {
+    if (block.length < 2) return;
+    const header = block[0].replace(/#+\s*/, '');
+    const isProject = header.toLowerCase().includes('项目') || header.toLowerCase().includes('project');
+    const roleOrName = header;
+    const summary = block.slice(1).join('\n');
+    
+    const item: PortfolioExperience = {
+      id: createId("exp"),
+      year: "未知时间",
+      name: isProject ? roleOrName : undefined,
+      company: !isProject ? roleOrName : undefined,
+      role: isProject ? "" : "相关角色",
+      summary: summary,
+      techTags: [],
+    };
+    
+    if (isProject) {
+      projects.push(item);
+    } else {
+      timeline.push(item);
+    }
+  });
 
-export async function readPortfolioData(filePath = DEFAULT_PORTFOLIO_PATH) {
-  const exports = await loadPortfolioModule(filePath);
-  const portfolioData = exports.defaultPortfolioData;
-
-  if (!portfolioData) {
-    throw new Error(`Could not read defaultPortfolioData from ${filePath}`);
+  // Fallback if empty
+  if (projects.length === 0 && timeline.length === 0 && lines.length > 5) {
+     projects.push({
+       id: createId("exp"),
+       year: "近期",
+       name: "导入项目",
+       summary: lines.slice(5, 15).join('\n'),
+       techTags: []
+     });
   }
 
-  return portfolioData as PortfolioData;
+  return {
+    hero: { name, title, subtitle, location: "" },
+    about: { zh: subtitle },
+    timeline,
+    projects,
+    skills: [],
+    contact: { 
+      email: emailMatch ? emailMatch[0] : "", 
+      phone: phoneMatch ? phoneMatch[0] : "",
+      github,
+      websiteLinks: otherLinks
+    }
+  };
 }
 
-function mapListSection(
-  title: string,
-  type: "experience" | "projects",
-  items: PortfolioExperience[],
-) {
+export async function fetchAndParseUrl(url: string): Promise<PortfolioData> {
+  try {
+    const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0 Portfolio-Importer" }});
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const html = await res.text();
+    // simplistic text extraction
+    const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
+    const targetHtml = bodyMatch ? bodyMatch[1] : html;
+    
+    const text = targetHtml
+      .replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '')
+      .replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '')
+      .replace(/<[^>]*>?/gm, ' ')
+      .replace(/&nbsp;/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+      
+    return parseTextPortfolio(text);
+  } catch (error) {
+    throw new Error(`无法抓取网页: ${error instanceof Error ? error.message : String(error)}`);
+  }
+}
+
+function mapListSection(title: string, type: "experience" | "projects", items: PortfolioExperience[]) {
   return {
     id: createId("section"),
     type,
     title,
-    visible: true,
+    visible: items.length > 0,
     layout: "stacked-list" as const,
     contentHtml: "",
     items: items.map((item) => ({
@@ -116,7 +177,7 @@ function mapSkillsSection(skills: PortfolioSkillCategory[]) {
     id: createId("section"),
     type: "skills" as const,
     title: "Skills",
-    visible: true,
+    visible: skills.length > 0,
     layout: "tag-grid" as const,
     contentHtml: "",
     items: skills.map((item) => ({
@@ -135,16 +196,23 @@ function mapSkillsSection(skills: PortfolioSkillCategory[]) {
 
 export async function importPortfolioToResume(
   options: {
-    portfolioPath?: string;
+    source: "url" | "markdown" | "text";
+    payload: string;
     existingDocument?: ResumeDocument;
     resumeId?: string;
-  } = {},
+  }
 ) {
-  const filePath = options.portfolioPath ?? DEFAULT_PORTFOLIO_PATH;
-  const portfolio = await readPortfolioData(filePath);
+  let portfolio: Readonly<PortfolioData>;
+  
+  if (options.source === "url") {
+    portfolio = await fetchAndParseUrl(options.payload);
+  } else {
+    portfolio = parseTextPortfolio(options.payload);
+  }
+
   const baseDocument =
     options.existingDocument ??
-    createEmptyResumeDocument(options.resumeId ?? "default", "Portfolio Draft");
+    createEmptyResumeDocument(options.resumeId ?? "default", "Imported Draft");
 
   const links = [...(portfolio.contact.websiteLinks ?? [])];
   if (portfolio.contact.github) {
@@ -169,39 +237,28 @@ export async function importPortfolioToResume(
     meta: {
       ...baseDocument.meta,
       id: options.resumeId ?? baseDocument.meta.id,
-      title: `${portfolio.hero.name} Resume`,
-      sourceRefs: Array.from(new Set([...baseDocument.meta.sourceRefs, filePath])),
+      title: `${portfolio.hero.name} 的简历`,
       updatedAt: nowIso(),
     },
     sections: [
       {
         id: createId("section"),
         type: "summary",
-        title: "Profile",
-        visible: true,
+        title: "个人简介",
+        visible: !!portfolio.about.zh || !!portfolio.hero.subtitle,
         layout: "rich-text",
         contentHtml: textToHtml(
           [portfolio.hero.subtitle, portfolio.about.zh].filter(Boolean).join("\n\n"),
         ),
         items: [],
       },
-      mapListSection("Experience", "experience", portfolio.timeline),
-      mapListSection("Projects", "projects", portfolio.projects),
+      mapListSection("工作经历", "experience", portfolio.timeline),
+      mapListSection("项目经历", "projects", portfolio.projects),
       mapSkillsSection(portfolio.skills),
     ],
     importTrace: {
+      ...baseDocument.importTrace,
       portfolioImportedAt: nowIso(),
-      pdfImportedAt: baseDocument.importTrace.pdfImportedAt,
-      unmapped: [
-        "impact metrics",
-        "services",
-        "audience cards",
-        "consultation checklist",
-      ],
-      pendingReview: [
-        "Review wording length for one-page fit",
-        "Trim highlighted portfolio metrics if not relevant to target role",
-      ],
     },
   });
 
@@ -209,6 +266,6 @@ export async function importPortfolioToResume(
     document,
     rawPortfolio: portfolio,
     summary: stripHtml(document.basics.summaryHtml),
-    sourcePath: filePath,
+    sourcePath: options.source === "url" ? options.payload : "pasted-content",
   };
 }

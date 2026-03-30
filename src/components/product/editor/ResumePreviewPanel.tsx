@@ -13,7 +13,7 @@ export function ResumePreviewPanel({
   return (
     <aside className="editor-preview-panel">
       <div className="editor-preview-head">
-        <p className="editor-preview-kicker">预览</p>
+        <p className="editor-preview-kicker">实时预览</p>
         <Badge tone="neutral">{saveLabel}</Badge>
       </div>
 

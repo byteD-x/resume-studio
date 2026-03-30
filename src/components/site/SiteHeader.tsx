@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { FileText } from "lucide-react";
 import { usePathname } from "next/navigation";
@@ -12,16 +13,14 @@ const baseNavItems = [
     label: "模板",
     match: (pathname: string) => pathname.startsWith("/templates"),
   },
-  {
-    href: "/resumes",
-    label: "我的简历",
-    match: (pathname: string) => pathname.startsWith("/resumes"),
-  },
 ];
 
 export function SiteHeader() {
   const pathname = usePathname();
-  const navItems = baseNavItems;
+
+  if (pathname.startsWith("/studio/")) {
+    return null;
+  }
 
   return (
     <header className="site-header">
@@ -32,18 +31,18 @@ export function SiteHeader() {
               <FileText className="size-[18px]" />
             </span>
             <div className="leading-none">
-              <p className="site-brand-title">简历工坊</p>
+              <p className="site-brand-title">Resume Studio</p>
             </div>
           </Link>
 
           <nav className="site-nav">
-            {navItems.map((item) => {
+            {baseNavItems.map((item) => {
               const active = item.match(pathname);
               return (
                 <Link
                   key={item.href}
                   className={cn("site-nav-link", active && "site-nav-link-active")}
-                  href={item.href}
+                  href={item.href as Route}
                 >
                   {item.label}
                 </Link>
@@ -53,8 +52,8 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link className="btn btn-primary" href="/templates">
-            开始制作
+          <Link className="btn btn-primary" href={"/templates" as Route}>
+            开始新简历
           </Link>
         </div>
       </div>

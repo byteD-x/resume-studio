@@ -49,7 +49,7 @@ export function ResumeEditorSidebar({
   return (
     <aside className="editor-sidebar">
       <div className="editor-sidebar-block">
-        <p className="editor-sidebar-label">内容</p>
+        <p className="editor-sidebar-label">编辑步骤</p>
         <div className="editor-sidebar-list">
           {items.map((item) => {
             const active = activePanel === item.key;
@@ -68,7 +68,13 @@ export function ResumeEditorSidebar({
                   <div className="editor-sidebar-item-titleline">
                     <strong>{item.label}</strong>
                   </div>
-                  {item.countLabel ? <span className="editor-sidebar-item-note">{item.countLabel}</span> : null}
+                  <span className="editor-sidebar-item-hint">{item.hint}</span>
+                  <div className="editor-sidebar-item-meta">
+                    <span className={`editor-sidebar-item-status editor-sidebar-item-status-${item.status}`}>
+                      {item.status === "ready" ? "已完成" : item.status === "in_progress" ? "进行中" : "待开始"}
+                    </span>
+                    {item.countLabel ? <span className="editor-sidebar-item-note">{item.countLabel}</span> : null}
+                  </div>
                 </div>
               </button>
             );

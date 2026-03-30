@@ -10,7 +10,7 @@ type EditorMode = "form" | "markdown";
 function saveStateLabel(saveState: SaveState) {
   switch (saveState) {
     case "dirty":
-      return "未保存修改";
+      return "未保存";
     case "saving":
       return "保存中";
     case "error":
@@ -50,6 +50,7 @@ export function ResumeEditorToolbar({
         </button>
 
         <div className="editor-toolbar-titleblock">
+          <p className="editor-toolbar-kicker">编辑简历</p>
           <input
             className="editor-toolbar-titleinput"
             value={title}
@@ -63,6 +64,7 @@ export function ResumeEditorToolbar({
         </div>
 
         <div className="editor-toolbar-mode">
+          <p className="editor-toolbar-mode-label">编辑方式</p>
           <div className="editor-toolbar-mode-switch" role="tablist" aria-label="编辑方式切换">
             <button
               aria-selected={editorMode === "form"}
@@ -95,7 +97,7 @@ export function ResumeEditorToolbar({
         </Button>
         <button className="btn btn-ghost" onClick={onOpenPreview} type="button">
           <Eye className="size-4" />
-          预览
+          预览导出
         </button>
       </div>
     </section>

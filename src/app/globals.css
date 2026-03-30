@@ -16,9 +16,9 @@
   --accent-muted: oklch(0.916 0.013 247);
   --danger: oklch(0.56 0.18 24);
   --success: oklch(0.61 0.1 165);
-  --shadow-soft: 0 8px 20px rgba(15, 23, 42, 0.035);
-  --shadow-medium: 0 14px 32px rgba(15, 23, 42, 0.05);
-  --shadow-paper: 0 20px 46px rgba(15, 23, 42, 0.08);
+  --shadow-soft: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-medium: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-paper: 0 8px 24px rgba(15, 23, 42, 0.08);
 }
 
 * {
@@ -41,9 +41,7 @@ body {
     "Microsoft YaHei",
     sans-serif;
   text-rendering: optimizeLegibility;
-  background:
-    radial-gradient(circle at top left, rgba(54, 84, 151, 0.03), transparent 26rem),
-    linear-gradient(180deg, #fbfaf7 0%, #f5f2ec 100%);
+  background: #fdfcfb;
 }
 
 a {
@@ -63,22 +61,11 @@ select {
 }
 
 .app-backdrop {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  background: radial-gradient(circle at 16% 10%, rgba(62, 94, 177, 0.025), transparent 18rem);
+  display: none;
 }
 
 .app-grid {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  opacity: 0.035;
-  background-image:
-    linear-gradient(rgba(36, 49, 82, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(36, 49, 82, 0.03) 1px, transparent 1px);
-  background-size: 56px 56px;
-  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.42), transparent 92%);
+  display: none;
 }
 
 .page-wrap,
@@ -128,10 +115,10 @@ select {
   justify-content: center;
   width: 2.1rem;
   height: 2.1rem;
-  border-radius: 0.72rem;
+  border-radius: 0.42rem;
   background: color-mix(in srgb, var(--accent-strong) 88%, white);
   color: white;
-  box-shadow: 0 8px 16px rgba(45, 73, 144, 0.1);
+  box-shadow: 0 2px 8px rgba(45, 73, 144, 0.15);
 }
 
 .site-brand-title {
@@ -139,6 +126,13 @@ select {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--ink-strong);
+}
+
+.site-brand-subtitle {
+  margin: 0.18rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
 }
 
 .site-nav {
@@ -272,7 +266,7 @@ select {
 .workspace-sidebar-card,
 .workspace-preview-card,
 .workspace-header {
-  border-radius: 1.35rem;
+  border-radius: 0.75rem;
 }
 
 .page-header-copy {
@@ -298,8 +292,8 @@ select {
   justify-content: center;
   gap: 0.5rem;
   min-height: 2.55rem;
-  padding: 0.6rem 0.9rem;
-  border-radius: 0.78rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.5rem;
   border: 1px solid transparent;
   font-size: 0.94rem;
   font-weight: 600;
@@ -320,11 +314,11 @@ select {
 .btn-primary {
   background: color-mix(in srgb, var(--accent-strong) 96%, white);
   color: white;
-  box-shadow: 0 6px 16px rgba(48, 76, 148, 0.1);
+  box-shadow: 0 2px 8px rgba(48, 76, 148, 0.1);
 }
 
 .btn-primary:hover {
-  box-shadow: 0 8px 18px rgba(48, 76, 148, 0.12);
+  box-shadow: 0 4px 12px rgba(48, 76, 148, 0.15);
 }
 
 .btn-secondary {
@@ -382,10 +376,10 @@ select {
 .workspace-toolbar-select {
   width: 100%;
   border: 1px solid var(--line);
-  border-radius: 0.82rem;
+  border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.96);
   color: var(--ink-strong);
-  padding: 0.8rem 0.9rem;
+  padding: 0.6rem 0.8rem;
   transition:
     border-color 140ms ease,
     box-shadow 140ms ease,
@@ -414,10 +408,10 @@ select {
   display: flex;
   align-items: center;
   gap: 0.65rem;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.9);
-  padding: 0.88rem 0.95rem;
+  padding: 0.6rem 0.8rem;
 }
 
 .search-input {
@@ -456,10 +450,10 @@ select {
   align-items: start;
   justify-content: space-between;
   gap: 0.8rem;
-  border-radius: 1.1rem;
+  border-radius: 0.5rem;
   border: 1px solid var(--line);
   background: rgba(255, 255, 255, 0.88);
-  padding: 0.95rem;
+  padding: 0.8rem;
   text-align: left;
   transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
   cursor: pointer;
@@ -542,7 +536,7 @@ select {
 .state-card {
   padding: 1.6rem;
   border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
-  border-radius: 1.25rem;
+  border-radius: 0.75rem;
   background: rgba(255, 255, 255, 0.94);
   box-shadow: var(--shadow-soft);
 }
@@ -699,7 +693,7 @@ select {
   display: grid;
   gap: 0;
   border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
-  border-radius: 1.05rem;
+  border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.88);
   box-shadow: none;
   overflow: hidden;
@@ -720,9 +714,9 @@ select {
 
 .template-mini-sheet {
   width: min(17rem, 100%);
-  border-radius: 0.8rem;
+  border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.86);
-  padding: 0.95rem;
+  padding: 0.8rem;
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
 }
 
@@ -860,7 +854,7 @@ select {
 .preview-sidebar-section {
   padding: 1rem 1.05rem;
   border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
-  border-radius: 1.1rem;
+  border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.84);
   box-shadow: var(--shadow-soft);
 }
@@ -926,7 +920,7 @@ select {
   margin-top: 0.35rem;
   padding: 0.78rem;
   border: 1px solid transparent;
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   background: transparent;
   text-align: left;
   cursor: pointer;
@@ -1088,7 +1082,7 @@ select {
 
 .workspace-preview-stage {
   margin-top: 1rem;
-  border-radius: 1.25rem;
+  border-radius: 0.75rem;
   border: 1px solid #dde1e7;
   overflow: hidden;
   background: #f4f1eb;
@@ -1096,7 +1090,7 @@ select {
 
 .preview-stage {
   overflow: hidden;
-  border-radius: 1.25rem;
+  border-radius: 0.75rem;
   border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
   background: #f0ede6;
   box-shadow: var(--shadow-soft);
@@ -1122,7 +1116,7 @@ select {
 .library-stack {
   display: grid;
   border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
-  border-radius: 1.05rem;
+  border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.82);
   box-shadow: var(--shadow-soft);
   overflow: hidden;
@@ -1266,6 +1260,219 @@ select {
   margin: 0;
   color: var(--ink-soft);
   font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.home-flow-strip {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-flow-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 1.15rem;
+  background: color-mix(in srgb, var(--paper-soft) 74%, white);
+}
+
+.home-flow-step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 999px;
+  background: white;
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.home-flow-step strong {
+  display: block;
+  font-size: 0.94rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.home-flow-step p {
+  margin: 0.24rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.62;
+}
+
+.home-metric-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.home-metric-grid article {
+  padding: 0.95rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--paper-soft) 76%, white);
+}
+
+.home-metric-grid strong {
+  display: block;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.home-metric-grid span {
+  display: block;
+  margin-top: 0.22rem;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+}
+
+.home-feature-list {
+  margin: 0;
+  padding-left: 1rem;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.8;
+}
+
+.home-export-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--accent-strong) 14%, white);
+  border-radius: 1.15rem;
+  background: color-mix(in srgb, var(--accent-soft) 58%, white);
+}
+
+.home-export-title {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.home-export-copy {
+  margin: 0.3rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.7;
+}
+
+.template-recommendation {
+  padding: 0.95rem 1rem;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.76);
+}
+
+.template-recommendation strong {
+  display: block;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.template-recommendation p {
+  margin: 0.3rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.65;
+}
+
+.template-import-switch {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.6rem;
+}
+
+.template-import-tab {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 2.65rem;
+  border: 1px solid var(--line);
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  font-weight: 700;
+  transition: border-color 140ms ease, background-color 140ms ease, color 140ms ease;
+  cursor: pointer;
+}
+
+.template-import-tab:hover {
+  border-color: color-mix(in srgb, var(--line-strong) 65%, white);
+  color: var(--ink-strong);
+}
+
+.template-import-tab-active {
+  border-color: color-mix(in srgb, var(--accent-strong) 18%, white);
+  background: color-mix(in srgb, var(--accent-soft) 70%, white);
+  color: var(--accent-strong);
+}
+
+.template-import-surface {
+  display: grid;
+  gap: 0.85rem;
+  padding: 0.8rem;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.74);
+}
+
+.template-import-file {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.template-import-file-ready {
+  border-color: color-mix(in srgb, var(--accent-strong) 12%, white);
+  background: color-mix(in srgb, var(--accent-soft) 42%, white);
+}
+
+.template-import-file strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.template-import-file span {
+  display: block;
+  margin-top: 0.28rem;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.template-import-actions,
+.template-import-benefits,
+.resume-editor-import-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.template-import-helper,
+.resume-editor-import-meta {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
   line-height: 1.65;
 }
 
@@ -1475,6 +1682,87 @@ select {
   align-items: center;
 }
 
+.editor-workflow-strip {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.editor-workflow-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+.editor-workflow-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-top: 0.38rem;
+}
+
+.editor-workflow-head strong {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.editor-workflow-head span {
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.editor-workflow-copy {
+  margin: 0.34rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.62;
+}
+
+.editor-workflow-actions {
+  display: flex;
+  flex-direction: column;
+  justify-content: end;
+  gap: 0.7rem;
+}
+
+.resume-editor-import-banner {
+  display: grid;
+  gap: 1rem;
+  grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.95fr) auto;
+  margin-top: 1rem;
+  padding: 1rem 1.1rem;
+  border: 1px solid color-mix(in srgb, var(--accent-strong) 12%, white);
+  border-radius: 0.5rem;
+  background: color-mix(in srgb, var(--accent-soft) 40%, white);
+}
+
+.resume-editor-import-list {
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+}
+
+.resume-editor-import-item {
+  padding: 0.78rem 0.82rem;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+  border-radius: 0.92rem;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
 .resume-editor-layout {
   display: grid;
   gap: 1.1rem;
@@ -1491,7 +1779,7 @@ select {
   margin-top: 1rem;
   padding: 0.85rem 1rem;
   border: 1px solid color-mix(in srgb, var(--accent-strong) 12%, white);
-  border-radius: 1.1rem;
+  border-radius: 0.5rem;
   background: color-mix(in srgb, var(--accent-soft) 44%, white);
   box-shadow: none;
 }
@@ -1512,7 +1800,7 @@ select {
 .editor-sidebar,
 .editor-preview-panel {
   position: sticky;
-  top: 10.6rem;
+  top: 1.5rem;
 }
 
 .editor-sidebar-block,
@@ -1557,7 +1845,7 @@ select {
   width: 100%;
   padding: 0.72rem 0.76rem;
   border: 1px solid transparent;
-  border-radius: 0.82rem;
+  border-radius: 0.5rem;
   background: transparent;
   text-align: left;
   transition: border-color 140ms ease, background-color 140ms ease;
@@ -1619,9 +1907,49 @@ select {
 
 .editor-sidebar-item-note {
   display: inline-block;
-  margin-top: 0.12rem;
   color: var(--ink-muted);
   font-size: 0.74rem;
+}
+
+.editor-sidebar-item-hint {
+  display: block;
+  margin-top: 0.2rem;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.editor-sidebar-item-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin-top: 0.4rem;
+}
+
+.editor-sidebar-item-status {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.4rem;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+}
+
+.editor-sidebar-item-status-empty {
+  background: rgba(241, 245, 249, 0.9);
+  color: var(--ink-muted);
+}
+
+.editor-sidebar-item-status-in_progress {
+  background: rgba(254, 243, 199, 0.85);
+  color: #9a6700;
+}
+
+.editor-sidebar-item-status-ready {
+  background: rgba(220, 252, 231, 0.9);
+  color: #166534;
 }
 
 .resume-editor-main {
@@ -1703,7 +2031,7 @@ select {
   align-items: start;
   justify-content: space-between;
   gap: 1rem;
-  padding: 0.88rem 0.95rem;
+  padding: 0.6rem 0.8rem;
   border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   border-radius: 0.92rem;
   background: rgba(248, 246, 241, 0.9);
@@ -1736,7 +2064,7 @@ select {
   min-height: 2.25rem;
   padding: 0.5rem 0.78rem;
   border: 1px solid var(--line);
-  border-radius: 0.82rem;
+  border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.92);
   color: var(--ink-soft);
   font-size: 0.84rem;
@@ -1760,7 +2088,7 @@ select {
   min-height: 35rem;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   background: #f7f4ef;
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
 }
@@ -1892,7 +2220,7 @@ select {
 .editor-shortcut-group {
   padding: 1rem;
   border: 1px solid var(--line);
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(247, 246, 242, 0.92));
 }
 
@@ -1952,7 +2280,7 @@ select {
 .editor-item-card {
   padding: 0.95rem 1rem;
   border: 1px solid var(--line);
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.9);
   transition: border-color 140ms ease, box-shadow 140ms ease;
 }
@@ -2193,7 +2521,7 @@ select {
   .workspace-preview,
   .preview-sidebar {
     position: sticky;
-    top: 5.8rem;
+    top: 1.5rem;
   }
 
   .preview-layout {
@@ -2271,7 +2599,7 @@ select {
   .auth-form-panel,
   .empty-surface {
     padding: 1.1rem;
-    border-radius: 1.25rem;
+    border-radius: 0.75rem;
   }
 
   .page-header-copy,
@@ -2283,6 +2611,8 @@ select {
   .auth-brand-grid,
   .library-meta-strip,
   .library-summary-strip,
+  .home-flow-strip,
+  .home-metric-grid,
   .preview-stat-grid,
   .editor-panel-meta,
   .editor-field-grid,
@@ -2296,9 +2626,24 @@ select {
   }
 
   .editor-toolbar-primary,
+  .resume-editor-import-banner,
+  .editor-workflow-strip,
   .resume-editor-sticky-actions {
     flex-direction: column;
     align-items: start;
+  }
+
+  .resume-editor-import-banner,
+  .editor-workflow-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .template-import-switch {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .template-import-file {
+    flex-direction: column;
   }
 
   .resume-editor-notice {
@@ -2313,6 +2658,11 @@ select {
   .resume-editor-source-banner,
   .resume-editor-source-footer {
     flex-direction: column;
+  }
+
+  .home-export-callout {
+    flex-direction: column;
+    align-items: start;
   }
 
   .resume-editor-source-note {
