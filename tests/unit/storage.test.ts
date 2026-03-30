@@ -75,10 +75,32 @@ describe("storage management", () => {
       const summariesAfterDelete = await storage.listResumeSummaries();
 
       expect(duplicated.meta.id).not.toBe(created.meta.id);
-      expect(duplicated.meta.title).toContain("Copy");
+      expect(duplicated.meta.title).toContain("副本");
       expect(summariesBeforeDelete).toHaveLength(2);
       expect(summariesAfterDelete).toHaveLength(1);
       expect(summariesAfterDelete[0]?.meta.id).toBe(duplicated.meta.id);
+    } finally {
+      process.chdir(originalCwd);
+      await rm(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it("creates guided starters when requested", async () => {
+    const tempDir = await mkdtemp(path.join(os.tmpdir(), "resume-studio-storage-"));
+    process.chdir(tempDir);
+
+    try {
+      const storage = await loadStorageModule();
+      const created = await storage.createResumeDocument("Guided Resume", {
+        starter: "guided",
+        writerProfile: "campus",
+        template: "classic-single-column",
+      });
+
+      expect(created.meta.sourceRefs).toContain("starter:guided");
+      expect(created.meta.writerProfile).toBe("campus");
+      expect(created.meta.template).toBe("classic-single-column");
+      expect(created.layout.headingFont).toBe("Times New Roman");
     } finally {
       process.chdir(originalCwd);
       await rm(tempDir, { recursive: true, force: true });

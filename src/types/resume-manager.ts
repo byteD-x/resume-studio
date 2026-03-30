@@ -6,4 +6,5 @@ export interface ResumeDashboardSummary {
   targeting: ResumeDocument["targeting"];
   layout: ResumeDocument["layout"];
   sections: ResumeDocument["sections"];
+  importTrace: ResumeDocument["importTrace"];
 }

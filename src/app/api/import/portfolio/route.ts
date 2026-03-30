@@ -10,7 +10,7 @@ export async function POST(request: NextRequest) {
     portfolioPath?: string;
   };
   const resumeId = body.resumeId?.trim() || "default";
-  const existingDocument = await ensureResumeDocument(resumeId, "主简历");
+  const existingDocument = await ensureResumeDocument(resumeId, "未命名简历");
   const result = await importPortfolioToResume({
     existingDocument,
     portfolioPath: body.portfolioPath,

@@ -21,7 +21,7 @@ export const resumeWorkflowStateMeta: Record<
 > = {
   drafting: {
     label: "起稿中",
-    description: "先补齐基础信息、摘要和核心经历，建立主简历骨架。",
+    description: "先补齐基础信息、摘要和核心经历，建立简历骨架。",
   },
   tailoring: {
     label: "定制中",
@@ -394,7 +394,7 @@ export function buildResumeWorkbenchReport(
     .forEach((item) => {
       openTasks.push({
         id: `diagnostic-${item.id}`,
-        title: item.target === "content" ? "处理内容风险" : "处理版式风险",
+        title: item.target === "content" ? "继续优化内容" : "处理导出风险",
         detail: item.message,
         area: item.target === "content" ? "content" : "export",
         status: item.severity === "blocker" ? "todo" : "warning",

@@ -14,7 +14,7 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
-  const document = await ensureResumeDocument(id, "主简历");
+  const document = await ensureResumeDocument(id, "未命名简历");
   return Response.json(document);
 }
 

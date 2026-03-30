@@ -32,29 +32,35 @@ The project supports three writer profiles. Each profile changes starter scaffol
 2. Write a short summary: direction, core strengths, proof of value.
 3. Build core evidence: experience, projects, or transition proof.
 4. Add targeting inputs: role, company, JD, keywords.
-5. Review diagnostics and clear blocking issues.
-6. Open preview and export only after the checklist passes.
+5. Review workbench status and clear required items first.
+6. Open `/studio/<id>/preview` only after the export checklist is mostly green.
 
 ## What the quality report checks
 
-Blocking issues:
+Required items (`blockingIssues`):
 
 - Missing header
 - Not enough contact methods
 - Summary too short
 - Missing core evidence for the active writer profile
 
-Warnings:
+Suggested improvements (`warnings`):
 
 - Too few result bullets
 - Weak bullet phrasing such as `负责 / 参与 / 协助`
 - No result signals in bullets
 - Overlong summary, too many sections, too many bullets
 
-Suggestions:
+Lightweight suggestions (`suggestions`):
 
 - Missing portfolio or social links
 - Tight page margins
+
+In the product UI, these checks are usually surfaced as:
+
+- `需要补充内容`: export-blocking items
+- `建议优化`: content or layout improvements worth fixing before export
+- `可直接导出`: no required item is still blocking export
 
 ## Tailored variants
 
@@ -63,3 +69,4 @@ Tailored variants are always created as a new local draft.
 - The source draft is preserved
 - Section and item retention is based on keyword relevance
 - Missing keywords remain visible in Studio so the draft can still be improved manually
+- Preview is a separate route, so export review stays independent from editing

@@ -1,8 +1,19 @@
 import type { ResumeDocument, ResumeSection, ResumeSectionItem } from "@/types/resume";
+import {
+  getResumeRenderableSections,
+  hasMeaningfulRichText,
+  hasResumeRenderableContent,
+  hasResumeSectionItemContent,
+} from "@/lib/resume-content";
 import { escapeHtml, sanitizeRichTextHtml } from "@/lib/utils";
+
+interface PreviewBuildOptions {
+  highlightedTarget?: "basics" | "targeting" | { sectionType: ResumeSection["type"] };
+}
 
 function renderLinks(document: ResumeDocument) {
   return document.basics.links
+    .filter((link) => link.label.trim() && link.url.trim())
     .map(
       (link) =>
         `<a class="resume-link" href="${escapeHtml(link.url)}">${escapeHtml(link.label)}</a>`,
@@ -38,32 +49,46 @@ function renderItem(item: ResumeSectionItem) {
             </div>`
           : ""
       }
-      ${item.summaryHtml ? `<div class="rich-text">${sanitizeRichTextHtml(item.summaryHtml)}</div>` : ""}
+      ${hasMeaningfulRichText(item.summaryHtml) ? `<div class="rich-text">${sanitizeRichTextHtml(item.summaryHtml)}</div>` : ""}
       ${bullets}
       ${tags}
     </article>
   `;
 }
 
-function renderSection(section: ResumeSection) {
+function renderSection(
+  section: ResumeSection,
+  options?: PreviewBuildOptions,
+) {
   if (!section.visible) return "";
+  const highlighted =
+    typeof options?.highlightedTarget === "object" &&
+    options.highlightedTarget.sectionType === section.type;
 
-  const itemsHtml = section.items.map(renderItem).join("");
+  const items = section.items.filter(hasResumeSectionItemContent);
+  const itemsHtml = items.map(renderItem).join("");
   const tagsHtml =
     section.layout === "tag-grid"
-      ? section.items
+      ? items
           .flatMap((item) => item.tags)
+          .filter(Boolean)
           .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
           .join("")
       : "";
+  const hasBody =
+    hasMeaningfulRichText(section.contentHtml) ||
+    items.length > 0 ||
+    (section.layout === "tag-grid" && tagsHtml.length > 0);
+
+  if (!hasBody) return "";
 
   return `
-    <section class="resume-section">
+    <section class="resume-section${highlighted ? " resume-section-highlighted" : ""}">
       <header class="section-header">
         <h2>${escapeHtml(section.title)}</h2>
       </header>
       ${
-        section.contentHtml
+        hasMeaningfulRichText(section.contentHtml)
           ? `<div class="rich-text">${sanitizeRichTextHtml(section.contentHtml)}</div>`
           : ""
       }
@@ -73,7 +98,7 @@ function renderSection(section: ResumeSection) {
 }
 
 function getPreviewDensity(document: ResumeDocument) {
-  const visibleSections = document.sections.filter((section) => section.visible);
+  const visibleSections = getResumeRenderableSections(document);
   const totalItems = visibleSections.reduce((sum, section) => sum + section.items.length, 0);
   const totalBullets = visibleSections.reduce(
     (sum, section) =>
@@ -94,9 +119,117 @@ function getPreviewDensity(document: ResumeDocument) {
   } as const;
 }
 
-export function buildResumePreviewHtml(document: ResumeDocument) {
+function buildEmptyPreviewState(document: ResumeDocument, accent: string) {
+  return `<!DOCTYPE html>
+<html lang="${escapeHtml(document.meta.locale)}">
+  <head>
+    <meta charset="utf-8" />
+    <title>${escapeHtml(document.meta.title)}</title>
+    <style>
+      :root {
+        --accent: ${accent};
+        --ink: #182132;
+        --ink-soft: #5f6b7d;
+        --line: rgba(24, 33, 50, 0.12);
+        --paper: #fffdf8;
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        background: ${document.meta.template === "modern-two-column" ? "#f3ede4" : "#ede6dc"};
+        color: var(--ink);
+        font-family: "${escapeHtml(document.layout.bodyFont)}", "Segoe UI", sans-serif;
+      }
+      .page {
+        width: 210mm;
+        min-height: 297mm;
+        margin: 0 auto;
+        padding: ${document.layout.marginsMm}mm;
+        background: var(--paper);
+      }
+      .empty-shell {
+        min-height: calc(297mm - ${document.layout.marginsMm * 2}mm);
+        display: grid;
+        place-items: center;
+      }
+      .empty-card {
+        width: min(126mm, 100%);
+        padding: 18mm 14mm;
+        border: 1px dashed var(--line);
+        border-radius: 10mm;
+        background:
+          linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, white), rgba(255, 255, 255, 0.98));
+        text-align: center;
+      }
+      .empty-mark {
+        width: 18mm;
+        height: 18mm;
+        margin: 0 auto 7mm;
+        border-radius: 999px;
+        background: color-mix(in srgb, var(--accent) 14%, white);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 24%, transparent);
+      }
+      h1 {
+        margin: 0;
+        font-family: "${escapeHtml(document.layout.headingFont)}", "Times New Roman", serif;
+        font-size: 22pt;
+        line-height: 1.1;
+      }
+      p {
+        margin: 4mm auto 0;
+        max-width: 88mm;
+        color: var(--ink-soft);
+        font-size: 10.5pt;
+        line-height: 1.65;
+      }
+      .empty-notes {
+        margin: 8mm auto 0;
+        display: grid;
+        gap: 2.2mm;
+        text-align: left;
+        max-width: 78mm;
+      }
+      .empty-note {
+        padding: 3mm 3.4mm;
+        border-radius: 4mm;
+        background: rgba(255, 255, 255, 0.86);
+        font-size: 9.5pt;
+        color: var(--ink);
+      }
+      @page {
+        size: A4;
+        margin: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page template-${escapeHtml(document.meta.template)}">
+      <div class="empty-shell">
+        <section class="empty-card">
+          <div class="empty-mark" aria-hidden="true"></div>
+          <h1>开始填写</h1>
+          <p>内容会按当前模板排版。</p>
+          <div class="empty-notes">
+            <div class="empty-note">先填写姓名和职位。</div>
+            <div class="empty-note">再补充经历、项目或技能。</div>
+            <div class="empty-note">完成后导出 PDF。</div>
+          </div>
+        </section>
+      </div>
+    </div>
+  </body>
+</html>`;
+}
+
+export function buildResumePreviewHtml(
+  document: ResumeDocument,
+  options?: PreviewBuildOptions,
+) {
   const isModern = document.meta.template === "modern-two-column";
   const accent = document.layout.accentColor;
+  if (!hasResumeRenderableContent(document)) {
+    return buildEmptyPreviewState(document, accent);
+  }
   const density = getPreviewDensity(document);
   const visibleSections = density.visibleSections;
   const asideSections =
@@ -111,6 +244,18 @@ export function buildResumePreviewHtml(document: ResumeDocument) {
           (section) => !["summary", "skills", "education"].includes(section.type),
         )
       : visibleSections;
+
+  const summarySection =
+    hasMeaningfulRichText(document.basics.summaryHtml)
+      ? `
+        <section class="resume-section${options?.highlightedTarget === "basics" ? " resume-section-highlighted" : ""}">
+          <header class="section-header">
+            <h2>自我评价</h2>
+          </header>
+          <div class="rich-text">${sanitizeRichTextHtml(document.basics.summaryHtml)}</div>
+        </section>
+      `
+      : "";
 
   return `<!DOCTYPE html>
 <html lang="${escapeHtml(document.meta.locale)}">
@@ -196,6 +341,14 @@ export function buildResumePreviewHtml(document: ResumeDocument) {
         color: var(--accent);
         text-decoration: none;
       }
+      .resume-section-highlighted {
+        position: relative;
+        border-radius: 6px;
+        background: color-mix(in srgb, var(--accent) 6%, white);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent) 18%, transparent);
+        padding: 2.2mm;
+        margin: -2.2mm;
+      }
       .column {
         display: grid;
         align-content: start;
@@ -278,6 +431,64 @@ export function buildResumePreviewHtml(document: ResumeDocument) {
         font-family: "${escapeHtml(document.layout.headingFont)}", "Times New Roman", serif;
         margin: 0 0 2mm;
       }
+      .rich-text a {
+        color: var(--accent);
+        text-decoration: none;
+        border-bottom: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+      }
+      .rich-text blockquote {
+        margin: 0 0 ${document.layout.paragraphGapMm}mm;
+        padding-left: 3mm;
+        border-left: 1px solid var(--line);
+        color: var(--ink-soft);
+      }
+      .rich-text hr {
+        margin: 2.6mm 0;
+        border: 0;
+        border-top: 1px solid var(--line);
+      }
+      .rich-text code {
+        padding: 0.2mm 0.8mm;
+        border-radius: 3px;
+        background: rgba(24, 33, 50, 0.06);
+        font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", monospace;
+        font-size: 0.92em;
+      }
+      .rich-text pre {
+        margin: 2.4mm 0 0;
+        padding: 2.4mm;
+        border: 1px solid var(--line);
+        border-radius: 4px;
+        background: rgba(24, 33, 50, 0.04);
+        overflow: hidden;
+      }
+      .rich-text pre code {
+        padding: 0;
+        background: transparent;
+      }
+      .rich-text ol {
+        margin: 2mm 0 0;
+        padding-left: 5mm;
+        font-size: var(--bullet-size);
+        line-height: ${document.layout.lineHeight};
+      }
+      .rich-text table {
+        width: 100%;
+        margin-top: 2.2mm;
+        border-collapse: collapse;
+        font-size: 8.9pt;
+      }
+      .rich-text th,
+      .rich-text td {
+        padding: 1.2mm 1mm;
+        border-bottom: 1px solid var(--line);
+        text-align: left;
+        vertical-align: top;
+      }
+      .rich-text th {
+        color: var(--ink-soft);
+        font-weight: 700;
+      }
       ul {
         margin: 2mm 0 0;
         padding-left: 5mm;
@@ -357,6 +568,9 @@ export function buildResumePreviewHtml(document: ResumeDocument) {
         border-bottom: 0;
         padding-bottom: 0;
       }
+      .masthead-empty {
+        display: none;
+      }
       @page {
         size: A4;
         margin: 0;
@@ -365,29 +579,33 @@ export function buildResumePreviewHtml(document: ResumeDocument) {
   </head>
   <body>
     <div class="page template-${escapeHtml(document.meta.template)} density-${density.mode}">
-      <header class="masthead">
-        <h1>${escapeHtml(document.basics.name || document.meta.title)}</h1>
+      <header class="masthead${document.basics.name.trim() || document.basics.headline.trim() || document.basics.location.trim() || document.basics.email.trim() || document.basics.phone.trim() || document.basics.website.trim() || document.basics.links.length > 0 ? "" : " masthead-empty"}">
+        ${document.basics.name.trim() ? `<h1>${escapeHtml(document.basics.name)}</h1>` : ""}
         ${
           document.basics.headline
             ? `<p class="headline">${escapeHtml(document.basics.headline)}</p>`
             : ""
         }
-        <div class="contact-row">
-          ${
-            [document.basics.location, document.basics.email, document.basics.phone, document.basics.website]
-              .filter(Boolean)
-              .map((item) => `<span>${escapeHtml(item)}</span>`)
-              .join("")
-          }
-        </div>
+        ${
+          [document.basics.location, document.basics.email, document.basics.phone, document.basics.website]
+            .filter(Boolean)
+            .length > 0
+            ? `<div class="contact-row">${
+                [document.basics.location, document.basics.email, document.basics.phone, document.basics.website]
+                  .filter(Boolean)
+                  .map((item) => `<span>${escapeHtml(item)}</span>`)
+                  .join("")
+              }</div>`
+            : ""
+        }
         ${document.basics.links.length > 0 ? `<div class="resume-links">${renderLinks(document)}</div>` : ""}
       </header>
       <div class="resume-shell">
         ${
           isModern
-            ? `<aside class="column sidebar-column">${asideSections.map(renderSection).join("")}</aside>
-               <main class="column main-column">${mainSections.map(renderSection).join("")}</main>`
-            : `<main class="column main-column">${mainSections.map(renderSection).join("")}</main>`
+            ? `<aside class="column sidebar-column">${summarySection}${asideSections.map((section) => renderSection(section, options)).join("")}</aside>
+               <main class="column main-column">${mainSections.map((section) => renderSection(section, options)).join("")}</main>`
+            : `<main class="column main-column">${summarySection}${mainSections.map((section) => renderSection(section, options)).join("")}</main>`
         }
       </div>
     </div>

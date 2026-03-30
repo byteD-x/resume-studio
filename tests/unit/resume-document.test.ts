@@ -16,8 +16,19 @@ describe("resume document", () => {
     expect(document.meta.schemaVersion).toBe(1);
     expect(document.meta.writerProfile).toBe("experienced");
     expect(document.meta.workflowState).toBe("drafting");
+    expect(document.basics.summaryHtml).toBe("");
     expect(document.targeting.focusKeywords).toEqual([]);
     expect(document.sections.length).toBeGreaterThanOrEqual(3);
+  });
+
+  it("renders a clean empty preview state for blank resumes", () => {
+    const document = createEmptyResumeDocument("default", "Primary Resume");
+
+    const html = buildResumePreviewHtml(document);
+
+    expect(html).toContain("开始填写");
+    expect(html).not.toContain("Primary Resume</h1>");
+    expect(html).not.toContain("自我评价");
   });
 
   it("builds printable HTML from the document", () => {
@@ -35,9 +46,41 @@ describe("resume document", () => {
   it("renders different preview layouts for each template", () => {
     const modernDocument = createEmptyResumeDocument("modern", "现代模板");
     modernDocument.meta.template = "modern-two-column";
+    modernDocument.basics.name = "Jane Doe";
+    modernDocument.basics.headline = "Product Designer";
+    modernDocument.basics.summaryHtml = "<p>Focused on clear product narratives.</p>";
+    modernDocument.sections[0]!.items = [
+      {
+        id: "modern-exp",
+        title: "Experience",
+        subtitle: "Lead Designer",
+        location: "Shanghai",
+        dateRange: "2024 - 2026",
+        meta: "",
+        summaryHtml: "",
+        bulletPoints: ["Built end-to-end product systems."],
+        tags: [],
+      },
+    ];
 
     const classicDocument = createEmptyResumeDocument("classic", "经典模板");
     classicDocument.meta.template = "classic-single-column";
+    classicDocument.basics.name = "Jane Doe";
+    classicDocument.basics.headline = "Product Designer";
+    classicDocument.basics.summaryHtml = "<p>Focused on clear product narratives.</p>";
+    classicDocument.sections[0]!.items = [
+      {
+        id: "classic-exp",
+        title: "Experience",
+        subtitle: "Lead Designer",
+        location: "Shanghai",
+        dateRange: "2024 - 2026",
+        meta: "",
+        summaryHtml: "",
+        bulletPoints: ["Built end-to-end product systems."],
+        tags: [],
+      },
+    ];
 
     const modernHtml = buildResumePreviewHtml(modernDocument);
     const classicHtml = buildResumePreviewHtml(classicDocument);
@@ -154,7 +197,7 @@ describe("resume document", () => {
 
     expect(document.meta.sourceRefs).toContain("starter:guided");
     expect(document.sections.some((section) => section.type === "education")).toBe(true);
-    expect(document.sections[0]?.items.length).toBeGreaterThan(0);
+    expect(document.sections.every((section) => section.items.length === 0)).toBe(true);
   });
 
   it("builds different guided starters for each writer profile", () => {
@@ -165,7 +208,7 @@ describe("resume document", () => {
     expect(campus.sections[0]?.type).toBe("education");
     expect(campus.sections.some((section) => section.title.includes("实习"))).toBe(true);
     expect(switcher.meta.writerProfile).toBe("career-switch");
-    expect(switcher.sections.some((section) => section.title.includes("转岗证明"))).toBe(true);
+    expect(switcher.sections.some((section) => section.title === "工作经历")).toBe(true);
     expect(resumeWriterProfileMeta["career-switch"].workflowSteps).toHaveLength(3);
   });
 

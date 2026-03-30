@@ -1,17 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { ResumeEditorPage } from "@/components/product/ResumeEditorPage";
+import { ResumePreviewPage } from "@/components/product/ResumePreviewPage";
 import { readResumeDocument } from "@/lib/storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
-  title: "编辑",
-  description: "修改内容并预览。",
+  title: "预览",
+  description: "预览并导出 PDF。",
 };
 
-export default async function ResumeStudioPage({
+export default async function ResumePreviewRoutePage({
   params,
 }: {
   params: Promise<{ id: string }>;
@@ -25,5 +25,5 @@ export default async function ResumeStudioPage({
     notFound();
   }
 
-  return <ResumeEditorPage initialDocument={document} />;
+  return <ResumePreviewPage initialDocument={document} />;
 }

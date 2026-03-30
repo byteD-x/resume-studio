@@ -47,6 +47,26 @@ describe("resume analysis", () => {
     document.basics.email = "jane@example.com";
     document.basics.phone = "123456";
     document.basics.summaryHtml = "<p>应届生，关注产品运营与内容增长，做过校园项目并拿到可量化结果。</p>";
+    const projectSection = document.sections.find((section) => section.type === "projects");
+    if (projectSection) {
+      projectSection.items = [
+        {
+          id: "project-1",
+          title: "校园增长项目",
+          subtitle: "项目负责人",
+          location: "上海",
+          dateRange: "2025",
+          meta: "",
+          summaryHtml: "",
+          bulletPoints: [
+            "搭建报名转化漏斗，报名率提升 32%。",
+            "协同内容和设计团队，上线三轮活动页面优化。",
+            "复盘用户反馈并整理成下一轮增长实验方案。",
+          ],
+          tags: ["运营", "增长"],
+        },
+      ];
+    }
 
     const report = buildResumeQualityReport(document);
     const checklist = buildResumeExportChecklist(document, report);

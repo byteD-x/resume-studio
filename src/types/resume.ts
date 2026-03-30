@@ -118,6 +118,7 @@ export const resumeDocumentSchema = z.object({
 export type ResumeDocument = z.infer<typeof resumeDocumentSchema>;
 export type ResumeSection = z.infer<typeof resumeSectionSchema>;
 export type ResumeSectionItem = z.infer<typeof resumeSectionItemSchema>;
+export type ResumeSectionType = z.infer<typeof resumeSectionTypeSchema>;
 export type ResumeTemplate = z.infer<typeof resumeTemplateSchema>;
 export type ResumeWorkflowState = z.infer<typeof resumeWorkflowStateSchema>;
 export type ResumeTargeting = z.infer<typeof resumeTargetingSchema>;

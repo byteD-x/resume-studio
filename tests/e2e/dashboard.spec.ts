@@ -4,25 +4,66 @@ test("dashboard renders primary entry point", async ({ page }) => {
   await page.goto("/");
   await expect(
     page.getByRole("heading", {
-      name: /把经历写成招聘方愿意继续看的简历/,
+      name: /简历工作台/,
     }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: /创建引导草稿/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /从 portfolio 起稿/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /选一个模板开始/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /继续当前草稿/ })).toBeVisible();
+  await expect(page.getByRole("heading", { name: /导入旧内容，完成后导出/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: /从模板开始/ }).first()).toBeVisible();
+  await expect(page.getByRole("button", { name: /导入旧 pdf/i })).toBeVisible();
+  await expect(page.getByRole("link", { name: /我的简历/ }).first()).toBeVisible();
+  await expect(page.getByText(/设置身份/)).toHaveCount(0);
+});
+
+test("resumes library stays accessible without auth", async ({ page }) => {
+  await page.goto("/resumes");
+  await expect(page).toHaveURL(/\/resumes$/);
+  await expect(page.getByRole("heading", { name: /我的简历/ })).toBeVisible();
+});
+
+test("templates page explains the current writer profile", async ({ page }) => {
+  await page.goto("/templates");
+  await expect(page.getByRole("heading", { name: /选择模板开始/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /有经验求职/ })).toBeVisible();
+  await expect(page.getByRole("button", { name: /用这个模板开始/ }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: /导入旧 pdf/i })).toBeVisible();
 });
 
-test("studio renders editor and preview", async ({ page }) => {
-  await page.goto("/studio/default");
-  await expect(page.getByRole("heading", { name: /章节设置/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /^预览$/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /导出前检查/ })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /目标岗位与 jd 匹配度/i })).toBeVisible();
-  await expect(page.getByRole("heading", { name: /自动生成定制版本/ })).toBeVisible();
-  await expect(page.getByRole("button", { name: /查看导出前检查/ })).toBeVisible();
-  await expect(
-    page.locator("#editor-export-checklist").getByRole("button", { name: /通过检查后导出 pdf/i }),
-  ).toBeVisible();
+test("studio renders current editor shell and preview panel", async ({ page, request }) => {
+  const createdResponse = await request.post("/api/resumes", {
+    data: { title: `Editor Shell ${Date.now()}`, starter: "guided" },
+  });
+  const created = await createdResponse.json();
+
+  try {
+    await page.goto(`/studio/${created.meta.id}`);
+    await expect(page.locator(".editor-toolbar-titleinput")).toBeVisible();
+    await expect(page.getByRole("tab", { name: /表单/ })).toBeVisible();
+    await expect(page.getByRole("tab", { name: /markdown/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "基本信息" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "岗位信息" })).toBeVisible();
+    await expect(page.locator(".editor-preview-head")).toContainText("预览");
+  } finally {
+    await request.delete(`/api/resumes/${created.meta.id}`);
+  }
+});
+
+test("preview page shows export checklist for incomplete drafts", async ({ page, request }) => {
+  const createdResponse = await request.post("/api/resumes", {
+    data: { title: `Preview Checklist ${Date.now()}` },
+  });
+  const created = await createdResponse.json();
+
+  try {
+    await page.goto(`/studio/${created.meta.id}/preview`);
+    await expect(page.getByText(/需要补充内容/)).toBeVisible();
+    await expect(page.getByText(/导出前检查/)).toBeVisible();
+    await expect(page.locator(".preview-sidebar-card").getByText("姓名和职位", { exact: true }).first()).toBeVisible();
+    await expect(page.getByText(/必须处理/).first()).toBeVisible();
+  } finally {
+    await request.delete(`/api/resumes/${created.meta.id}`);
+  }
 });
 
 test("studio auto-saves edits and keeps them after reload", async ({ page, request }) => {
@@ -36,13 +77,10 @@ test("studio auto-saves edits and keeps them after reload", async ({ page, reque
   try {
     await page.goto(`/studio/${created.meta.id}`);
 
-    const titleField = page
-      .locator("label:has-text('简历标题')")
-      .locator("..")
-      .locator("input");
+    const titleField = page.locator(".editor-toolbar-titleinput");
     await titleField.fill(nextTitle);
 
-    await expect(page.getByText(/已全部保存/)).toBeVisible({ timeout: 5000 });
+    await expect(page.locator(".editor-toolbar-hint")).toContainText(/已自动保存|已保存/, { timeout: 5000 });
     await page.reload();
     await expect(titleField).toHaveValue(nextTitle);
   } finally {
@@ -50,12 +88,11 @@ test("studio auto-saves edits and keeps them after reload", async ({ page, reque
   }
 });
 
-test("studio generates a tailored variant from the current draft", async ({ page, request }) => {
+test("studio carries targeting edits into preview flow", async ({ page, request }) => {
   const createdResponse = await request.post("/api/resumes", {
     data: { title: `Tailor Source ${Date.now()}` },
   });
   const created = await createdResponse.json();
-  let generatedId: string | null = null;
 
   try {
     await request.put(`/api/resumes/${created.meta.id}`, {
@@ -151,20 +188,19 @@ test("studio generates a tailored variant from the current draft", async ({ page
     });
 
     await page.goto(`/studio/${created.meta.id}`);
-    await expect(page.getByRole("heading", { name: /自动生成定制版本/ })).toBeVisible();
-    await expect(page.getByText(/Tailor Source · Acme/i)).toBeVisible();
-    await page.getByRole("button", { name: /生成定制版本/ }).click();
+    await page.getByRole("button", { name: /岗位信息/ }).click();
+    await expect(page.getByRole("heading", { name: /岗位信息/ })).toBeVisible();
 
-    await expect(page).toHaveURL(/\/studio\/tailor-source-acme/);
-    generatedId = page.url().split("/").pop() ?? null;
+    await page.getByLabel("岗位").fill("Staff Frontend Engineer");
+    await page.getByLabel("公司").fill("Acme");
+    await page.getByLabel("关键词").fill("React, Next.js, Design Systems");
 
-    await expect(page.getByRole("heading", { name: /Tailor Source · Acme/i })).toBeVisible();
-    await expect(page.getByText(/保留 \d+ 条 \/ 删除 \d+ 条/)).toBeVisible();
-    await expect(page.getByText("Office Move Support")).toHaveCount(0);
+    await page.getByRole("button", { name: /预览/ }).click();
+
+    await expect(page).toHaveURL(new RegExp(`/studio/${created.meta.id}/preview$`));
+    await expect(page.getByRole("heading", { name: /Tailor Source/ })).toBeVisible();
+    await expect(page.getByRole("button", { name: /导出 pdf/i })).toBeVisible();
   } finally {
     await request.delete(`/api/resumes/${created.meta.id}`);
-    if (generatedId) {
-      await request.delete(`/api/resumes/${generatedId}`);
-    }
   }
 });

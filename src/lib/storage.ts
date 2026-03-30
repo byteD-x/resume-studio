@@ -75,7 +75,7 @@ export async function ensureResumeDocument(id: string, title?: string) {
   try {
     return await readResumeDocument(id);
   } catch {
-    const created = createEmptyResumeDocument(id, title ?? "主简历");
+    const created = createEmptyResumeDocument(id, title ?? "未命名简历");
     return writeResumeDocument(created);
   }
 }
@@ -101,13 +101,20 @@ export async function listResumeDocuments() {
 
 export async function createResumeDocument(
   title: string,
-  options: { starter?: ResumeStarterPreset; writerProfile?: ResumeWriterProfile } = {},
+  options: {
+    starter?: ResumeStarterPreset;
+    writerProfile?: ResumeWriterProfile;
+    template?: ResumeDocument["meta"]["template"];
+  } = {},
 ) {
   const id = await createUniqueResumeId(title);
   const document =
     options.starter === "guided"
-      ? createGuidedResumeDocument(id, title, options.writerProfile)
-      : createEmptyResumeDocument(id, title, { writerProfile: options.writerProfile });
+      ? createGuidedResumeDocument(id, title, options.writerProfile, options.template)
+      : createEmptyResumeDocument(id, title, {
+          writerProfile: options.writerProfile,
+          template: options.template,
+        });
   return writeResumeDocument(document);
 }
 
@@ -119,6 +126,7 @@ export async function listResumeSummaries() {
     targeting: document.targeting,
     layout: document.layout,
     sections: document.sections,
+    importTrace: document.importTrace,
   }));
 
   return summaries satisfies ResumeDashboardSummary[];
@@ -146,7 +154,7 @@ export async function writeExportedPdf(id: string, buffer: Buffer) {
 
 export async function duplicateResumeDocument(sourceId: string, nextTitle?: string) {
   const source = await readResumeDocument(sourceId);
-  const title = nextTitle?.trim() || `${source.meta.title} Copy`;
+  const title = nextTitle?.trim() || `${source.meta.title} 副本`;
   const id = await createUniqueResumeId(title);
 
   return writeResumeDocument({

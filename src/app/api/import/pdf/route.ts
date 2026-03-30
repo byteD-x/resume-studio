@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
     return new Response("Missing PDF file", { status: 400 });
   }
 
-  const existingDocument = await ensureResumeDocument(resumeId, "主简历");
+  const existingDocument = await ensureResumeDocument(resumeId, "未命名简历");
   const result = await importPdfToResume(Buffer.from(await file.arrayBuffer()), {
     existingDocument,
     resumeId,
