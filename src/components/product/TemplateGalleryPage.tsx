@@ -12,7 +12,6 @@ import {
   templateCategories,
   type TemplateCatalogItem,
 } from "@/data/template-catalog";
-
 import type { ResumeDocument, ResumeWriterProfile } from "@/types/resume";
 
 const writerProfiles: Array<{
@@ -125,7 +124,7 @@ export function TemplateGalleryPage() {
       );
 
       startTransition(() => {
-        router.push(`/studio/${document.meta.id}`);
+        router.push(`/studio/${document.meta.id}?onboarding=template&focus=basics`);
       });
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "创建失败。");
@@ -135,33 +134,32 @@ export function TemplateGalleryPage() {
 
   return (
     <main className="page-wrap">
-      <section className="flex flex-col sm:flex-row items-start sm:items-end justify-between border-b border-[color:var(--line)] pb-5 mb-5 gap-4">
+      <section className="mb-5 flex flex-col items-start justify-between gap-4 border-b border-[color:var(--line)] pb-5 sm:flex-row sm:items-end">
         <div>
           <h1 className="text-[1.8rem] font-bold tracking-tight text-[color:var(--ink-strong)]">
             新建简历
           </h1>
           <p className="mt-1.5 text-[0.92rem] text-[color:var(--ink-soft)]">
-            直接挑选一个版式开始。
+            先按求职语境筛选，再挑一个版式进入编辑器起稿。
           </p>
           <p aria-live="polite" className="mt-2 text-[0.85rem] text-[color:var(--accent-strong)] empty:hidden">
             {status}
           </p>
         </div>
-        
+
         <div className="flex flex-wrap gap-3">
-          <ButtonLink
-            href="/import"
-            variant="secondary"
-          >
+          <ButtonLink href="/import" variant="secondary">
             <FileArchive aria-hidden="true" className="size-4" />
             解析源文件或导入线上经历
           </ButtonLink>
         </div>
       </section>
 
-      <section className="flex flex-col sm:flex-row gap-5 mb-7 items-start sm:items-center bg-[color:var(--paper-soft)] p-3 px-4 rounded-[0.75rem] border border-[color:var(--line)]">
+      <section className="mb-7 flex flex-col items-start gap-5 rounded-[0.75rem] border border-[color:var(--line)] bg-[color:var(--paper-soft)] p-3 px-4 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <span className="text-[0.75rem] font-bold uppercase tracking-wider text-[color:var(--ink-muted)] shrink-0">求职语境</span>
+          <span className="shrink-0 text-[0.75rem] font-bold uppercase tracking-wider text-[color:var(--ink-muted)]">
+            求职语境
+          </span>
           <div className="flex flex-wrap gap-2">
             {writerProfiles.map((profile) => {
               const active = writerProfile === profile.value;
@@ -180,10 +178,12 @@ export function TemplateGalleryPage() {
           </div>
         </div>
 
-        <div className="hidden sm:block w-px h-5 bg-[color:var(--line)]" />
+        <div className="hidden h-5 w-px bg-[color:var(--line)] sm:block" />
 
         <div className="flex items-center gap-3">
-          <span className="text-[0.75rem] font-bold uppercase tracking-wider text-[color:var(--ink-muted)] shrink-0">排版分类</span>
+          <span className="shrink-0 text-[0.75rem] font-bold uppercase tracking-wider text-[color:var(--ink-muted)]">
+            排版分类
+          </span>
           <div className="flex flex-wrap gap-2">
             {templateCategories.map((category) => (
               <button
@@ -198,6 +198,13 @@ export function TemplateGalleryPage() {
             ))}
           </div>
         </div>
+      </section>
+
+      <section className="template-recommendation">
+        <strong>建议这样开启</strong>
+        <p>
+          先按当前求职场景筛出合适版式，创建后优先补齐抬头、摘要和经历要点；如果你已经有旧简历或网站资料，也可以直接切到导入链路。
+        </p>
       </section>
 
       {templates.length > 0 ? (
@@ -218,13 +225,13 @@ export function TemplateGalleryPage() {
                   <h2 className="mt-4 text-[1.12rem] font-bold tracking-tight text-[color:var(--ink-strong)]">
                     {template.name}
                   </h2>
-                  <p className="mt-1.5 text-[0.88rem] leading-relaxed text-[color:var(--ink-soft)] h-[2.5rem] line-clamp-2">
+                  <p className="mt-1.5 line-clamp-2 h-[2.5rem] text-[0.88rem] leading-relaxed text-[color:var(--ink-soft)]">
                     {template.summary}
                   </p>
-                  
+
                   <div className="mt-4 flex flex-wrap gap-1.5">
                     {template.highlights.slice(0, 3).map((highlight) => (
-                      <span className="filter-chip text-[0.72rem] px-2 py-0.5" key={highlight}>
+                      <span className="filter-chip px-2 py-0.5 text-[0.72rem]" key={highlight}>
                         {highlight}
                       </span>
                     ))}
@@ -249,7 +256,7 @@ export function TemplateGalleryPage() {
           })}
         </section>
       ) : (
-        <section className="mt-6 empty-surface">
+        <section className="empty-surface mt-6">
           <p className="empty-surface-title">没有匹配的排版</p>
           <p className="empty-surface-text">换一个分类试试。</p>
         </section>

@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/Button";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { getTemplateFamily } from "@/data/template-catalog";
 import { readClientAiConfig, writeClientAiConfig } from "@/lib/client-ai-config";
+import type { ResumeLineageMeta } from "@/lib/resume-lineage";
 import { hasResumeRenderableContent } from "@/lib/resume-content";
 import { createEmptyResumeDocument, getResumeTemplateLayoutPreset } from "@/lib/resume-document";
 import { useEditorHistory } from "@/lib/editor-history";
@@ -51,12 +52,18 @@ import {
 import { buildResumeQualityReport } from "@/lib/resume-quality";
 import { buildTailoredVariantPlan, type TailoredVariantPlan } from "@/lib/resume-tailoring";
 import { analyzeResumeTargeting } from "@/lib/resume-targeting";
+import { buildResumeWorkbenchReport, type ResumeWorkbenchTask } from "@/lib/resume-workbench";
 import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
-import type { ResumeDocument, ResumeImportFieldSuggestion, ResumeSectionItem } from "@/types/resume";
+import type {
+  ResumeDocument,
+  ResumeImportFieldSuggestion,
+  ResumeSectionItem,
+} from "@/types/resume";
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
 type FormPanel = Exclude<EditorPanel, "markdown">;
 type SectionPanel = (typeof editorSectionDefinitions)[number]["type"];
+type WorkbenchAreaId = "basics" | "content" | "targeting" | "export";
 type ImportReviewKind = "pdf" | "portfolio";
 type BasicsTextField = "name" | "headline" | "location" | "website" | "email" | "phone" | "summaryHtml" | "links";
 
@@ -78,6 +85,19 @@ interface PendingEditorConfirmation {
   confirmLabel: string;
   confirmVariant?: "primary" | "secondary" | "ghost" | "danger";
   onConfirm: () => void | Promise<void>;
+}
+
+interface EditorOnboardingState {
+  title: string;
+  description: string;
+  steps: Array<{
+    title: string;
+    description: string;
+  }>;
+  actions: Array<{
+    label: string;
+    target: "basics" | "content" | "targeting" | "preview";
+  }>;
 }
 
 async function getJson<T>(response: Response): Promise<T> {
@@ -449,6 +469,14 @@ function resolveInitialStatusMessage(document: ResumeDocument, focus: string | n
     return "先核对作品集导入结果。";
   }
 
+  if (onboarding === "template") {
+    return "先把模板示例替换成你的真实信息。";
+  }
+
+  if (onboarding === "guided") {
+    return "先补齐基础信息，再逐步添加内容。";
+  }
+
   if (focus === "summary") {
     return "先补摘要。";
   }
@@ -472,10 +500,94 @@ function resolveInitialStatusMessage(document: ResumeDocument, focus: string | n
   return hasResumeRenderableContent(document) ? "继续编辑" : "开始填写";
 }
 
+function detectStarterKind(document: ResumeDocument) {
+  if (document.meta.sourceRefs.includes("starter:template-sample")) return "template";
+  if (document.meta.sourceRefs.includes("starter:guided")) return "guided";
+  return null;
+}
+
+function buildEditorOnboardingState(
+  document: ResumeDocument,
+  onboarding: string | null,
+  report: ReturnType<typeof buildResumeWorkbenchReport>,
+  hasImportReview: boolean,
+) {
+  if (hasImportReview || onboarding === "pdf" || onboarding === "portfolio") return null;
+
+  const starter = onboarding === "template" || onboarding === "guided" ? onboarding : detectStarterKind(document);
+  const shouldGuideBlankDraft =
+    !starter && !hasResumeRenderableContent(document) && report.readiness === "starting";
+
+  if (!starter && !shouldGuideBlankDraft) return null;
+
+  if (starter === "template") {
+    return {
+      title: "先把模板示例改成你的真实经历",
+      description: "这份草稿已经带有示例内容。建议先替换抬头与摘要，再改工作经历，最后补岗位定向信息。",
+      steps: [
+        {
+          title: "替换抬头与摘要",
+          description: "先改姓名、定位和个人摘要，避免示例信息继续残留。",
+        },
+        {
+          title: "替换经历与项目",
+          description: "把模板示例逐段替换成你自己的经历、项目与结果。",
+        },
+        {
+          title: "补岗位定向",
+          description: "写清目标岗位、关键词和 JD，再去预览页检查导出。",
+        },
+      ],
+      actions: [
+        { label: "先改基础信息", target: "basics" },
+        { label: "继续改经历", target: "content" },
+        { label: "补岗位定向", target: "targeting" },
+      ],
+    } satisfies EditorOnboardingState;
+  }
+
+  if (starter === "guided" || shouldGuideBlankDraft) {
+    return {
+      title: "先完成第一版主稿",
+      description: "现在最重要的是先形成一份可读主稿，不必一开始就处理全部设置或所有高级功能。",
+      steps: [
+        {
+          title: "补齐基础信息",
+          description: "先写姓名、定位、联系方式和一段摘要。",
+        },
+        {
+          title: "添加核心经历",
+          description: "至少补一段工作经历或项目经历，并写出结果要点。",
+        },
+        {
+          title: "确认后再导出",
+          description: "补岗位信息后去预览页检查，再决定是否导出 PDF。",
+        },
+      ],
+      actions: [
+        { label: "填写基础信息", target: "basics" },
+        { label: "添加经历内容", target: "content" },
+        { label: "打开预览清单", target: "preview" },
+      ],
+    } satisfies EditorOnboardingState;
+  }
+
+  return null;
+}
+
+function resolveWorkbenchAreaFromPanel(panel: EditorPanel): WorkbenchAreaId {
+  if (panel === "targeting" || panel === "ai") return "targeting";
+  if (panel === "design" || panel === "markdown") return "export";
+  if (panel === "basics") return "basics";
+  return "content";
+}
+
 export function ResumeEditorPage({
   initialDocument,
+  lineage,
 }: {
   initialDocument: ResumeDocument;
+  lineage: ResumeLineageMeta | null;
 }) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -522,6 +634,14 @@ export function ResumeEditorPage({
   const targetingAnalysis = useMemo(() => analyzeResumeTargeting(document), [document]);
   const tailoredVariantPlan = useMemo(() => buildTailoredVariantPlan(document), [document]);
   const qualityReport = useMemo(() => buildResumeQualityReport(document), [document]);
+  const workbenchReport = useMemo(
+    () =>
+      buildResumeWorkbenchReport(document, {
+        qualityReport,
+        targetingAnalysis,
+      }),
+    [document, qualityReport, targetingAnalysis],
+  );
   const sidebarItems = useMemo(
     () => buildSidebarItems(document, markdownDraft, targetingAnalysis, tailoredVariantPlan),
     [document, markdownDraft, targetingAnalysis, tailoredVariantPlan],
@@ -534,6 +654,11 @@ export function ResumeEditorPage({
   const highlightedDiagnostics = useMemo(
     () => [...qualityReport.blockingIssues, ...qualityReport.warnings].slice(0, 3),
     [qualityReport],
+  );
+  const activeWorkbenchArea = resolveWorkbenchAreaFromPanel(activePanel);
+  const editorOnboarding = useMemo(
+    () => buildEditorOnboardingState(document, onboardingParam, workbenchReport, Boolean(importReview)),
+    [document, onboardingParam, workbenchReport, importReview],
   );
 
   const syncClientAiConfig = useEffectEvent(() => {
@@ -1715,6 +1840,91 @@ export function ResumeEditorPage({
     void handleOpenPreview();
   };
 
+  const handleFocusWorkbenchArea = (area: WorkbenchAreaId) => {
+    if (area === "basics") {
+      focusFormPanel("basics", "先补齐基本信息。");
+      return;
+    }
+
+    if (area === "content") {
+      focusFormPanel("experience", "先整理经历和结果要点。");
+      return;
+    }
+
+    if (area === "targeting") {
+      focusFormPanel("targeting", "先补充岗位和关键词。");
+      return;
+    }
+
+    void handleOpenPreview();
+  };
+
+  const handleOnboardingAction = (target: "basics" | "content" | "targeting" | "preview") => {
+    if (target === "basics") {
+      focusFormPanel("basics", "先补齐基本信息。");
+      return;
+    }
+
+    if (target === "content") {
+      focusFormPanel("experience", "先整理经历和结果要点。");
+      return;
+    }
+
+    if (target === "targeting") {
+      focusFormPanel("targeting", "先补充岗位和关键词。");
+      return;
+    }
+
+    void handleOpenPreview();
+  };
+
+  const handleApplyWorkflowState = (workflowState: ResumeDocument["meta"]["workflowState"]) => {
+    updateDocument(
+      (current) => ({
+        ...current,
+        meta: {
+          ...current.meta,
+          workflowState,
+        },
+      }),
+      {
+        historyLabel: "切换简历阶段",
+        clearDeletion: true,
+        message: "已更新当前阶段。",
+      },
+    );
+  };
+
+  const handleWorkbenchTask = (task: ResumeWorkbenchTask) => {
+    switch (task.action.type) {
+      case "focus-basics":
+        focusFormPanel("basics", task.detail);
+        return;
+      case "focus-summary":
+        focusFormPanel("basics", "先补摘要。");
+        return;
+      case "focus-targeting":
+        focusFormPanel("targeting", task.detail);
+        return;
+      case "focus-export":
+        void handleOpenPreview();
+        return;
+      case "ensure-experience":
+      case "ensure-bullet":
+        focusFormPanel("experience", task.detail);
+        return;
+      case "apply-suggested-keywords":
+        focusFormPanel("targeting", "正在应用建议关键词。");
+        applySuggestedKeywords();
+        return;
+      case "set-workflow":
+        handleApplyWorkflowState(task.action.workflowState);
+        return;
+      default:
+        return;
+    }
+  };
+
   useEffect(() => {
     const focus = searchParams.get("focus");
     const onboarding = searchParams.get("onboarding");
@@ -1748,6 +1958,10 @@ export function ResumeEditorPage({
       setStatusMessage("先核对 PDF 导入结果。");
     } else if (onboarding === "portfolio") {
       setStatusMessage("先核对作品集导入结果。");
+    } else if (onboarding === "template") {
+      setStatusMessage("先把模板示例替换成你的真实信息。");
+    } else if (onboarding === "guided") {
+      setStatusMessage("先补齐基础信息，再逐步添加内容。");
     }
   }, [searchParams]);
 
@@ -1837,7 +2051,12 @@ export function ResumeEditorPage({
         />
       );
     } else if (activePanel === "targeting") {
-      panelContent = <ResumeTargetingPanel document={document} onTargetingChange={updateTargetingField} />;
+      panelContent = (
+        <ResumeTargetingPanel
+          document={document}
+          onTargetingChange={updateTargetingField}
+        />
+      );
     } else if (activePanel === "ai") {
       panelContent = (
         <ResumeAiPanel
@@ -1904,19 +2123,181 @@ export function ResumeEditorPage({
   return (
     <main className="resume-editor-workspace">
       <ResumeEditorToolbar
+        canRedo={history.canRedo}
+        canUndo={history.canUndo}
         currentPanelGroupLabel={activePanelGroup?.label ?? "工作区"}
         editorMode={editorMode}
         onBack={() => void handleBack()}
         onModeChange={handleModeChange}
         onOpenPreview={() => void handleOpenPreview()}
+        onRedo={redoLastChange}
         onSave={() => void saveDocument("manual")}
         onTemplateChange={updateTemplate}
         onTitleChange={updateResumeTitle}
+        onUndo={undoLastChange}
+        recentHistoryLabels={history.recentLabels}
+        redoLabel={history.redoLabel}
         saveState={saveState}
         statusMessage={statusMessage}
         template={document.meta.template}
         title={document.meta.title}
+        undoLabel={history.undoLabel}
       />
+
+      {lineage ? (
+        <section className="resume-lineage-banner">
+          <div>
+            <p className="editor-workflow-kicker">版本关系</p>
+            <div className="resume-lineage-banner-head">
+              <strong>
+                {lineage.kind === "variant"
+                  ? "当前正在编辑一份岗位定制版。"
+                  : lineage.kind === "source"
+                    ? "当前正在编辑一份主稿。"
+                    : "当前是一份独立草稿。"}
+              </strong>
+              <div className="resume-lineage-banner-badges">
+                <Badge tone={lineage.kind === "variant" ? "accent" : "neutral"}>
+                  {lineage.kind === "variant" ? "定制版" : lineage.kind === "source" ? "主稿" : "独立稿"}
+                </Badge>
+                {lineage.childCount > 0 ? <Badge tone="success">已派生 {lineage.childCount} 份</Badge> : null}
+              </div>
+            </div>
+            <p className="editor-workflow-copy">
+              {lineage.parentTitle
+                ? `这份版本基于「${lineage.parentTitle}」生成，适合针对岗位继续微调。`
+                : lineage.childCount > 0
+                  ? "建议把这份主稿保持稳定，再围绕不同岗位生成定制版。"
+                  : "如果后续需要面向不同岗位继续扩展，可以在补完岗位信息后生成定制版。"}
+            </p>
+          </div>
+
+          <div className="editor-workflow-actions">
+            {lineage.parentId ? (
+              <Button onClick={() => router.push(`/studio/${lineage.parentId}`)} variant="secondary">
+                查看来源主稿
+              </Button>
+            ) : null}
+            <Button onClick={() => router.push("/resumes" as Route)} variant="ghost">
+              返回简历库
+            </Button>
+          </div>
+        </section>
+      ) : null}
+
+      <section className="resume-editor-journey">
+        <div className="resume-editor-journey-main">
+          <p className="editor-workflow-kicker">当前链路</p>
+          <div className="editor-workflow-head">
+            <strong>当前处于「{workbenchReport.workflow.currentLabel}」阶段</strong>
+            <span>完成度 {workbenchReport.score}%</span>
+          </div>
+          <p className="editor-workflow-copy">
+            {workbenchReport.workflow.currentDescription}
+            {workbenchReport.workflow.currentState !== workbenchReport.workflow.suggestedState
+              ? ` 当前内容更适合标记为「${workbenchReport.workflow.suggestedLabel}」。`
+              : ""}
+          </p>
+
+          <div className="resume-editor-journey-grid">
+            {workbenchReport.areaScores.map((area) => (
+              <button
+                aria-pressed={activeWorkbenchArea === area.id}
+                className={`resume-editor-journey-step ${activeWorkbenchArea === area.id ? "resume-editor-journey-step-active" : ""}`}
+                key={area.id}
+                onClick={() => handleFocusWorkbenchArea(area.id)}
+                type="button"
+              >
+                <div className="resume-editor-journey-step-head">
+                  <strong>{area.label}</strong>
+                  <span>{area.score}%</span>
+                </div>
+                <p>{area.note}</p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <aside className="resume-editor-journey-side">
+          <div className="resume-editor-journey-side-head">
+            <div>
+              <p className="editor-workflow-kicker">下一步</p>
+              <strong>
+                {workbenchReport.openTasks.length > 0 ? "优先处理这几项。" : "这份简历可以进入最终检查。"}
+              </strong>
+            </div>
+            <Badge tone={workbenchReport.openTasks.length > 0 ? "accent" : "success"}>
+              {workbenchReport.openTasks.length > 0 ? `${workbenchReport.openTasks.length} 项待推进` : "可预览导出"}
+            </Badge>
+          </div>
+
+          {workbenchReport.openTasks.length > 0 ? (
+            <div className="resume-editor-task-list">
+              {workbenchReport.openTasks.slice(0, 3).map((task) => (
+                <article className="resume-editor-task-card" key={task.id}>
+                  <div className="resume-editor-task-card-head">
+                    <strong>{task.title}</strong>
+                    <Badge tone={task.status === "warning" ? "warning" : "neutral"}>
+                      {task.status === "warning" ? "建议" : "下一步"}
+                    </Badge>
+                  </div>
+                  <p>{task.detail}</p>
+                  <Button onClick={() => handleWorkbenchTask(task)} variant="secondary">
+                    {task.action.label}
+                  </Button>
+                </article>
+              ))}
+            </div>
+          ) : (
+            <div className="resume-editor-task-card resume-editor-task-card-ready">
+              <div className="resume-editor-task-card-head">
+                <strong>内容已经具备导出条件</strong>
+                <Badge tone="success">已就绪</Badge>
+              </div>
+              <p>可以直接进入预览页做最后检查，确认无误后导出 PDF。</p>
+              <Button onClick={() => void handleOpenPreview()} variant="secondary">
+                打开预览
+              </Button>
+            </div>
+          )}
+        </aside>
+      </section>
+
+      {editorOnboarding ? (
+        <section className="resume-editor-onboarding">
+          <div className="resume-editor-onboarding-head">
+            <div>
+              <p className="editor-workflow-kicker">首次进入</p>
+              <strong>{editorOnboarding.title}</strong>
+            </div>
+          </div>
+          <p className="editor-workflow-copy">{editorOnboarding.description}</p>
+
+          <div className="resume-editor-onboarding-grid">
+            {editorOnboarding.steps.map((step, index) => (
+              <article className="resume-editor-onboarding-step" key={step.title}>
+                <span>{index + 1}</span>
+                <div>
+                  <strong>{step.title}</strong>
+                  <p>{step.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          <div className="editor-workflow-actions">
+            {editorOnboarding.actions.map((action) => (
+              <Button
+                key={action.label}
+                onClick={() => handleOnboardingAction(action.target)}
+                variant={action.target === "basics" ? "primary" : "secondary"}
+              >
+                {action.label}
+              </Button>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       {importReview ? (
         <section className="resume-editor-import-banner">

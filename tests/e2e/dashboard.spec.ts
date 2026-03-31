@@ -23,6 +23,26 @@ test("templates page explains the current writer profile and creation flow", asy
   await expect(page.getByRole("link", { name: "解析源文件或导入线上经历" })).toBeVisible();
 });
 
+test("template starter resumes show editor onboarding flow", async ({ page, request }) => {
+  const createdResponse = await request.post("/api/resumes", {
+    data: {
+      title: `Template Starter ${Date.now()}`,
+      starter: "template-sample",
+      template: "aurora-grid",
+    },
+  });
+  const created = await createdResponse.json();
+
+  try {
+    await page.goto(`/studio/${created.meta.id}?onboarding=template&focus=basics`);
+    await expect(page.locator(".resume-editor-onboarding")).toBeVisible();
+    await expect(page.getByText("先把模板示例改成你的真实经历")).toBeVisible();
+    await expect(page.getByRole("button", { name: "先改基础信息" })).toBeVisible();
+  } finally {
+    await request.delete(`/api/resumes/${created.meta.id}`);
+  }
+});
+
 test("import workspace can bring text content into the editor review flow", async ({ page, request }) => {
   let createdId: string | null = null;
 
@@ -83,6 +103,7 @@ test("preview page shows export checklist for incomplete drafts", async ({ page,
   try {
     await page.goto(`/studio/${created.meta.id}/preview`);
     await expect(page.getByText("需要补充内容")).toBeVisible();
+    await expect(page.getByText("最终决策")).toBeVisible();
     await expect(page.getByText("导出前检查")).toBeVisible();
     await expect(page.getByText("必须处理").first()).toBeVisible();
   } finally {
@@ -194,5 +215,133 @@ test("studio carries targeting edits into preview flow", async ({ page, request 
     await expect(page.getByRole("button", { name: /导出 pdf/i })).toBeVisible();
   } finally {
     await request.delete(`/api/resumes/${created.meta.id}`);
+  }
+});
+
+test("library and editor surface tailored variant lineage", async ({ page, request }) => {
+  const sourceResponse = await request.post("/api/resumes", {
+    data: { title: `Lineage Source ${Date.now()}` },
+  });
+  const source = await sourceResponse.json();
+  let variantId: string | null = null;
+
+  try {
+    await request.put(`/api/resumes/${source.meta.id}`, {
+      data: {
+        ...source,
+        targeting: {
+          ...source.targeting,
+          role: "Frontend Engineer",
+          company: "Acme",
+          focusKeywords: ["React", "Next.js"],
+        },
+        sections: [
+          {
+            id: "experience",
+            type: "experience",
+            title: "Experience",
+            visible: true,
+            layout: "stacked-list",
+            contentHtml: "",
+            items: [
+              {
+                id: "exp-1",
+                title: "Frontend Engineer",
+                subtitle: "Acme",
+                location: "",
+                dateRange: "2024-2026",
+                meta: "",
+                summaryHtml: "<p>Built Next.js and React application flows.</p>",
+                bulletPoints: ["Shipped a reusable React UI workflow."],
+                tags: ["React", "Next.js"],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const variantResponse = await request.post(`/api/resumes/${source.meta.id}/generate-tailored-variant`, {
+      data: { title: "Acme Tailored Variant" },
+    });
+    const variant = await variantResponse.json();
+    variantId = variant.document.meta.id;
+
+    await page.goto("/resumes");
+    await expect(page.locator(".library-master-detail")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Lineage Source/ }).first()).toBeVisible();
+    await expect(page.getByText("这份主稿下共有 1 个岗位定制版，可以在右侧集中切换和管理。")).toBeVisible();
+    await expect(page.getByText("Acme Tailored Variant")).toBeVisible();
+    await expect(page.getByText(/基于[「《]Lineage Source/)).toBeVisible();
+
+    await page.goto(`/studio/${variantId}`);
+    await expect(page.getByText("当前正在编辑一份岗位定制版。")).toBeVisible();
+    await expect(page.getByRole("button", { name: "查看来源主稿" })).toBeVisible();
+  } finally {
+    if (variantId) {
+      await request.delete(`/api/resumes/${variantId}`);
+    }
+    await request.delete(`/api/resumes/${source.meta.id}`);
+  }
+});
+
+test("library can generate the first tailored variant from a ready source draft", async ({ page, request }) => {
+  const sourceResponse = await request.post("/api/resumes", {
+    data: { title: `Library Generate ${Date.now()}` },
+  });
+  const source = await sourceResponse.json();
+  let variantId: string | null = null;
+
+  try {
+    await request.put(`/api/resumes/${source.meta.id}`, {
+      data: {
+        ...source,
+        targeting: {
+          ...source.targeting,
+          role: "Frontend Engineer",
+          company: "Acme",
+          focusKeywords: ["React", "Next.js"],
+        },
+        sections: [
+          {
+            id: "experience",
+            type: "experience",
+            title: "Experience",
+            visible: true,
+            layout: "stacked-list",
+            contentHtml: "",
+            items: [
+              {
+                id: "exp-1",
+                title: "Frontend Engineer",
+                subtitle: "Acme",
+                location: "",
+                dateRange: "2024-2026",
+                meta: "",
+                summaryHtml: "<p>Built React and Next.js product flows.</p>",
+                bulletPoints: ["Delivered resume workflow surfaces for multiple job targets."],
+                tags: ["React", "Next.js"],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    await page.goto("/resumes");
+    await expect(page.getByText("可直接生成定制版").first()).toBeVisible();
+    await Promise.all([
+      page.waitForURL(/\/studio\/[^/?]+\?focus=ai$/),
+      page.locator(".library-detail-actions").getByRole("button", { name: "直接生成定制版", exact: true }).click(),
+    ]);
+    variantId = page.url().match(/\/studio\/([^/?]+)/)?.[1] ?? null;
+
+    await expect(page.getByText("当前正在编辑一份岗位定制版。")).toBeVisible();
+    await expect(page.getByRole("button", { name: "查看来源主稿" })).toBeVisible();
+  } finally {
+    if (variantId) {
+      await request.delete(`/api/resumes/${variantId}`);
+    }
+    await request.delete(`/api/resumes/${source.meta.id}`);
   }
 });

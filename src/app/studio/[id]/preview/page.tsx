@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ResumePreviewPage } from "@/components/product/ResumePreviewPage";
-import { readResumeDocument } from "@/lib/storage";
+import { buildResumeLineageMap } from "@/lib/resume-lineage";
+import { listResumeSummaries, readResumeDocument } from "@/lib/storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,12 +19,15 @@ export default async function ResumePreviewRoutePage({
 }) {
   const { id } = await params;
   let document;
+  let lineage = null;
 
   try {
     document = await readResumeDocument(id);
+    const summaries = await listResumeSummaries();
+    lineage = buildResumeLineageMap(summaries).get(id) ?? null;
   } catch {
     notFound();
   }
 
-  return <ResumePreviewPage initialDocument={document} />;
+  return <ResumePreviewPage initialDocument={document} lineage={lineage} />;
 }

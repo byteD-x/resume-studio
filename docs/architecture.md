@@ -1,66 +1,61 @@
 # Resume Studio Architecture
 
-## Overview
+Resume Studio is a local-first Next.js App Router application for writing, tailoring, previewing, and exporting resumes.
 
-Resume Studio is a local-first Next.js App Router application for writing, refining, tailoring, and exporting resumes.
+## System map
 
-- Runtime: Next.js 16 App Router with Node.js route handlers
+- Entry: `/`, `/templates`, `/import`, `/resumes`
+  Creates drafts, recovers drafts, and converts imported material into `ResumeDocument`
+- Editor: `/studio/[id]`
+  Handles structured editing, Markdown editing, autosave, workbench guidance, and editing history
+- Targeting and variants: `/studio/[id]`, `/api/resumes/[id]/generate-tailored-variant`
+  Collects targeting inputs, analyzes keyword coverage, and creates tailored variants with lineage
+- Preview and export: `/studio/[id]/preview`, `/api/resumes/[id]/export-pdf`
+  Validates readiness, renders preview HTML, and exports PDF
+- Library: `/resumes`
+  Groups drafts by lineage and surfaces readiness plus next actions
+
+## Runtime
+
+- Framework: Next.js 16 App Router
+- Runtime model: Node.js route handlers
 - Storage: local filesystem under `data/resumes/<id>`
-- Editing model: one `document.json` per resume draft
-- UI model: Dashboard, resume library, editor route, preview route, and import/template entry routes
 - Export: HTML preview rendered to PDF through Playwright Chromium
-
-## Core flow
-
-1. Dashboard creates or lists local resume drafts.
-2. `/resumes` provides a searchable library view over the same local data.
-3. `/studio/[id]` edits a single `ResumeDocument` with form and Markdown modes.
-4. Autosave persists the document through `/api/resumes/[id]`.
-5. Import routes rebuild structured drafts from portfolio or PDF inputs.
-6. Targeting and tailoring derive role-specific variants from the current draft.
-7. `/studio/[id]/preview` surfaces export readiness, checklist state, and preview HTML.
-8. The export route validates the draft, renders preview HTML, and writes a PDF archive.
 
 ## Data model
 
-The canonical source of truth is `data/resumes/<id>/document.json`.
-When `RESUME_STUDIO_DATA_DIR` is provided, storage is redirected to that writable directory instead.
+Canonical source of truth: `data/resumes/<id>/document.json`
 
 Key fields:
 
-- `meta.schemaVersion`: compatibility version for future evolution
-- `meta.writerProfile`: `campus | experienced | career-switch`
-- `meta.workflowState`: `drafting | tailoring | ready`
-- `targeting`: role, company, JD, keywords, notes
-- `layout`: template, typography, margins, spacing
+- `meta`: id, writer profile, workflow state, timestamps, source refs
+- `targeting`: role, company, posting URL, JD, keywords, notes
+- `layout`: template and typography settings
 - `sections`: structured resume content used by editing, preview, and export
 
-Old documents remain compatible because the schema supplies defaults for new fields.
+`RESUME_STUDIO_DATA_DIR` can redirect storage to another writable directory.
 
 ## Quality system
 
-The writing quality layer is built from shared rules in `src/lib/resume-quality.ts`.
+Shared rules in `src/lib/resume-quality.ts` drive:
 
-- `blockingIssues`: required items that should stop export
-- `warnings`: content or layout improvements still worth fixing
-- `suggestions`: non-blocking hints
-- `buildResumeExportChecklist()`: shared checklist for Studio and export gating
-
-The same rules drive:
-
-- Studio diagnostics
-- workbench scores and next-step tasks
+- blocking issues
+- warnings
+- workbench scores
 - export checklist
-- preview readiness labels
-- export route validation
+- preview readiness
+- export validation
 
-## Testing and release gates
+## Scope rule
 
-Required checks:
+Architecture work should strengthen draft creation, editing, targeting, preview, export, or lineage management. By default, it should not expand into application tracking or CRM-like systems.
 
-- `npm run lint`
-- `npm run test:unit`
-- `npm run test:e2e`
-- `npm run build`
+## Release gate
 
-CI mirrors the same gate so local validation and automated validation stay aligned.
+```bash
+npm run lint
+npm run typecheck
+npm run test:unit
+npm run test:e2e
+npm run build
+```

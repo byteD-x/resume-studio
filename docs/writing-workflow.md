@@ -1,72 +1,57 @@
 # Resume Writing Workflow
 
-## Product intent
-
-Resume Studio is not a generic editor. It is a guided writing desk for producing stronger Chinese resumes with local-only capabilities.
+This document only covers resume writing strategy inside the core chain described in [`README.md`](../README.md).
 
 ## Writer profiles
 
-The project supports three writer profiles. Each profile changes starter scaffolding and quality expectations.
-
 ### `campus`
 
-- For internships, campus recruiting, and recent graduates
-- Prioritizes education, internship, campus experience, and projects
-- Allows project-heavy resumes when full-time experience is limited
+- 面向应届、实习、校招
+- 优先教育、实习、校园经历、项目
 
 ### `experienced`
 
-- For candidates with established work experience
-- Prioritizes work experience, impact bullets, and role-focused positioning
-- Requires at least one experience section before export
+- 面向已有工作经验的求职者
+- 优先工作经历、影响力要点、岗位定位
 
 ### `career-switch`
 
-- For cross-function or cross-industry transitions
-- Prioritizes transferable skills and proof projects
-- Encourages rewriting old experience around the new target role
+- 面向转岗或跨行业
+- 优先可迁移能力、证明项目、新目标岗位叙事
 
-## Recommended editing order
+## Recommended order
 
-1. Fill in identity basics: name, headline, contacts.
-2. Write a short summary: direction, core strengths, proof of value.
-3. Build core evidence: experience, projects, or transition proof.
-4. Add targeting inputs: role, company, JD, keywords.
-5. Review workbench status and clear required items first.
-6. Open `/studio/<id>/preview` only after the export checklist is mostly green.
+1. Fill basics: name, headline, contacts
+2. Write a short summary: direction, strengths, proof
+3. Build core evidence: experience, projects, or transition proof
+4. Add targeting inputs: role, company, JD, keywords
+5. Clear required workbench items first
+6. Open Preview only when the export checklist is mostly green
 
-## What the quality report checks
+## Quality checks
 
 Required items (`blockingIssues`):
 
-- Missing header
-- Not enough contact methods
-- Summary too short
-- Missing core evidence for the active writer profile
+- missing header
+- not enough contact methods
+- summary too short
+- missing core evidence for the active writer profile
 
-Suggested improvements (`warnings`):
+Warnings (`warnings`):
 
-- Too few result bullets
-- Weak bullet phrasing such as `负责 / 参与 / 协助`
-- No result signals in bullets
-- Overlong summary, too many sections, too many bullets
+- too few result bullets
+- weak bullet phrasing
+- no result signals in bullets
+- overlong summary or overloaded structure
 
-Lightweight suggestions (`suggestions`):
+Suggestions (`suggestions`):
 
-- Missing portfolio or social links
-- Tight page margins
-
-In the product UI, these checks are usually surfaced as:
-
-- `需要补充内容`: export-blocking items
-- `建议优化`: content or layout improvements worth fixing before export
-- `可直接导出`: no required item is still blocking export
+- missing portfolio or social links
+- tight page margins
 
 ## Tailored variants
 
-Tailored variants are always created as a new local draft.
-
-- The source draft is preserved
-- Section and item retention is based on keyword relevance
-- Missing keywords remain visible in Studio so the draft can still be improved manually
-- Preview is a separate route, so export review stays independent from editing
+- Always create a new local draft
+- Preserve the source draft
+- Retain sections and items based on keyword relevance
+- Keep missing keywords visible so the user can continue improving manually

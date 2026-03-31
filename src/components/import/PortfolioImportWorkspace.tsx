@@ -336,6 +336,35 @@ function WorkspaceInner() {
             </div>
           ) : null}
 
+          <div className="home-flow-strip mb-8 w-full text-left">
+            {[
+              {
+                title: "先核对基础信息",
+                description: "确认姓名、标题、联系方式和摘要是否被正确映射。",
+              },
+              {
+                title: "再整理内容",
+                description: "把经历、项目和未映射片段补录成更可读的主稿。",
+              },
+              {
+                title: "最后做岗位定制",
+                description: "补 JD 和关键词，再进入预览页做最终检查与导出。",
+              },
+              {
+                title: "用导入结果起稿",
+                description: "把这次抽取当作第一版，不必一次就整理到最终版。",
+              },
+            ].map((step, index) => (
+              <article className="home-flow-step" key={step.title}>
+                <span>{index + 1}</span>
+                <div>
+                  <strong>{step.title}</strong>
+                  <p>{step.description}</p>
+                </div>
+              </article>
+            ))}
+          </div>
+
           <Button
             className="h-[2.8rem] w-full max-w-[16rem] justify-center rounded-[0.5rem] bg-[color:var(--ink-strong)] text-white hover:bg-[color:var(--ink)]"
             disabled={isPending || isExtracting}

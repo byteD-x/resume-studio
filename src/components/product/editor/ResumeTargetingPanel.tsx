@@ -21,9 +21,10 @@ export function ResumeTargetingPanel({
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
-          <h3>投递信息</h3>
-          <p>岗位、公司和职位链接。</p>
+          <h3>目标信息</h3>
+          <p>岗位、公司和链接会一起决定这份版本要强调什么。</p>
         </div>
+
         <div className="resume-editor-field-grid">
           <label className="field-shell">
             <span className="field-label">目标岗位</span>
@@ -31,8 +32,6 @@ export function ResumeTargetingPanel({
               autoComplete="organization-title"
               className="input-control"
               name="role"
-              placeholder="例如：前端负责人 / Staff Frontend Engineer"
-              value={document.targeting.role}
               onChange={(event) => onTargetingChange("role", event.target.value)}
               onPaste={(event) =>
                 handleSanitizedPaste(event, {
@@ -41,6 +40,8 @@ export function ResumeTargetingPanel({
                   onValueChange: (nextValue) => onTargetingChange("role", nextValue),
                 })
               }
+              placeholder="例如：前端负责人 / Staff Frontend Engineer"
+              value={document.targeting.role}
             />
           </label>
 
@@ -50,8 +51,6 @@ export function ResumeTargetingPanel({
               autoComplete="organization"
               className="input-control"
               name="company"
-              placeholder="例如：字节跳动 / Acme"
-              value={document.targeting.company}
               onChange={(event) => onTargetingChange("company", event.target.value)}
               onPaste={(event) =>
                 handleSanitizedPaste(event, {
@@ -60,31 +59,33 @@ export function ResumeTargetingPanel({
                   onValueChange: (nextValue) => onTargetingChange("company", nextValue),
                 })
               }
+              placeholder="例如：字节跳动 / Acme"
+              value={document.targeting.company}
+            />
+          </label>
+
+          <label className="field-shell">
+            <span className="field-label">职位链接</span>
+            <input
+              autoComplete="off"
+              className="input-control"
+              inputMode="url"
+              name="posting_url"
+              onChange={(event) => onTargetingChange("postingUrl", event.target.value)}
+              onPaste={(event) =>
+                handleSanitizedPaste(event, {
+                  currentValue: document.targeting.postingUrl,
+                  mode: "single-line",
+                  onValueChange: (nextValue) => onTargetingChange("postingUrl", nextValue),
+                })
+              }
+              placeholder="https://..."
+              spellCheck={false}
+              type="url"
+              value={document.targeting.postingUrl}
             />
           </label>
         </div>
-
-        <label className="field-shell">
-          <span className="field-label">职位链接</span>
-          <input
-            autoComplete="off"
-            className="input-control"
-            inputMode="url"
-            name="posting_url"
-            placeholder="https://..."
-            spellCheck={false}
-            type="url"
-            value={document.targeting.postingUrl}
-            onChange={(event) => onTargetingChange("postingUrl", event.target.value)}
-            onPaste={(event) =>
-              handleSanitizedPaste(event, {
-                currentValue: document.targeting.postingUrl,
-                mode: "single-line",
-                onValueChange: (nextValue) => onTargetingChange("postingUrl", nextValue),
-              })
-            }
-          />
-        </label>
       </div>
 
       <div className="resume-editor-group">
@@ -98,9 +99,6 @@ export function ResumeTargetingPanel({
             autoComplete="off"
             className="textarea-control min-h-24"
             name="focus_keywords"
-            placeholder="例如：React, Next.js, Design Systems, Growth, SQL"
-            spellCheck={false}
-            value={document.targeting.focusKeywords.join(", ")}
             onChange={(event) => onTargetingChange("focusKeywords", event.target.value)}
             onPaste={(event) =>
               handleSanitizedPaste(event, {
@@ -109,6 +107,9 @@ export function ResumeTargetingPanel({
                 onValueChange: (nextValue) => onTargetingChange("focusKeywords", nextValue),
               })
             }
+            placeholder="例如：React, Next.js, Design Systems, Growth, SQL"
+            spellCheck={false}
+            value={document.targeting.focusKeywords.join(", ")}
           />
         </label>
       </div>
@@ -124,8 +125,6 @@ export function ResumeTargetingPanel({
             autoComplete="off"
             className="textarea-control min-h-44"
             name="job_description"
-            placeholder="粘贴职位描述原文。"
-            value={document.targeting.jobDescription}
             onChange={(event) => onTargetingChange("jobDescription", event.target.value)}
             onPaste={(event) =>
               handleSanitizedPaste(event, {
@@ -134,6 +133,8 @@ export function ResumeTargetingPanel({
                 onValueChange: (nextValue) => onTargetingChange("jobDescription", nextValue),
               })
             }
+            placeholder="粘贴职位描述原文。"
+            value={document.targeting.jobDescription}
           />
         </label>
       </div>
@@ -141,7 +142,7 @@ export function ResumeTargetingPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>版本备注</h3>
-          <p>记录这版的强调点和取舍。</p>
+          <p>记录这一版的强调点和需要继续补强的方向。</p>
         </div>
         <label className="field-shell">
           <span className="field-label">备注</span>
@@ -149,8 +150,6 @@ export function ResumeTargetingPanel({
             autoComplete="off"
             className="textarea-control min-h-32"
             name="targeting_notes"
-            placeholder="例如：这版优先突出设计系统、跨团队影响力和增长实验经验。"
-            value={document.targeting.notes}
             onChange={(event) => onTargetingChange("notes", event.target.value)}
             onPaste={(event) =>
               handleSanitizedPaste(event, {
@@ -159,6 +158,8 @@ export function ResumeTargetingPanel({
                 onValueChange: (nextValue) => onTargetingChange("notes", nextValue),
               })
             }
+            placeholder="例如：这一版优先突出设计系统、跨团队影响力和增长实验经验。"
+            value={document.targeting.notes}
           />
         </label>
       </div>

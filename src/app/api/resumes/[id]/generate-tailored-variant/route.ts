@@ -1,6 +1,11 @@
 import { NextRequest } from "next/server";
 import { validateResumeDocument } from "@/lib/resume-document";
-import { applySummaryText, canUseRemoteResumeAi, generateRemoteResumeSummary } from "@/lib/resume-ai";
+import {
+  applySummaryText,
+  canUseRemoteResumeAi,
+  generateRemoteResumeSummary,
+  isLikelyLocalOllamaBaseUrl,
+} from "@/lib/resume-ai";
 import {
   buildTailoredVariantPlan,
   createTailoredVariantDocument,
@@ -12,6 +17,17 @@ import {
 } from "@/lib/storage";
 
 export const runtime = "nodejs";
+
+function canGenerateRemoteSummary(apiKey?: string, baseUrl?: string) {
+  if (apiKey?.trim()) return true;
+  if (baseUrl && isLikelyLocalOllamaBaseUrl(baseUrl)) return true;
+
+  return Boolean(
+    process.env.RESUME_STUDIO_AI_API_KEY?.trim() ||
+      process.env.OPENAI_COMPATIBLE_API_KEY?.trim() ||
+      process.env.OPENAI_API_KEY?.trim(),
+  );
+}
 
 export async function POST(
   request: NextRequest,
@@ -53,7 +69,7 @@ export async function POST(
   let remoteSummaryApplied = false;
   let remoteSummaryError: string | null = null;
 
-  if (canUseRemoteResumeAi(tailoredDocument.ai)) {
+  if (canUseRemoteResumeAi(tailoredDocument.ai) && canGenerateRemoteSummary(body.apiKey, tailoredDocument.ai.baseUrl)) {
     try {
       const generatedSummary = await generateRemoteResumeSummary(tailoredDocument, body.apiKey);
       tailoredDocument = applySummaryText(tailoredDocument, generatedSummary);

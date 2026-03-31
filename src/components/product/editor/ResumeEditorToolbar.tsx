@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowLeft, Code2, Eye, FilePenLine, LayoutTemplate, Save } from "lucide-react";
+import { ArrowLeft, Code2, Eye, FilePenLine, History, LayoutTemplate, Redo2, Save, Undo2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { resumeTemplateOptions } from "@/data/template-catalog";
@@ -29,9 +29,16 @@ export function ResumeEditorToolbar({
   statusMessage,
   editorMode,
   currentPanelGroupLabel,
+  canUndo,
+  canRedo,
+  undoLabel,
+  redoLabel,
+  recentHistoryLabels,
   onTitleChange,
   onTemplateChange,
   onModeChange,
+  onUndo,
+  onRedo,
   onBack,
   onSave,
   onOpenPreview,
@@ -42,9 +49,16 @@ export function ResumeEditorToolbar({
   statusMessage: string;
   editorMode: EditorMode;
   currentPanelGroupLabel: string;
+  canUndo: boolean;
+  canRedo: boolean;
+  undoLabel: string | null;
+  redoLabel: string | null;
+  recentHistoryLabels: string[];
   onTitleChange: (value: string) => void;
   onTemplateChange: (template: ResumeTemplate) => void;
   onModeChange: (mode: EditorMode) => void;
+  onUndo: () => void;
+  onRedo: () => void;
   onBack: () => void;
   onSave: () => void;
   onOpenPreview: () => void;
@@ -102,6 +116,49 @@ export function ResumeEditorToolbar({
           <div aria-live="polite" className="editor-toolbar-meta">
             <Badge tone={saveState === "error" ? "warning" : "neutral"}>{saveStateLabel(saveState)}</Badge>
             <span className="editor-toolbar-hint">{statusMessage}</span>
+          </div>
+
+          <div className="editor-toolbar-history" aria-label="编辑历史">
+            <div className="editor-toolbar-history-actions">
+              <button
+                aria-label={undoLabel ? `撤销：${undoLabel}` : "撤销"}
+                className="editor-history-button"
+                disabled={!canUndo}
+                onClick={onUndo}
+                title={undoLabel ? `撤销：${undoLabel}` : "没有可撤销的操作"}
+                type="button"
+              >
+                <Undo2 className="size-4" />
+                <span>{undoLabel ?? "撤销"}</span>
+              </button>
+              <button
+                aria-label={redoLabel ? `重做：${redoLabel}` : "重做"}
+                className="editor-history-button"
+                disabled={!canRedo}
+                onClick={onRedo}
+                title={redoLabel ? `重做：${redoLabel}` : "没有可重做的操作"}
+                type="button"
+              >
+                <Redo2 className="size-4" />
+                <span>{redoLabel ?? "重做"}</span>
+              </button>
+            </div>
+
+            {recentHistoryLabels.length > 0 ? (
+              <div className="editor-toolbar-history-list">
+                <span className="editor-toolbar-history-label">
+                  <History className="size-3.5" />
+                  最近编辑
+                </span>
+                <div className="editor-toolbar-history-chips">
+                  {recentHistoryLabels.map((label, index) => (
+                    <span className="editor-history-chip" key={`${label}-${index}`}>
+                      {label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
