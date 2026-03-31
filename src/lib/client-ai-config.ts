@@ -8,6 +8,7 @@ export interface ClientAiConfig extends ResumeAiSettings {
 }
 
 export const CLIENT_AI_CONFIG_STORAGE_KEY = "resume-studio-ai-config";
+export const CLIENT_AI_API_KEY_STORAGE_KEY = "resume-studio-ai-key";
 
 export function getDefaultClientAiConfig(): ClientAiConfig {
   return {
@@ -25,7 +26,14 @@ export function readClientAiConfig(): ClientAiConfig {
 
   try {
     const raw = window.localStorage.getItem(CLIENT_AI_CONFIG_STORAGE_KEY);
-    if (!raw) return getDefaultClientAiConfig();
+    const sessionApiKey = window.sessionStorage.getItem(CLIENT_AI_API_KEY_STORAGE_KEY) ?? "";
+    if (!raw) {
+      return {
+        ...getDefaultClientAiConfig(),
+        apiKey: sessionApiKey,
+      };
+    }
+
     const parsed = JSON.parse(raw) as Partial<ClientAiConfig>;
     const looksLikeLegacyLocalDefault =
       parsed.provider !== "local" &&
@@ -39,6 +47,13 @@ export function readClientAiConfig(): ClientAiConfig {
       return migrated;
     }
 
+    if (!sessionApiKey && typeof parsed.apiKey === "string" && parsed.apiKey) {
+      window.sessionStorage.setItem(CLIENT_AI_API_KEY_STORAGE_KEY, parsed.apiKey);
+      const legacyConfig = { ...parsed };
+      delete legacyConfig.apiKey;
+      window.localStorage.setItem(CLIENT_AI_CONFIG_STORAGE_KEY, JSON.stringify(legacyConfig));
+    }
+
     return {
       provider: parsed.provider === "local" ? "local" : "openai-compatible",
       model: typeof parsed.model === "string" && parsed.model.trim() ? parsed.model : DEFAULT_FREE_CLOUD_MODEL,
@@ -46,7 +61,7 @@ export function readClientAiConfig(): ClientAiConfig {
         typeof parsed.baseUrl === "string" && parsed.baseUrl.trim()
           ? parsed.baseUrl
           : DEFAULT_FREE_CLOUD_BASE_URL,
-      apiKey: typeof parsed.apiKey === "string" ? parsed.apiKey : "",
+      apiKey: sessionApiKey || (typeof parsed.apiKey === "string" ? parsed.apiKey : ""),
     };
   } catch {
     return getDefaultClientAiConfig();
@@ -56,5 +71,12 @@ export function readClientAiConfig(): ClientAiConfig {
 export function writeClientAiConfig(config: ClientAiConfig) {
   if (typeof window === "undefined") return;
 
-  window.localStorage.setItem(CLIENT_AI_CONFIG_STORAGE_KEY, JSON.stringify(config));
+  const { apiKey, ...persistedConfig } = config;
+  window.localStorage.setItem(CLIENT_AI_CONFIG_STORAGE_KEY, JSON.stringify(persistedConfig));
+
+  if (apiKey) {
+    window.sessionStorage.setItem(CLIENT_AI_API_KEY_STORAGE_KEY, apiKey);
+  } else {
+    window.sessionStorage.removeItem(CLIENT_AI_API_KEY_STORAGE_KEY);
+  }
 }

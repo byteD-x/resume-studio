@@ -1,32 +1,40 @@
 "use client";
 
 import { PreviewFrame } from "@/components/studio/PreviewFrame";
-import { Badge } from "@/components/ui/Badge";
 
 export function ResumePreviewPanel({
   html,
   saveLabel,
+  panelLabel,
+  groupLabel,
+  countLabel,
 }: {
   html: string;
   saveLabel: string;
+  panelLabel: string;
+  groupLabel: string;
+  countLabel?: string;
 }) {
   return (
     <aside className="editor-preview-panel">
       <div className="editor-preview-head">
-        <p className="editor-preview-kicker">实时预览</p>
-        <Badge tone="neutral">{saveLabel}</Badge>
+        <div>
+          <p className="editor-preview-kicker">成稿</p>
+          <p className="editor-preview-title">当前编辑「{panelLabel}」</p>
+          <p className="editor-preview-copy">版式与导出保持一致。</p>
+        </div>
+        <span className="editor-preview-save">{saveLabel}</span>
+      </div>
+
+      <div className="editor-preview-meta">
+        <span>{groupLabel}</span>
+        <span>A4</span>
+        {countLabel ? <span>{countLabel}</span> : null}
       </div>
 
       <div className="editor-preview-canvas">
-        <div className="editor-preview-canvas-head">
-          <span />
-          <span />
-          <span />
-        </div>
         <div className="editor-preview-canvas-body">
-          <div className="editor-preview-frame-scale">
-            <PreviewFrame html={html} />
-          </div>
+          <PreviewFrame html={html} />
         </div>
       </div>
     </aside>

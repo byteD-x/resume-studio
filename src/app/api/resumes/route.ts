@@ -1,7 +1,11 @@
 import { NextRequest } from "next/server";
 import { createResumeDocument, listResumeSummaries } from "@/lib/storage";
 import type { ResumeStarterPreset } from "@/lib/resume-document";
-import type { ResumeTemplate, ResumeWriterProfile } from "@/types/resume";
+import {
+  normalizeResumeTemplateValue,
+  type ResumeTemplate,
+  type ResumeWriterProfile,
+} from "@/types/resume";
 
 export const runtime = "nodejs";
 
@@ -18,13 +22,13 @@ export async function POST(request: NextRequest) {
     template?: ResumeTemplate;
   };
   const title = body.title?.trim() || "未命名简历";
-  const starter: ResumeStarterPreset = body.starter === "guided" ? "guided" : "blank";
+  const starter: ResumeStarterPreset =
+    body.starter === "guided" ? "guided" : body.starter === "template-sample" ? "template-sample" : "blank";
   const writerProfile: ResumeWriterProfile =
     body.writerProfile === "campus" || body.writerProfile === "career-switch"
       ? body.writerProfile
       : "experienced";
-  const template: ResumeTemplate =
-    body.template === "classic-single-column" ? "classic-single-column" : "modern-two-column";
+  const template: ResumeTemplate = normalizeResumeTemplateValue(body.template) ?? "aurora-grid";
   const document = await createResumeDocument(title, { starter, writerProfile, template });
   return Response.json(document, { status: 201 });
 }

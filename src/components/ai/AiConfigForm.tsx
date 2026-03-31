@@ -127,46 +127,46 @@ export function AiConfigForm({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="ai-config-stack">
       <div className="resume-editor-group-head">
         <h3>{title}</h3>
         {description ? <p>{description}</p> : null}
       </div>
 
       {showProvider ? (
-        <div className="grid gap-2 sm:grid-cols-2">
+        <div className="ai-config-provider-grid">
           <button
-            className={`rounded-[1rem] border px-4 py-3 text-left transition ${
+            className={`ai-config-provider-card ${
               provider === "local"
-                ? "border-[color:var(--accent-strong)] bg-[color:var(--accent-soft)]"
-                : "border-[color:var(--line)] bg-white/80"
+                ? "ai-config-provider-card-active"
+                : "ai-config-provider-card-idle"
             }`}
             disabled={disabled}
             onClick={() => onProviderChange?.("local")}
             type="button"
           >
-            <strong className="block text-sm text-[color:var(--ink-strong)]">本地规则</strong>
+            <strong>本地规则</strong>
           </button>
           <button
-            className={`rounded-[1rem] border px-4 py-3 text-left transition ${
+            className={`ai-config-provider-card ${
               provider === "openai-compatible"
-                ? "border-[color:var(--accent-strong)] bg-[color:var(--accent-soft)]"
-                : "border-[color:var(--line)] bg-white/80"
+                ? "ai-config-provider-card-active"
+                : "ai-config-provider-card-idle"
             }`}
             disabled={disabled}
             onClick={() => onProviderChange?.("openai-compatible")}
             type="button"
           >
-            <strong className="block text-sm text-[color:var(--ink-strong)]">AI 模型</strong>
+            <strong>AI 模型</strong>
           </button>
         </div>
       ) : null}
 
       {usesRemoteProvider ? (
         <>
-          <div className="space-y-3 rounded-[1rem] border border-[color:var(--line)] bg-[color:var(--paper-soft)] p-4">
-            <div className="flex items-center justify-between gap-2">
-              <p className="text-sm font-semibold text-[color:var(--ink-strong)]">选择方案</p>
+          <div className="ai-config-surface ai-config-surface-soft">
+            <div className="ai-config-head">
+              <p className="ai-config-heading">选择方案</p>
               {selectedPreset ? (
                 <Badge tone={getKindTone(selectedPreset.kind)}>{selectedPreset.freeLabel}</Badge>
               ) : (
@@ -174,28 +174,28 @@ export function AiConfigForm({
               )}
             </div>
 
-            <div className="grid gap-2">
+            <div className="ai-config-preset-list">
               {enhancedResumeAiPresets.map((preset) => {
                 const active = selectedPresetId === preset.id;
 
                 return (
                   <button
-                    className={`rounded-[0.9rem] border px-4 py-3 text-left transition ${
+                    className={`ai-config-preset-card ${
                       active
-                        ? "border-[color:var(--accent-strong)] bg-white shadow-sm"
-                        : "border-[color:var(--line)] bg-white/70 hover:bg-white"
+                        ? "ai-config-preset-card-active"
+                        : "ai-config-preset-card-idle"
                     }`}
                     disabled={disabled}
                     key={preset.id}
                     onClick={() => onApplyPreset(preset.id)}
                     type="button"
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0">
-                        <strong className="block text-sm text-[color:var(--ink-strong)]">{preset.label}</strong>
-                        <span className="mt-1 block text-xs text-[color:var(--ink-muted)]">{preset.providerName}</span>
+                    <div className="ai-config-preset-head">
+                      <div className="ai-config-preset-copy">
+                        <strong>{preset.label}</strong>
+                        <span>{preset.providerName}</span>
                       </div>
-                      <div className="flex shrink-0 items-center gap-2">
+                      <div className="ai-config-preset-meta">
                         <Badge tone={getKindTone(preset.kind)}>{preset.freeLabel}</Badge>
                         {active ? <Badge tone="accent">已选</Badge> : null}
                       </div>
@@ -206,10 +206,10 @@ export function AiConfigForm({
             </div>
           </div>
 
-          <div className="space-y-3 rounded-[1rem] border border-[color:var(--line)] bg-white/80 p-4">
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="text-sm font-semibold text-[color:var(--ink-strong)]">API Key</p>
-              <div className="flex flex-wrap gap-2">
+          <div className="ai-config-surface">
+            <div className="ai-config-head ai-config-head-wrap">
+              <p className="ai-config-heading">API Key</p>
+              <div className="ai-config-inline-actions">
                 {selectedPreset?.apiKeyUrl ? (
                   <a className="btn btn-secondary" href={selectedPreset.apiKeyUrl} rel="noreferrer" target="_blank">
                     获取 Key
@@ -223,8 +223,8 @@ export function AiConfigForm({
               </div>
             </div>
 
-            <div className="flex flex-col gap-3 sm:flex-row">
-              <label className="field-shell flex-1">
+            <div className="ai-config-connection-row">
+              <label className="field-shell ai-config-field-grow">
                 <span className="field-label">Key</span>
                 <input
                   className="input-control"
@@ -243,7 +243,7 @@ export function AiConfigForm({
                 />
               </label>
 
-              <div className="sm:self-end">
+              <div className="ai-config-action-slot">
                 <Button
                   disabled={disabled || isChecking}
                   onClick={() => void handleCheckConnection()}
@@ -251,13 +251,13 @@ export function AiConfigForm({
                   variant="secondary"
                 >
                   {isChecking ? <LoaderCircle className="size-4 animate-spin" /> : <PlugZap className="size-4" />}
-                  测试
+                  检查连接
                 </Button>
               </div>
             </div>
 
             {healthState ? (
-              <div className="space-y-2 rounded-[0.9rem] border border-[color:var(--line)] bg-[color:var(--paper-soft)] p-4">
+              <div className="ai-config-health">
                 <Badge tone={healthState.tone}>
                   {"result" in healthState
                     ? healthState.result.modelFound
@@ -265,22 +265,22 @@ export function AiConfigForm({
                       : "模型不可用"
                     : "连接失败"}
                 </Badge>
-                <p className="text-sm text-[color:var(--ink-soft)]">
+                <p className="ai-config-health-copy">
                   {"result" in healthState ? healthState.result.message : healthState.message}
                 </p>
               </div>
             ) : null}
           </div>
 
-          <details className="rounded-[1rem] border border-[color:var(--line)] bg-white/80 p-4">
-            <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-sm font-semibold text-[color:var(--ink-strong)]">
+          <details className="ai-config-advanced">
+            <summary className="ai-config-advanced-summary">
               <span>高级设置</span>
               <ChevronDown className="size-4" />
             </summary>
 
-            <div className="mt-4 grid gap-3">
+            <div className="ai-config-advanced-fields">
               <label className="field-shell">
-                <span className="field-label">Model</span>
+                <span className="field-label">模型名称</span>
                 <input
                   className="input-control"
                   disabled={disabled}
@@ -298,7 +298,7 @@ export function AiConfigForm({
               </label>
 
               <label className="field-shell">
-                <span className="field-label">Base URL</span>
+                <span className="field-label">接口地址</span>
                 <input
                   className="input-control"
                   disabled={disabled}
@@ -319,7 +319,7 @@ export function AiConfigForm({
           </details>
         </>
       ) : (
-        <div className="rounded-[1rem] border border-dashed border-[color:var(--line)] bg-[color:var(--paper-soft)] p-4 text-sm text-[color:var(--ink-soft)]">
+        <div className="ai-config-empty">
           当前无需配置。
         </div>
       )}

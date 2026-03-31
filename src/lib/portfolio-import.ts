@@ -1,8 +1,12 @@
 import { createEmptyResumeDocument, validateResumeDocument } from "@/lib/resume-document";
 import { canUseRemoteResumeAi, generateWebsiteImportPortfolio } from "@/lib/resume-ai";
 import { buildBasicsImportFieldSuggestions } from "@/lib/resume-import-review";
+import { assertSafeUrlImportTarget } from "@/lib/network-safety";
 import { createId, nowIso, stripHtml, textToHtml } from "@/lib/utils";
 import type { ResumeAiSettings, ResumeDocument, ResumeImportSnapshot } from "@/types/resume";
+
+const MAX_HTML_BYTES = 1_500_000;
+const FETCH_TIMEOUT_MS = 10_000;
 
 export interface PortfolioExperience {
   id: string;
@@ -159,20 +163,35 @@ function extractAnchors(html: string) {
 }
 
 async function fetchHtmlPage(url: string): Promise<ParsedHtmlPage> {
-  const response = await fetch(url, {
+  const safeUrl = assertSafeUrlImportTarget(url).toString();
+  const response = await fetch(safeUrl, {
     headers: { "User-Agent": "Mozilla/5.0 Resume-Studio-Importer" },
+    signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
   });
 
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}`);
   }
 
+  const contentType = response.headers.get("content-type") ?? "";
+  if (contentType && !/text\/html|application\/xhtml\+xml/i.test(contentType)) {
+    throw new Error("Only HTML pages can be imported from a URL.");
+  }
+
+  const contentLength = Number(response.headers.get("content-length") ?? "0");
+  if (contentLength > MAX_HTML_BYTES) {
+    throw new Error("The selected page is too large to import safely.");
+  }
+
   const html = await response.text();
+  if (Buffer.byteLength(html, "utf8") > MAX_HTML_BYTES) {
+    throw new Error("The selected page is too large to import safely.");
+  }
   const bodyMatch = html.match(/<body[^>]*>([\s\S]*?)<\/body>/i);
   const targetHtml = bodyMatch ? bodyMatch[1] : html;
 
   return {
-    url,
+    url: safeUrl,
     title: extractTitle(html),
     text: htmlToReadableText(targetHtml),
     anchors: extractAnchors(targetHtml),
@@ -242,7 +261,7 @@ function rankCandidateLinks(baseUrl: string, anchors: ParsedAnchor[]) {
 }
 
 async function crawlPortfolioSite(url: string, options: UrlImportOptions = {}) {
-  const normalizedUrl = new URL(url).toString();
+  const normalizedUrl = assertSafeUrlImportTarget(url).toString();
   const includeLinkedPages = options.includeLinkedPages ?? true;
   const maxPages = Math.min(Math.max(options.maxPages ?? 3, 1), 6);
   const rootPage = await fetchHtmlPage(normalizedUrl);

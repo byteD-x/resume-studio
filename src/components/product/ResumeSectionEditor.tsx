@@ -52,6 +52,8 @@ function ItemCard({
 }) {
   const metaSummary = [item.subtitle, item.dateRange, item.location].filter(Boolean).join(" · ");
   const summaryValue = htmlFieldToText(item.summaryHtml);
+  const itemLabel = item.title.trim() || "未命名条目";
+  const detailPanelId = `${item.id}-panel`;
   const assistPack = useMemo(
     () => buildItemAssistPack(sectionType, item, writerProfile),
     [item, sectionType, writerProfile],
@@ -60,6 +62,9 @@ function ItemCard({
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const usesRemoteProvider = document.ai.provider === "openai-compatible";
+  const targetingKeywordsKey = document.targeting.focusKeywords.join("|");
+  const itemBulletsKey = item.bulletPoints.join("|");
+  const itemTagsKey = item.tags.join("|");
   const combinedSuggestions =
     remoteSuggestions.length > 0 ? [...remoteSuggestions, ...assistPack.suggestions] : assistPack.suggestions;
 
@@ -72,14 +77,14 @@ function ItemCard({
     document.ai.baseUrl,
     document.targeting.role,
     document.targeting.jobDescription,
-    document.targeting.focusKeywords.join("|"),
+    targetingKeywordsKey,
     item.id,
     item.title,
     item.subtitle,
     item.meta,
     item.summaryHtml,
-    item.bulletPoints.join("|"),
-    item.tags.join("|"),
+    itemBulletsKey,
+    itemTagsKey,
   ]);
 
   async function handleGenerateRemoteAssist() {
@@ -118,25 +123,51 @@ function ItemCard({
       onFocusCapture={onActivate}
     >
       <div className="editor-item-head">
-        <button className="editor-item-summary" onClick={onToggle} type="button">
+        <button
+          aria-expanded={expanded}
+          aria-label={`${expanded ? "收起" : "展开"}${itemLabel}`}
+          className="editor-item-summary"
+          onClick={onToggle}
+          type="button"
+        >
           <span className="editor-item-grip" aria-hidden="true">
             <GripVertical className="size-4" />
           </span>
           <p className="editor-item-title">{item.title.trim() || "未命名"}</p>
-          <p className="editor-item-subtitle">{metaSummary || "补充信息"}</p>
+          <p className="editor-item-subtitle">{metaSummary || "待补充"}</p>
         </button>
 
         <div className="editor-item-actions">
-            <button className="icon-button" onClick={onCopy} title="复制条目内容" type="button">
+          <button
+            aria-label={`复制${itemLabel}的内容`}
+            className="icon-button"
+            onClick={onCopy}
+            title="复制条目内容"
+            type="button"
+          >
             <Copy className="size-4" />
           </button>
-            <button className="icon-button" onClick={onDuplicate} title="克隆条目" type="button">
+          <button
+            aria-label={`复制整个${itemLabel}`}
+            className="icon-button"
+            onClick={onDuplicate}
+            title="复制整个条目"
+            type="button"
+          >
             <Files className="size-4" />
           </button>
-          <button className="icon-button" disabled={index === 0} onClick={() => onMove("up")} title="上移" type="button">
+          <button
+            aria-label={`上移${itemLabel}`}
+            className="icon-button"
+            disabled={index === 0}
+            onClick={() => onMove("up")}
+            title="上移"
+            type="button"
+          >
             <ChevronUp className="size-4" />
           </button>
           <button
+            aria-label={`下移${itemLabel}`}
             className="icon-button"
             disabled={index === total - 1}
             onClick={() => onMove("down")}
@@ -145,15 +176,21 @@ function ItemCard({
           >
             <ChevronDown className="size-4" />
           </button>
-          <button className="icon-button" onClick={onDelete} title="删除条目" type="button">
+          <button
+            aria-label={`删除${itemLabel}`}
+            className="icon-button"
+            onClick={onDelete}
+            title="删除条目"
+            type="button"
+          >
             <Trash2 className="size-4" />
           </button>
         </div>
       </div>
 
       {expanded ? (
-        <>
-          <div className="editor-field-grid mt-5">
+        <div id={detailPanelId}>
+          <div className="editor-field-grid editor-item-primary-fields">
             <label className="field-shell">
               <span className="field-label">{sectionType === "education" ? "学校 / 机构" : "名称"}</span>
               <input
@@ -186,21 +223,6 @@ function ItemCard({
               />
             </label>
             <label className="field-shell">
-              <span className="field-label">地点</span>
-              <input
-                className="input-control"
-                onChange={(event) => onChange({ ...item, location: event.target.value })}
-                onPaste={(event) =>
-                  handleSanitizedPaste(event, {
-                    currentValue: item.location,
-                    mode: "single-line",
-                    onValueChange: (nextValue) => onChange({ ...item, location: nextValue }),
-                  })
-                }
-                value={item.location}
-              />
-            </label>
-            <label className="field-shell">
               <span className="field-label">时间范围</span>
               <input
                 className="input-control"
@@ -218,51 +240,72 @@ function ItemCard({
             </label>
           </div>
 
-          <label className="field-shell mt-4">
-            <span className="field-label">备注</span>
-            <input
-              className="input-control"
-              onChange={(event) => onChange({ ...item, meta: event.target.value })}
-              onPaste={(event) =>
-                handleSanitizedPaste(event, {
-                  currentValue: item.meta,
-                  mode: "single-line",
-                  onValueChange: (nextValue) => onChange({ ...item, meta: nextValue }),
-                })
-              }
-              placeholder="团队或技术栈"
-              value={item.meta}
-            />
-          </label>
+          <details className="editor-item-secondary">
+            <summary>补充信息</summary>
+            <div className="editor-item-secondary-fields">
+              <label className="field-shell">
+                <span className="field-label">地点</span>
+                <input
+                  className="input-control"
+                  onChange={(event) => onChange({ ...item, location: event.target.value })}
+                  onPaste={(event) =>
+                    handleSanitizedPaste(event, {
+                      currentValue: item.location,
+                      mode: "single-line",
+                      onValueChange: (nextValue) => onChange({ ...item, location: nextValue }),
+                    })
+                  }
+                  value={item.location}
+                />
+              </label>
 
-          <label className="field-shell mt-4">
-            <span className="field-label">说明</span>
-            <textarea
-              className="textarea-control min-h-28"
-              onChange={(event) =>
-                onChange({
-                  ...item,
-                  summaryHtml: toSummaryHtml(event.target.value),
-                })
-              }
-              onPaste={(event) =>
-                handleSanitizedPaste(event, {
-                  currentValue: summaryValue,
-                  mode: "multiline",
-                  onValueChange: (nextValue) =>
+              <label className="field-shell">
+                <span className="field-label">备注</span>
+                <input
+                  className="input-control"
+                  onChange={(event) => onChange({ ...item, meta: event.target.value })}
+                  onPaste={(event) =>
+                    handleSanitizedPaste(event, {
+                      currentValue: item.meta,
+                      mode: "single-line",
+                      onValueChange: (nextValue) => onChange({ ...item, meta: nextValue }),
+                    })
+                  }
+                  placeholder="团队或技术栈"
+                  value={item.meta}
+                />
+              </label>
+
+              <label className="field-shell field-shell-full">
+                <span className="field-label">说明</span>
+                <textarea
+                  className="textarea-control min-h-28"
+                  onChange={(event) =>
                     onChange({
                       ...item,
-                      summaryHtml: toSummaryHtml(nextValue),
-                    }),
-                })
-              }
-              placeholder="补充职责或结果"
-              value={summaryValue}
-            />
-          </label>
+                      summaryHtml: toSummaryHtml(event.target.value),
+                    })
+                  }
+                  onPaste={(event) =>
+                    handleSanitizedPaste(event, {
+                      currentValue: summaryValue,
+                      mode: "multiline",
+                      onValueChange: (nextValue) =>
+                        onChange({
+                          ...item,
+                          summaryHtml: toSummaryHtml(nextValue),
+                        }),
+                    })
+                  }
+                  placeholder="补充职责或结果"
+                  value={summaryValue}
+                />
+              </label>
+            </div>
+          </details>
 
           {sectionType === "skills" ? (
-            <label className="field-shell mt-4">
+            <label className="field-shell editor-item-block">
               <span className="field-label">技能</span>
               <textarea
                 className="textarea-control min-h-24"
@@ -294,7 +337,7 @@ function ItemCard({
               />
             </label>
           ) : (
-            <label className="field-shell mt-4">
+            <label className="field-shell editor-item-block">
               <span className="field-label">要点</span>
               <textarea
                 className="textarea-control min-h-32"
@@ -329,6 +372,21 @@ function ItemCard({
 
           <ResumeAssistPanel
             description=""
+            getCurrentValue={(suggestion) => {
+              if (suggestion.target === "summary") {
+                return htmlFieldToText(item.summaryHtml);
+              }
+
+              if (suggestion.target === "bullets") {
+                return item.bulletPoints;
+              }
+
+              if (suggestion.target === "tags") {
+                return item.tags;
+              }
+
+              return null;
+            }}
             issues={assistPack.issues}
             onGenerateRemote={() => void handleGenerateRemoteAssist()}
             onApply={(suggestion) => {
@@ -355,13 +413,13 @@ function ItemCard({
             }}
             remoteDisabled={!usesRemoteProvider || remoteLoading}
             remoteError={remoteError}
-            remoteHint={usesRemoteProvider ? "\u7ed3\u5408\u5f53\u524d\u6761\u76ee\u751f\u6210\u3002" : "\u5148\u914d\u7f6e AI \u6a21\u578b\u3002"}
+            remoteHint={usesRemoteProvider ? "结合当前条目生成。" : "先配置 AI 模型。"}
             remoteLoading={remoteLoading}
-            remoteLabel={sectionType === "skills" ? "生成远程技能整理" : "生成远程写作建议"}
+            remoteLabel={sectionType === "skills" ? "生成技能建议" : "生成写作建议"}
             suggestions={combinedSuggestions}
-            title={sectionType === "skills" ? "AI 技能整理助手" : "AI 经历写作助手"}
+            title={sectionType === "skills" ? "技能建议" : "写作建议"}
           />
-        </>
+        </div>
       ) : null}
     </article>
   );
@@ -424,14 +482,14 @@ export function ResumeSectionEditor({
           </button>
           <button className="btn btn-secondary" onClick={() => onAddItem()} type="button">
             <Plus className="size-4" />
-            添加条目
+            新建条目
           </button>
         </div>
       </div>
 
       <div className="resume-editor-group resume-editor-group-compact">
         <div className="resume-editor-group-head">
-          <h3>设置</h3>
+          <h3>区块设置</h3>
         </div>
         <div className="resume-editor-field-grid">
           <label className="field-shell">
@@ -450,23 +508,23 @@ export function ResumeSectionEditor({
             />
           </label>
           <label className="field-shell">
-            <span className="field-label">补充说明</span>
-            <input
-              className="input-control"
+            <span className="field-label">区块说明</span>
+            <textarea
+              className="textarea-control min-h-28"
               onChange={(event) =>
                 onChange({
                   ...section,
-                  contentHtml: event.target.value.trim() ? `<p>${event.target.value.trim()}</p>` : "",
+                  contentHtml: toSummaryHtml(event.target.value),
                 })
               }
               onPaste={(event) =>
                 handleSanitizedPaste(event, {
                   currentValue: htmlFieldToText(section.contentHtml),
-                  mode: "single-line",
+                  mode: "multiline",
                   onValueChange: (nextValue) =>
                     onChange({
                       ...section,
-                      contentHtml: nextValue.trim() ? `<p>${nextValue.trim()}</p>` : "",
+                      contentHtml: toSummaryHtml(nextValue),
                     }),
                 })
               }
@@ -482,7 +540,7 @@ export function ResumeSectionEditor({
           <h3>{section.type === "skills" ? "技能分组" : "条目"}</h3>
         </div>
 
-        <div className="space-y-4">
+        <div className="editor-item-stack">
           {section.items.length > 0 ? (
             section.items.map((item, index) => (
               <ItemCard
@@ -525,11 +583,11 @@ export function ResumeSectionEditor({
           ) : (
             <div className="empty-surface empty-surface-left">
               <p className="empty-surface-title">{definition.emptyState}</p>
-              <p className="empty-surface-text">添加后显示。</p>
-              <div className="mt-4">
+              <p className="empty-surface-text">新建后即可开始编辑。</p>
+              <div className="empty-surface-actions">
                 <button className="btn btn-secondary" onClick={() => onAddItem()} type="button">
                   <Plus className="size-4" />
-                  添加条目
+                  新建条目
                 </button>
               </div>
             </div>

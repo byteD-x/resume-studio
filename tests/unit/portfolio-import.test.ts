@@ -70,7 +70,10 @@ describe("portfolio import", () => {
           return new Response("missing", { status: 404 });
         }
 
-        return new Response(html, { status: 200 });
+        return new Response(html, {
+          status: 200,
+          headers: { "Content-Type": "text/html; charset=utf-8" },
+        });
       }),
     );
 
@@ -130,7 +133,10 @@ describe("portfolio import", () => {
 
         if (url === "https://portfolio-ai.test/" || url === "https://portfolio-ai.test/projects") {
           const html = pages.get(url);
-          return new Response(html, { status: 200 });
+          return new Response(html, {
+            status: 200,
+            headers: { "Content-Type": "text/html; charset=utf-8" },
+          });
         }
 
         if (url === "http://127.0.0.1:11434/v1/chat/completions") {
@@ -198,5 +204,15 @@ describe("portfolio import", () => {
     expect(result.document.ai.model).toBe("qwen3:4b");
     expect(result.document.basics.location).toBe("Shanghai");
     expect(result.document.sections.find((section) => section.type === "skills")?.items[0]?.tags).toContain("React");
+  });
+
+  it("rejects private-network URL imports by default", async () => {
+    await expect(
+      importPortfolioToResume({
+        source: "url",
+        payload: "http://127.0.0.1:3000",
+        resumeId: "private-url",
+      }),
+    ).rejects.toThrow("public http(s) host");
   });
 });

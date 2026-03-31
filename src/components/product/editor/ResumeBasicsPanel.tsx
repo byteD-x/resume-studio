@@ -8,12 +8,14 @@ import { buildBasicsAssistPack } from "@/lib/resume-assistant";
 import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
 import type { ResumeDocument } from "@/types/resume";
 
+type BasicsTextField = "name" | "headline" | "location" | "website" | "email" | "phone" | "summaryHtml" | "links";
+
 export function ResumeBasicsPanel({
   document,
   onBasicsChange,
 }: {
   document: ResumeDocument;
-  onBasicsChange: (field: keyof ResumeDocument["basics"], value: string) => void;
+  onBasicsChange: (field: BasicsTextField, value: string) => void;
 }) {
   const linksValue = document.basics.links.map((link) => `${link.label} ${link.url}`).join("\n");
   const assistPack = useMemo(() => buildBasicsAssistPack(document), [document]);
@@ -21,6 +23,7 @@ export function ResumeBasicsPanel({
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const usesRemoteProvider = document.ai.provider === "openai-compatible";
+  const targetingKeywordsKey = document.targeting.focusKeywords.join("|");
   const combinedSuggestions =
     remoteSuggestions.length > 0 ? [...remoteSuggestions, ...assistPack.suggestions] : assistPack.suggestions;
 
@@ -36,7 +39,7 @@ export function ResumeBasicsPanel({
     document.targeting.role,
     document.targeting.company,
     document.targeting.jobDescription,
-    document.targeting.focusKeywords.join("|"),
+    targetingKeywordsKey,
   ]);
 
   async function handleGenerateRemoteAssist() {
@@ -72,14 +75,14 @@ export function ResumeBasicsPanel({
       <div className="resume-editor-panel-head">
         <div>
           <p className="resume-editor-panel-kicker">基本信息</p>
-          <h2 className="resume-editor-panel-title">填写基本信息</h2>
+          <h2 className="resume-editor-panel-title">抬头信息</h2>
         </div>
       </div>
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>身份信息</h3>
-          <p>姓名、定位、城市与站点。</p>
+          <p>姓名、定位与城市。</p>
         </div>
         <div className="resume-editor-field-grid">
           {[
@@ -103,12 +106,12 @@ export function ResumeBasicsPanel({
                 className="input-control"
                 inputMode={field === "website" ? "url" : "text"}
                 name={field}
-                onChange={(event) => onBasicsChange(field as keyof ResumeDocument["basics"], event.target.value)}
+                onChange={(event) => onBasicsChange(field as BasicsTextField, event.target.value)}
                 onPaste={(event) =>
                   handleSanitizedPaste(event, {
                     currentValue: (document.basics[field as keyof ResumeDocument["basics"]] as string) ?? "",
                     mode: "single-line",
-                    onValueChange: (nextValue) => onBasicsChange(field as keyof ResumeDocument["basics"], nextValue),
+                    onValueChange: (nextValue) => onBasicsChange(field as BasicsTextField, nextValue),
                   })
                 }
                 placeholder={placeholder}
@@ -124,7 +127,7 @@ export function ResumeBasicsPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>联系方式</h3>
-          <p>至少保留两种联系方式。</p>
+          <p>保留常用联系渠道。</p>
         </div>
         <div className="resume-editor-field-grid">
           {[
@@ -138,12 +141,12 @@ export function ResumeBasicsPanel({
                 className="input-control"
                 inputMode={field === "email" ? "email" : "tel"}
                 name={field}
-                onChange={(event) => onBasicsChange(field as keyof ResumeDocument["basics"], event.target.value)}
+                onChange={(event) => onBasicsChange(field as BasicsTextField, event.target.value)}
                 onPaste={(event) =>
                   handleSanitizedPaste(event, {
                     currentValue: (document.basics[field as keyof ResumeDocument["basics"]] as string) ?? "",
                     mode: "single-line",
-                    onValueChange: (nextValue) => onBasicsChange(field as keyof ResumeDocument["basics"], nextValue),
+                    onValueChange: (nextValue) => onBasicsChange(field as BasicsTextField, nextValue),
                   })
                 }
                 placeholder={placeholder}
@@ -159,7 +162,7 @@ export function ResumeBasicsPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>职业摘要</h3>
-          <p>用 2 到 3 句写方向、优势和结果。</p>
+          <p>用两三句话概括方向、优势和结果。</p>
         </div>
         <label className="field-shell">
           <span className="field-label">职业摘要</span>
@@ -182,6 +185,7 @@ export function ResumeBasicsPanel({
 
         <ResumeAssistPanel
           description=""
+          getCurrentValue={() => document.basics.summaryHtml.replace(/<[^>]+>/g, "\n").replace(/\n+/g, "\n").trim()}
           issues={assistPack.issues}
           onApply={(suggestion) => {
             if (typeof suggestion.nextValue === "string") {
@@ -191,18 +195,18 @@ export function ResumeBasicsPanel({
           onGenerateRemote={() => void handleGenerateRemoteAssist()}
           remoteDisabled={!usesRemoteProvider || remoteLoading}
           remoteError={remoteError}
-          remoteHint={usesRemoteProvider ? "使用当前配置。" : "先配置 AI 模型。"}
-          remoteLabel="生成远程摘要"
+          remoteHint={usesRemoteProvider ? "使用当前配置生成。" : "先配置 AI 模型。"}
+          remoteLabel="生成摘要"
           remoteLoading={remoteLoading}
           suggestions={combinedSuggestions}
-          title="AI 摘要助手"
+          title="摘要建议"
         />
       </div>
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>附加链接</h3>
-          <p>补充 GitHub、作品集或博客。</p>
+          <p>只保留最能证明能力的链接。</p>
         </div>
         <label className="field-shell">
           <span className="field-label">链接</span>

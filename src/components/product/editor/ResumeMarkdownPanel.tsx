@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef } from "react";
+import { useId, useRef } from "react";
 import { Bold, Code2, Eraser, Heading2, Link2, List, Quote, RotateCcw, Table2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -35,6 +35,7 @@ export function ResumeMarkdownPanel({
   onInsertStarter: () => void;
   onClear: () => void;
 }) {
+  const noteId = useId();
   const textareaRef = useRef<HTMLTextAreaElement | null>(null);
   const gutterRef = useRef<HTMLDivElement | null>(null);
   const lineCount = countLines(value);
@@ -87,8 +88,8 @@ export function ResumeMarkdownPanel({
       <div className="resume-editor-panel-head">
         <div>
           <p className="resume-editor-panel-kicker">Markdown</p>
-          <h2 className="resume-editor-panel-title">源码</h2>
-          <p className="resume-editor-panel-copy">直接编辑 Markdown。</p>
+          <h2 className="resume-editor-panel-title">Markdown 源码</h2>
+          <p className="resume-editor-panel-copy">直接编辑 Markdown 内容。</p>
         </div>
 
         <div className="resume-editor-panel-actions">
@@ -105,11 +106,11 @@ export function ResumeMarkdownPanel({
 
       <div className="resume-editor-source-banner">
         <div>
-          <strong>源码</strong>
-          <p>支持常用 Markdown。</p>
+          <strong>编写提示</strong>
+          <p>支持常用 Markdown 语法。</p>
         </div>
         <Badge tone={parseError ? "warning" : "success"}>
-          {parseError ? "有错误" : "可用"}
+          {parseError ? "需修正" : "可解析"}
         </Badge>
       </div>
 
@@ -186,6 +187,9 @@ export function ResumeMarkdownPanel({
           ))}
         </div>
         <textarea
+          aria-describedby={noteId}
+          aria-invalid={Boolean(parseError)}
+          aria-label="Markdown 源码"
           className="resume-editor-source-input"
           onChange={(event) => onChange(event.target.value)}
           onKeyDown={(event) => {
@@ -247,12 +251,12 @@ export function ResumeMarkdownPanel({
         <div className="resume-editor-source-stats">
           <Badge tone="neutral">{lineCount} 行</Badge>
           <Badge tone="neutral">{charCount} 字</Badge>
-          <Badge tone="accent">预览</Badge>
+          <Badge tone="accent">实时预览</Badge>
         </div>
-        <p className={`resume-editor-source-note ${parseError ? "resume-editor-source-note-error" : ""}`}>
+        <p className={`resume-editor-source-note ${parseError ? "resume-editor-source-note-error" : ""}`} id={noteId}>
           {parseError
             ? parseError
-            : "切回表单后继续使用当前内容。"}
+            : "切回表单后会保留当前内容。"}
         </p>
       </div>
     </section>

@@ -6,9 +6,14 @@ import {
   type ResumeTemplate,
   type ResumeWriterProfile,
 } from "@/types/resume";
+import {
+  getTemplateCatalogItem,
+  getTemplateStarterSeed,
+  templateCatalog,
+} from "@/data/template-catalog";
 import { createId, nowIso } from "@/lib/utils";
 
-export type ResumeStarterPreset = "blank" | "guided";
+export type ResumeStarterPreset = "blank" | "guided" | "template-sample";
 
 export const resumeWriterProfileMeta: Record<
   ResumeWriterProfile,
@@ -58,32 +63,14 @@ export const resumeWriterProfileMeta: Record<
   },
 };
 
-export const resumeTemplateLayoutPresets: Record<
-  ResumeTemplate,
-  ResumeDocument["layout"]
-> = {
-  "modern-two-column": {
-    accentColor: "#3559b7",
-    bodyFont: "Aptos",
-    headingFont: "Iowan Old Style",
-    marginsMm: 14,
-    lineHeight: 1.45,
-    paragraphGapMm: 3,
-    pageSize: "A4",
-  },
-  "classic-single-column": {
-    accentColor: "#7b4b32",
-    bodyFont: "Georgia",
-    headingFont: "Times New Roman",
-    marginsMm: 16,
-    lineHeight: 1.5,
-    paragraphGapMm: 2.5,
-    pageSize: "A4",
-  },
-};
+export const resumeTemplateLayoutPresets = Object.fromEntries(
+  templateCatalog.map((template) => [template.id, template.layoutPreset]),
+) as Record<ResumeTemplate, ResumeDocument["layout"]>;
 
 export function getResumeTemplateLayoutPreset(template: ResumeTemplate) {
-  return resumeTemplateLayoutPresets[template];
+  return {
+    ...resumeTemplateLayoutPresets[template],
+  };
 }
 
 function createStarterSection(input: Partial<ResumeSection> & Pick<ResumeSection, "type" | "title">) {
@@ -141,14 +128,15 @@ function createGuidedSections(writerProfile: ResumeWriterProfile) {
   return createBlankSections(writerProfile);
 }
 
-export function createEmptyResumeDocument(
-  id = "default",
-  title = "未命名简历",
-  options: { writerProfile?: ResumeWriterProfile; template?: ResumeTemplate } = {},
+function createBaseResumeDocument(
+  id: string,
+  title: string,
+  writerProfile: ResumeWriterProfile,
+  template: ResumeTemplate,
 ) {
-  const writerProfile = options.writerProfile ?? "experienced";
-  const template = options.template ?? "modern-two-column";
-  const document: ResumeDocument = {
+  const templateDefinition = getTemplateCatalogItem(template);
+
+  return {
     meta: {
       id,
       title,
@@ -156,19 +144,9 @@ export function createEmptyResumeDocument(
       locale: "zh-CN",
       writerProfile,
       template,
-      workflowState: "drafting",
+      workflowState: "drafting" as const,
       updatedAt: nowIso(),
-      sourceRefs: [`writer-profile:${writerProfile}`],
-    },
-    basics: {
-      name: "",
-      headline: "",
-      location: "",
-      email: "",
-      phone: "",
-      website: "",
-      summaryHtml: "",
-      links: [],
+      sourceRefs: [`writer-profile:${writerProfile}`, `template:${templateDefinition.id}`],
     },
     targeting: {
       role: "",
@@ -179,12 +157,11 @@ export function createEmptyResumeDocument(
       notes: "",
     },
     ai: {
-      provider: "openai-compatible",
+      provider: "openai-compatible" as const,
       model: "qwen/qwen3-32b",
       baseUrl: "https://api.groq.com/openai/v1",
     },
     layout: getResumeTemplateLayoutPreset(template),
-    sections: createBlankSections(writerProfile),
     importTrace: {
       portfolioImportedAt: "",
       pdfImportedAt: "",
@@ -200,6 +177,40 @@ export function createEmptyResumeDocument(
         reviewedUnmappedItems: [],
       },
     },
+  };
+}
+
+export function createEmptyResumeDocument(
+  id = "default",
+  title = "未命名简历",
+  options: { writerProfile?: ResumeWriterProfile; template?: ResumeTemplate } = {},
+) {
+  const writerProfile = options.writerProfile ?? "experienced";
+  const template = options.template ?? "aurora-grid";
+  const base = createBaseResumeDocument(id, title, writerProfile, template);
+  const document: ResumeDocument = {
+    meta: base.meta,
+    basics: {
+      name: "",
+      headline: "",
+      location: "",
+      email: "",
+      phone: "",
+      website: "",
+      summaryHtml: "",
+      links: [],
+      photoUrl: "",
+      photoAlt: "",
+      photoVisible: false,
+      photoShape: "rounded",
+      photoPosition: "top-right",
+      photoSizeMm: 28,
+    },
+    targeting: base.targeting,
+    ai: base.ai,
+    layout: base.layout,
+    sections: createBlankSections(writerProfile),
+    importTrace: base.importTrace,
   };
 
   return resumeDocumentSchema.parse(document);
@@ -225,6 +236,38 @@ export function createGuidedResumeDocument(
       ),
     },
     sections: createGuidedSections(writerProfile),
+  });
+}
+
+export function createTemplateStarterDocument(
+  id = "default",
+  title = "未命名简历",
+  writerProfile: ResumeWriterProfile = "experienced",
+  template: ResumeTemplate = "aurora-grid",
+) {
+  const base = createBaseResumeDocument(id, title, writerProfile, template);
+  const seed = getTemplateStarterSeed(template, writerProfile);
+
+  return resumeDocumentSchema.parse({
+    ...base,
+    basics: {
+      ...seed.basics,
+      links: seed.basics.links.map((link) => ({ ...link })),
+    },
+    sections: seed.sections.map((section) => ({
+      ...section,
+      items: section.items.map((item) => ({
+        ...item,
+        bulletPoints: [...item.bulletPoints],
+        tags: [...item.tags],
+      })),
+    })),
+    meta: {
+      ...base.meta,
+      sourceRefs: Array.from(
+        new Set([...base.meta.sourceRefs, "starter:template-sample"]),
+      ),
+    },
   });
 }
 

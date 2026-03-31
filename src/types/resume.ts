@@ -2,10 +2,32 @@ import { z } from "zod";
 
 export const CURRENT_RESUME_SCHEMA_VERSION = 1;
 
-export const resumeTemplateSchema = z.enum([
-  "classic-single-column",
-  "modern-two-column",
-]);
+export const resumeTemplateValues = [
+  "aurora-grid",
+  "campus-line",
+  "portfolio-brief",
+  "engineer-pro",
+] as const;
+
+const legacyResumeTemplateMap = {
+  "modern-two-column": "aurora-grid",
+  "classic-single-column": "portfolio-brief",
+} as const;
+
+export function normalizeResumeTemplateValue(value: unknown) {
+  if (typeof value !== "string") return undefined;
+
+  if ((resumeTemplateValues as readonly string[]).includes(value)) {
+    return value as (typeof resumeTemplateValues)[number];
+  }
+
+  return legacyResumeTemplateMap[value as keyof typeof legacyResumeTemplateMap];
+}
+
+export const resumeTemplateSchema = z.preprocess(
+  (value) => normalizeResumeTemplateValue(value) ?? value,
+  z.enum(resumeTemplateValues),
+);
 
 export const resumeWriterProfileSchema = z.enum([
   "campus",
@@ -35,6 +57,18 @@ export const resumeLinkSchema = z.object({
   label: z.string().trim().min(1),
   url: z.string().trim().min(1),
 });
+
+export const resumePhotoShapeSchema = z.enum([
+  "square",
+  "rounded",
+  "circle",
+]);
+
+export const resumePhotoPositionSchema = z.enum([
+  "top-left",
+  "top-right",
+  "sidebar",
+]);
 
 export const resumeTargetingSchema = z.object({
   role: z.string().default(""),
@@ -120,7 +154,7 @@ export const resumeDocumentSchema = z.object({
     schemaVersion: z.number().int().min(1).default(CURRENT_RESUME_SCHEMA_VERSION),
     locale: z.string().default("zh-CN"),
     writerProfile: resumeWriterProfileSchema.default("experienced"),
-    template: resumeTemplateSchema.default("modern-two-column"),
+    template: resumeTemplateSchema.default("aurora-grid"),
     workflowState: resumeWorkflowStateSchema.default("drafting"),
     updatedAt: z.string(),
     sourceRefs: z.array(z.string()).default([]),
@@ -134,6 +168,12 @@ export const resumeDocumentSchema = z.object({
     website: z.string().default(""),
     summaryHtml: z.string().default(""),
     links: z.array(resumeLinkSchema).default([]),
+    photoUrl: z.string().default(""),
+    photoAlt: z.string().default(""),
+    photoVisible: z.boolean().default(false),
+    photoShape: resumePhotoShapeSchema.default("rounded"),
+    photoPosition: resumePhotoPositionSchema.default("top-right"),
+    photoSizeMm: z.number().min(18).max(60).default(28),
   }),
   targeting: resumeTargetingSchema.default({
     role: "",
@@ -152,9 +192,31 @@ export const resumeDocumentSchema = z.object({
     accentColor: z.string().default("#3559b7"),
     bodyFont: z.string().default("Aptos"),
     headingFont: z.string().default("Iowan Old Style"),
+    customCss: z.string().default(""),
+    pageBackground: z.string().default("#f3ede4"),
+    paperColor: z.string().default("#fffdf8"),
+    textColor: z.string().default("#182132"),
+    mutedTextColor: z.string().default("#49556a"),
+    dividerColor: z.string().default("rgba(24, 33, 50, 0.15)"),
+    linkColor: z.string().default("#3559b7"),
     marginsMm: z.number().min(8).max(24).default(14),
     lineHeight: z.number().min(1.1).max(2).default(1.45),
     paragraphGapMm: z.number().min(1).max(8).default(3),
+    bodyFontSizePt: z.number().min(8).max(14).default(9.7),
+    sectionTitleSizePt: z.number().min(9).max(18).default(11),
+    itemTitleSizePt: z.number().min(9).max(16).default(11),
+    metaFontSizePt: z.number().min(7).max(12).default(9),
+    nameSizePt: z.number().min(18).max(32).default(24),
+    headlineSizePt: z.number().min(9).max(16).default(11),
+    sectionGapMm: z.number().min(2).max(14).default(6),
+    itemGapMm: z.number().min(1).max(10).default(5),
+    columnGapMm: z.number().min(0).max(16).default(10),
+    listGapMm: z.number().min(0).max(4).default(0.8),
+    headerAlign: z.enum(["left", "center"]).default("left"),
+    sectionTitleAlign: z.enum(["left", "center"]).default("left"),
+    sectionTitleStyle: z.enum(["line", "filled", "minimal"]).default("line"),
+    pageShadowVisible: z.boolean().default(true),
+    showSectionDividers: z.boolean().default(true),
     pageSize: z.literal("A4").default("A4"),
   }),
   sections: z.array(resumeSectionSchema).default([]),
@@ -189,3 +251,5 @@ export type ResumeImportSnapshot = z.infer<typeof resumeImportSnapshotSchema>;
 export type ResumeImportField = z.infer<typeof resumeImportFieldSchema>;
 export type ResumeImportFieldSuggestion = z.infer<typeof resumeImportFieldSuggestionSchema>;
 export type ResumeImportReviewState = z.infer<typeof resumeImportReviewStateSchema>;
+export type ResumePhotoShape = z.infer<typeof resumePhotoShapeSchema>;
+export type ResumePhotoPosition = z.infer<typeof resumePhotoPositionSchema>;

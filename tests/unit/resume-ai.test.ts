@@ -21,7 +21,7 @@ function createConfiguredDocument() {
   const document = createGuidedResumeDocument("ai", "AI Resume");
   document.ai.provider = "openai-compatible";
   document.ai.model = "gpt-4.1-mini";
-  document.ai.baseUrl = "https://example.com/v1";
+  document.ai.baseUrl = "https://api.groq.com/openai/v1";
   document.basics.headline = "Staff Frontend Engineer";
   document.targeting.role = "Staff Frontend Engineer";
   document.targeting.focusKeywords = ["React", "Next.js"];
@@ -80,7 +80,7 @@ describe("resume ai", () => {
 
     expect(summary).toContain("聚焦前端平台");
     expect(global.fetch).toHaveBeenCalledWith(
-      "https://example.com/v1/chat/completions",
+      "https://api.groq.com/openai/v1/chat/completions",
       expect.objectContaining({
         method: "POST",
         headers: expect.objectContaining({
@@ -260,5 +260,13 @@ describe("resume ai", () => {
     expect(result.modelFound).toBe(false);
     expect(result.availableModels).toEqual(["qwen3:4b", "qwen3:8b"]);
     expect(result.message).toContain("not installed");
+  });
+
+  it("rejects untrusted public AI hosts", () => {
+    const document = createConfiguredDocument();
+    document.ai.baseUrl = "https://untrusted.example.com/v1";
+
+    expect(canUseRemoteResumeAi(document.ai)).toBe(false);
+    expect(getRemoteResumeAiConfigError(document.ai)).toContain("allowlist");
   });
 });

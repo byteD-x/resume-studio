@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   createEmptyResumeDocument,
   createGuidedResumeDocument,
+  createTemplateStarterDocument,
   getResumeTemplateLayoutPreset,
   resumeWriterProfileMeta,
   validateResumeDocument,
 } from "@/lib/resume-document";
+import { buildResumeQualityReport } from "@/lib/resume-quality";
 import { buildResumePreviewHtml } from "@/lib/resume-preview";
 
 describe("resume document", () => {
@@ -15,6 +17,7 @@ describe("resume document", () => {
     expect(document.meta.id).toBe("default");
     expect(document.meta.schemaVersion).toBe(1);
     expect(document.meta.writerProfile).toBe("experienced");
+    expect(document.meta.template).toBe("aurora-grid");
     expect(document.meta.workflowState).toBe("drafting");
     expect(document.basics.summaryHtml).toBe("");
     expect(document.targeting.focusKeywords).toEqual([]);
@@ -26,7 +29,7 @@ describe("resume document", () => {
 
     const html = buildResumePreviewHtml(document);
 
-    expect(html).toContain("开始填写");
+    expect(html).toContain("从这里开始");
     expect(html).not.toContain("Primary Resume</h1>");
     expect(html).not.toContain("自我评价");
   });
@@ -44,8 +47,9 @@ describe("resume document", () => {
   });
 
   it("renders different preview layouts for each template", () => {
-    const modernDocument = createEmptyResumeDocument("modern", "现代模板");
-    modernDocument.meta.template = "modern-two-column";
+    const modernDocument = createEmptyResumeDocument("modern", "现代模板", {
+      template: "aurora-grid",
+    });
     modernDocument.basics.name = "Jane Doe";
     modernDocument.basics.headline = "Product Designer";
     modernDocument.basics.summaryHtml = "<p>Focused on clear product narratives.</p>";
@@ -63,8 +67,9 @@ describe("resume document", () => {
       },
     ];
 
-    const classicDocument = createEmptyResumeDocument("classic", "经典模板");
-    classicDocument.meta.template = "classic-single-column";
+    const classicDocument = createEmptyResumeDocument("classic", "经典模板", {
+      template: "portfolio-brief",
+    });
     classicDocument.basics.name = "Jane Doe";
     classicDocument.basics.headline = "Product Designer";
     classicDocument.basics.summaryHtml = "<p>Focused on clear product narratives.</p>";
@@ -85,9 +90,9 @@ describe("resume document", () => {
     const modernHtml = buildResumePreviewHtml(modernDocument);
     const classicHtml = buildResumePreviewHtml(classicDocument);
 
-    expect(modernHtml).toContain("template-modern-two-column");
+    expect(modernHtml).toContain("template-aurora-grid");
     expect(modernHtml).toContain('<aside class="column sidebar-column">');
-    expect(classicHtml).toContain("template-classic-single-column");
+    expect(classicHtml).toContain("template-portfolio-brief");
     expect(classicHtml).not.toContain('<aside class="column sidebar-column">');
   });
 
@@ -200,6 +205,22 @@ describe("resume document", () => {
     expect(document.sections.every((section) => section.items.length === 0)).toBe(true);
   });
 
+  it("creates template starter documents with complete sample content", () => {
+    const document = createTemplateStarterDocument(
+      "starter-template",
+      "模板示例",
+      "experienced",
+      "engineer-pro",
+    );
+    const report = buildResumeQualityReport(document);
+
+    expect(document.meta.template).toBe("engineer-pro");
+    expect(document.meta.sourceRefs).toContain("starter:template-sample");
+    expect(document.basics.name).not.toBe("");
+    expect(document.sections.some((section) => section.items.length > 0)).toBe(true);
+    expect(report.blockingIssues).toHaveLength(0);
+  });
+
   it("builds different guided starters for each writer profile", () => {
     const campus = createGuidedResumeDocument("campus", "校招简历", "campus");
     const switcher = createGuidedResumeDocument("switcher", "转岗简历", "career-switch");
@@ -213,8 +234,8 @@ describe("resume document", () => {
   });
 
   it("exposes distinct layout presets for each template", () => {
-    const modernPreset = getResumeTemplateLayoutPreset("modern-two-column");
-    const classicPreset = getResumeTemplateLayoutPreset("classic-single-column");
+    const modernPreset = getResumeTemplateLayoutPreset("aurora-grid");
+    const classicPreset = getResumeTemplateLayoutPreset("portfolio-brief");
 
     expect(modernPreset.bodyFont).not.toBe(classicPreset.bodyFont);
     expect(modernPreset.headingFont).not.toBe(classicPreset.headingFont);
@@ -259,7 +280,7 @@ describe("resume document", () => {
         focusKeywords: [],
         notes: "",
       },
-      layout: getResumeTemplateLayoutPreset("modern-two-column"),
+      layout: getResumeTemplateLayoutPreset("aurora-grid"),
       sections: [],
       importTrace: {
         portfolioImportedAt: "",
@@ -271,5 +292,6 @@ describe("resume document", () => {
 
     expect(legacy.meta.schemaVersion).toBe(1);
     expect(legacy.meta.writerProfile).toBe("experienced");
+    expect(legacy.meta.template).toBe("aurora-grid");
   });
 });

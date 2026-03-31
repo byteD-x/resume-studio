@@ -29,9 +29,9 @@ export async function POST(request: NextRequest) {
   const { createId } = await import("@/lib/utils");
   const resumeId = body.resumeId?.trim() || createId("doc");
   const existingDocument = await ensureResumeDocument(resumeId, "简历草稿");
-  const aiSettings = body.aiSettings ? resumeAiSettingsSchema.parse(body.aiSettings) : undefined;
 
   try {
+    const aiSettings = body.aiSettings ? resumeAiSettingsSchema.parse(body.aiSettings) : undefined;
     const result = await importPortfolioToResume({
       existingDocument,
       source: body.source,
@@ -47,10 +47,9 @@ export async function POST(request: NextRequest) {
 
     return Response.json({ document, sourcePath: result.sourcePath, urlSummary: result.urlSummary });
   } catch (error) {
-    console.error("Portfolio Import Error:", error);
     return Response.json(
       { error: error instanceof Error ? error.message : "导入处理失败" },
-      { status: 500 }
+      { status: 400 },
     );
   }
 }

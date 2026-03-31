@@ -51,6 +51,10 @@ function itemToMarkdown(item: ResumeSectionItem) {
 }
 
 export function serializeResumeToMarkdown(document: ResumeDocument) {
+  const summaryValue = normalizeMarkdown(htmlToMarkdown(document.basics.summaryHtml));
+  const visibleSections = document.sections.filter(
+    (section) => section.visible && section.type !== "summary",
+  );
   const lines = [
     `# ${document.basics.name || document.meta.title}`,
     document.basics.headline ? `> ${document.basics.headline}` : "",
@@ -61,9 +65,9 @@ export function serializeResumeToMarkdown(document: ResumeDocument) {
     ...document.basics.links.map((link) => `- Link: ${link.label} | ${link.url}`),
     "",
     "## Summary [summary]",
-    normalizeMarkdown(htmlToMarkdown(document.basics.summaryHtml)),
+    summaryValue,
     "",
-    ...document.sections.filter((section) => section.visible).map(sectionToMarkdown),
+    ...visibleSections.map(sectionToMarkdown),
   ];
 
   return lines.filter((line, index, array) => {

@@ -4,6 +4,8 @@ import { buildBasicsImportFieldSuggestions } from "@/lib/resume-import-review";
 import { createId, nowIso, textToHtml } from "@/lib/utils";
 import type { ResumeDocument, ResumeSection, ResumeSectionItem } from "@/types/resume";
 
+const MAX_PDF_IMPORT_PAGES = 20;
+
 export interface RawPdfLine {
   page: number;
   text: string;
@@ -1197,6 +1199,9 @@ export async function importPdfToResume(
   } = {},
 ) {
   const pdf = await getDocument({ data: new Uint8Array(buffer) }).promise;
+  if (pdf.numPages > MAX_PDF_IMPORT_PAGES) {
+    throw new Error(`PDF import supports up to ${MAX_PDF_IMPORT_PAGES} pages.`);
+  }
   const rawLines: RawPdfLine[] = [];
 
   for (let pageNumber = 1; pageNumber <= pdf.numPages; pageNumber += 1) {

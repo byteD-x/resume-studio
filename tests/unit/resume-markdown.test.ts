@@ -16,7 +16,7 @@ describe("resume markdown", () => {
       subtitle: "Senior Engineer",
       location: "Remote",
       dateRange: "2024 - 2026",
-      meta: "TypeScript · Next.js",
+      meta: "TypeScript | Next.js",
       summaryHtml: "<p>Built delivery tooling.</p>",
       bulletPoints: ["Cut deploy time by 40%"],
       tags: ["TypeScript", "Next.js"],
@@ -28,6 +28,27 @@ describe("resume markdown", () => {
     expect(markdown).toContain("> Platform Engineer");
     expect(markdown).toContain("## 工作经历 [experience]");
     expect(markdown).toContain("### Example Corp");
+  });
+
+  it("does not duplicate summary sections during markdown export", () => {
+    const document = createEmptyResumeDocument("default", "主简历");
+    document.basics.summaryHtml = "<p>Primary summary</p>";
+    document.sections.unshift({
+      id: "summary-section",
+      type: "summary",
+      title: "Summary",
+      visible: true,
+      layout: "rich-text",
+      contentHtml: "<p>Imported summary section</p>",
+      items: [],
+    });
+
+    const markdown = serializeResumeToMarkdown(document);
+    const summaryHeadings = markdown.match(/^## Summary \[summary\]$/gm) ?? [];
+
+    expect(summaryHeadings).toHaveLength(1);
+    expect(markdown).toContain("Primary summary");
+    expect(markdown).not.toContain("Imported summary section");
   });
 
   it("parses markdown back into a structured document", () => {
@@ -44,7 +65,7 @@ Builds resilient systems.
 - Subtitle: Senior Engineer
 - Date: 2024 - 2026
 - Location: Remote
-- Meta: TypeScript · Next.js
+- Meta: TypeScript | Next.js
 - Tags: TypeScript, Next.js
 
 Built delivery tooling.

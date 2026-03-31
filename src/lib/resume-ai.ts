@@ -1,4 +1,5 @@
 import { stripHtml, textToHtml } from "@/lib/utils";
+import { assertSafeAiBaseUrl } from "@/lib/network-safety";
 import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
 import type { ResumeAiSettings, ResumeDocument, ResumeSectionItem, ResumeSectionType } from "@/types/resume";
 import type { PortfolioData } from "@/lib/portfolio-import";
@@ -210,7 +211,9 @@ export function isLikelyLocalOllamaBaseUrl(value: string) {
   return normalized === "http://127.0.0.1:11434/v1" || normalized === "http://localhost:11434/v1";
 }
 
-function resolveApiKey(override?: string) {
+function resolveApiKey(settings: ResumeAiSettings, override?: string) {
+  assertSafeAiBaseUrl(settings.baseUrl);
+
   if (override?.trim()) {
     return override.trim();
   }
@@ -223,8 +226,8 @@ function resolveApiKey(override?: string) {
   );
 }
 
-function buildAuthHeaders(apiKeyOverride?: string) {
-  const apiKey = resolveApiKey(apiKeyOverride);
+function buildAuthHeaders(settings: ResumeAiSettings, apiKeyOverride?: string) {
+  const apiKey = resolveApiKey(settings, apiKeyOverride);
   const headers: Record<string, string> = {};
   if (apiKey) {
     headers.Authorization = `Bearer ${apiKey}`;
@@ -324,11 +327,20 @@ function buildSummaryMessages(document: ResumeDocument) {
 }
 
 export function canUseRemoteResumeAi(settings: ResumeAiSettings) {
-  return (
-    settings.provider === "openai-compatible" &&
-    settings.model.trim().length > 0 &&
-    normalizeResumeAiBaseUrl(settings.baseUrl).length > 0
-  );
+  if (
+    settings.provider !== "openai-compatible" ||
+    settings.model.trim().length === 0 ||
+    normalizeResumeAiBaseUrl(settings.baseUrl).length === 0
+  ) {
+    return false;
+  }
+
+  try {
+    assertSafeAiBaseUrl(settings.baseUrl);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function getRemoteResumeAiConfigError(settings: ResumeAiSettings) {
@@ -342,6 +354,12 @@ export function getRemoteResumeAiConfigError(settings: ResumeAiSettings) {
 
   if (!normalizeResumeAiBaseUrl(settings.baseUrl)) {
     return "Set a Base URL before requesting remote AI suggestions.";
+  }
+
+  try {
+    assertSafeAiBaseUrl(settings.baseUrl);
+  } catch (error) {
+    return error instanceof Error ? error.message : "Invalid AI Base URL.";
   }
 
   return null;
@@ -370,7 +388,7 @@ export async function checkRemoteResumeAiConnection(
 
   const response = await fetch(`${normalizeResumeAiBaseUrl(settings.baseUrl)}/models`, {
     method: "GET",
-    headers: buildAuthHeaders(apiKeyOverride),
+    headers: buildAuthHeaders(settings, apiKeyOverride),
     signal: AbortSignal.timeout(DEFAULT_TIMEOUT_MS),
   });
 
@@ -420,7 +438,7 @@ export async function generateRemoteResumeSummary(document: ResumeDocument, apiK
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...buildAuthHeaders(apiKeyOverride),
+      ...buildAuthHeaders(document.ai, apiKeyOverride),
     },
     body: JSON.stringify({
       model: document.ai.model.trim(),
@@ -509,7 +527,7 @@ async function requestRemoteResumeAiText(
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      ...buildAuthHeaders(apiKeyOverride),
+      ...buildAuthHeaders(settings, apiKeyOverride),
     },
     body: JSON.stringify({
       model: settings.model.trim(),
