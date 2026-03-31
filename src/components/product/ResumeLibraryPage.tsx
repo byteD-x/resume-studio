@@ -6,6 +6,7 @@ import { Eye, FilePlus2, LoaderCircle, PencilLine, Target, Trash2 } from "lucide
 import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import { Badge } from "@/components/ui/Badge";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import { ButtonLink } from "@/components/ui/Button";
 import { hasResumeRenderableContent } from "@/lib/resume-content";
 import {
@@ -26,6 +27,13 @@ function formatDateTime(value: string) {
   return dateTimeFormatter.format(new Date(value));
 }
 
+interface PendingLibraryConfirmation {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  onConfirm: () => void | Promise<void>;
+}
+
 export function ResumeLibraryPage({
   resumes,
 }: {
@@ -33,7 +41,10 @@ export function ResumeLibraryPage({
 }) {
   const router = useRouter();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [status, setStatus] = useState(resumes.length > 0 ? `共 ${resumes.length} 份草稿` : "还没有简历草稿");
+  const [status, setStatus] = useState(
+    resumes.length > 0 ? `共 ${resumes.length} 份简历草稿` : "还没有简历草稿",
+  );
+  const [confirmation, setConfirmation] = useState<PendingLibraryConfirmation | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const rows = useMemo(() => {
@@ -50,15 +61,14 @@ export function ResumeLibraryPage({
         resume,
         report,
         studioHref,
+        targetingHref: `/studio/${resume.meta.id}?focus=targeting` as Route,
+        previewHref: `/studio/${resume.meta.id}/preview` as Route,
         hasContent: hasResumeRenderableContent(resume),
       };
     });
   }, [resumes]);
 
   const deleteResume = async (id: string, title: string) => {
-    const confirmed = window.confirm(`删除《${title}》？`);
-    if (!confirmed) return;
-
     setPendingKey(`delete:${id}`);
     setStatus(`正在删除 ${title}`);
 
@@ -81,6 +91,18 @@ export function ResumeLibraryPage({
     }
   };
 
+  const requestDeleteResume = (id: string, title: string) => {
+    setConfirmation({
+      title: `删除《${title}》？`,
+      description: "删除后会移除这份草稿及其导出文件，且无法自动恢复。",
+      confirmLabel: "删除简历",
+      onConfirm: async () => {
+        setConfirmation(null);
+        await deleteResume(id, title);
+      },
+    });
+  };
+
   const readyCount = rows.filter(({ hasContent, report }) => hasContent && report.readiness === "ready").length;
   const targetingCount = rows.filter(
     ({ resume }) => resume.targeting.role.trim() || resume.targeting.company.trim(),
@@ -99,7 +121,7 @@ export function ResumeLibraryPage({
               我的简历
             </h1>
             <p className="mt-2 text-[0.95rem] text-[color:var(--ink-soft)]">
-              在这里管理主稿、特定岗位的定向版本及追踪推进状态。
+              在这里管理主稿、岗位定向版本，以及每份简历当前最值得推进的下一步。
             </p>
           </div>
           <ButtonLink href="/templates">
@@ -123,12 +145,12 @@ export function ResumeLibraryPage({
         <article className="workspace-sidebar-card p-5">
           <span className="library-meta-label">已做岗位定向</span>
           <strong className="library-summary-value">{targetingCount}</strong>
-          <span className="library-summary-label">已填岗位信息</span>
+          <span className="library-summary-label">已填写岗位信息</span>
         </article>
         <article className="workspace-sidebar-card p-5">
           <span className="library-meta-label">最近 7 天更新</span>
           <strong className="library-summary-value">{recentlyUpdatedCount}</strong>
-          <span className="library-summary-label">最近活跃</span>
+          <span className="library-summary-label">近期活跃</span>
         </article>
       </section>
 
@@ -138,14 +160,14 @@ export function ResumeLibraryPage({
 
       {rows.length > 0 ? (
         <section className="library-stack mt-6">
-          {rows.map(({ resume, hasContent, report, studioHref }) => (
+          {rows.map(({ resume, hasContent, report, studioHref, targetingHref, previewHref }) => (
             <article className="library-row" key={resume.meta.id}>
               <div className="min-w-0">
                 <div className="library-row-head">
                   <div className="min-w-0">
                     <h2 className="library-row-title">{resume.meta.title}</h2>
                     <p className="library-row-copy">
-                      {resume.basics.headline.trim() || "先补基本信息。"}
+                      {resume.basics.headline.trim() || "先补齐基本信息，让预览页具备可读内容。"}
                     </p>
                   </div>
                   <div className="library-row-pills">
@@ -187,12 +209,12 @@ export function ResumeLibraryPage({
                   继续编辑
                 </Link>
                 {hasContent ? (
-                  <Link className="btn btn-secondary" href={`/studio/${resume.meta.id}/preview`}>
+                  <Link className="btn btn-secondary" href={previewHref}>
                     <Eye aria-hidden="true" className="size-4" />
                     预览导出
                   </Link>
                 ) : null}
-                <Link className="btn btn-ghost" href={studioHref}>
+                <Link className="btn btn-ghost" href={targetingHref}>
                   <Target className="size-4" />
                   岗位定向
                 </Link>
@@ -200,7 +222,7 @@ export function ResumeLibraryPage({
                   aria-label={`删除 ${resume.meta.title}`}
                   className="icon-button"
                   disabled={isPending}
-                  onClick={() => void deleteResume(resume.meta.id, resume.meta.title)}
+                  onClick={() => requestDeleteResume(resume.meta.id, resume.meta.title)}
                   type="button"
                 >
                   {pendingKey === `delete:${resume.meta.id}` && isPending ? (
@@ -216,23 +238,38 @@ export function ResumeLibraryPage({
       ) : (
         <section className="mt-8 rounded-xl border border-dashed border-[color:var(--line)] bg-[rgba(255,255,255,0.6)] px-6 py-12 text-center shadow-sm">
           <FilePlus2 className="mx-auto mb-4 size-8 text-[color:var(--ink-muted)]" />
-          <h2 className="text-xl font-bold text-[color:var(--ink-strong)]">
-            第一份简历
-          </h2>
-          
+          <h2 className="text-xl font-bold text-[color:var(--ink-strong)]">第一份简历</h2>
+          <p className="mx-auto mt-3 max-w-[30rem] text-[0.95rem] text-[color:var(--ink-soft)]">
+            你可以从模板开始，也可以先导入旧版 PDF 或在线经历，再进入编辑器继续完善。
+          </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-            <ButtonLink href="/templates">
-              挑选版式开始
-            </ButtonLink>
-            <ButtonLink className="bg-white border-[color:var(--line)] shadow-sm text-[color:var(--ink-strong)] hover:bg-slate-50" href="/import">
+            <ButtonLink href="/templates">挑选版式开始</ButtonLink>
+            <ButtonLink
+              className="border-[color:var(--line)] bg-white text-[color:var(--ink-strong)] shadow-sm hover:bg-slate-50"
+              href="/import"
+            >
               智能提取在线经历
             </ButtonLink>
-            <ButtonLink className="bg-transparent text-[color:var(--ink-muted)] hover:text-[color:var(--ink)] shadow-none px-3" href="/import?tab=pdf">
+            <ButtonLink
+              className="bg-transparent px-3 text-[color:var(--ink-muted)] shadow-none hover:text-[color:var(--ink)]"
+              href="/import?tab=pdf"
+            >
               导入旧版 PDF
             </ButtonLink>
           </div>
         </section>
       )}
+
+      <ConfirmDialog
+        cancelLabel="保留简历"
+        confirmLabel={confirmation?.confirmLabel}
+        confirmVariant="danger"
+        description={confirmation?.description}
+        onClose={() => setConfirmation(null)}
+        onConfirm={() => void confirmation?.onConfirm()}
+        open={Boolean(confirmation)}
+        title={confirmation?.title ?? "请确认"}
+      />
     </main>
   );
 }

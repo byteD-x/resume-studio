@@ -1,5 +1,6 @@
 ﻿"use client";
 
+import type { Route } from "next";
 import { Suspense, type DragEvent, useEffect, useRef, useState, useTransition } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { ChevronRight, FileCode2, Globe, Loader2, Sparkles, Type, UploadCloud } from "lucide-react";
@@ -89,6 +90,23 @@ function WorkspaceInner() {
     setImportAiMode(config.provider === "local" ? "rules" : "ai");
   }, []);
 
+  useEffect(() => {
+    const nextTab = (searchParams.get("tab") as ImportSource) || "url";
+    if (["url", "markdown", "text", "pdf"].includes(nextTab) && nextTab !== activeTab) {
+      setActiveTab(nextTab);
+      setError("");
+    }
+  }, [activeTab, searchParams]);
+
+  function setImportTab(nextTab: ImportSource) {
+    setActiveTab(nextTab);
+    setError("");
+
+    const params = new URLSearchParams(searchParams.toString());
+    params.set("tab", nextTab);
+    router.replace((`/import?${params.toString()}`) as Route, { scroll: false });
+  }
+
   function persistImportAiConfig(next: { model?: string; baseUrl?: string; apiKey?: string }) {
     const current = readClientAiConfig();
     writeClientAiConfig({
@@ -102,7 +120,7 @@ function WorkspaceInner() {
 
   const handleTextImport = async () => {
     if (!inputValue.trim()) {
-      setError("璇峰厛绮樿创鍐呭");
+      setError("请先粘贴内容");
       return;
     }
 
@@ -171,7 +189,7 @@ function WorkspaceInner() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           starter: "blank",
-          template: "modern-two-column",
+          template: "aurora-grid",
           title: "旧简历 PDF 解析",
           writerProfile: "experienced",
         }),
@@ -217,7 +235,7 @@ function WorkspaceInner() {
     }
   };
 
-  const handlePdfDrop = (event: DragEvent<HTMLDivElement>) => {
+  const handlePdfDrop = (event: DragEvent<HTMLElement>) => {
     event.preventDefault();
     if (isExtracting) return;
 
@@ -258,7 +276,7 @@ function WorkspaceInner() {
           </div>
           <h2 className="mb-2 text-[1.4rem] font-semibold tracking-tight text-[color:var(--ink-strong)]">基础信息已提取</h2>
           <p className="mb-8 max-w-[20rem] text-[0.95rem] leading-relaxed text-[color:var(--ink-soft)]">
-            系统已经尽量把原始内容结构化。进入编辑器后，你可以继续补充、删改和核对细节。
+            原始内容已整理成可编辑草稿，进入编辑器后继续核对与润色即可。
           </p>
 
           <div className="mb-8 grid w-full grid-cols-3 gap-0 rounded-lg bg-[color:var(--paper-soft)] p-1 ring-1 ring-[color:var(--line)]">
@@ -282,7 +300,8 @@ function WorkspaceInner() {
 
           {importResult.summary.fieldSuggestionCount > 0 ? (
             <p className="mb-6 max-w-[24rem] text-[0.85rem] leading-relaxed text-[color:var(--ink-soft)]">
-              鏈瀵煎叆瑕嗙洊浜?{importResult.summary.fieldSuggestionCount} 涓凡鏈夊熀纭€瀛楁锛岃繘鍏ョ紪杈戝尯鍚庡彲閫愭潯纭鏄惁淇濈暀瀵煎叆鍊笺€?            </p>
+              本次导入覆盖了 {importResult.summary.fieldSuggestionCount} 个基础字段，进入编辑区后可逐条确认。
+            </p>
           ) : null}
 
           {importResult.urlSummary ? (
@@ -293,7 +312,7 @@ function WorkspaceInner() {
                   <p className="mt-1 text-[0.9rem] text-[color:var(--ink-soft)]">{extractionSummary}</p>
                 </div>
                 <span className="rounded-full bg-white px-3 py-1 text-[0.8rem] font-medium text-[color:var(--ink-strong)] ring-1 ring-[color:var(--line)]">
-                  {importResult.urlSummary.selectedCandidateCount} 涓墿灞曢〉
+                  {importResult.urlSummary.selectedCandidateCount} 个扩展页
                 </span>
               </div>
 
@@ -336,22 +355,24 @@ function WorkspaceInner() {
 
   return (
     <div className="mx-auto w-full max-w-[42rem]">
-      <div className="relative mb-6 flex overflow-x-auto border-b border-[color:var(--line)] hide-scrollbar">
+      <div className="relative mb-6 flex overflow-x-auto border-b border-[color:var(--line)] hide-scrollbar" role="tablist" aria-label="导入方式">
         <ul className="flex items-center gap-6 px-2">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
             return (
               <li key={tab.id}>
                 <button
+                  aria-controls={`import-panel-${tab.id}`}
+                  aria-selected={isActive}
                   className={`relative flex items-center gap-2 rounded-sm pb-3 pt-2 text-[0.9rem] transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-slate-300 ${
                     isActive
                       ? "font-medium text-[color:var(--ink-strong)]"
                       : "text-[color:var(--ink-muted)] hover:text-[color:var(--ink)]"
                   }`}
-                  onClick={() => {
-                    setActiveTab(tab.id as ImportSource);
-                    setError("");
-                  }}
+                  id={`import-tab-${tab.id}`}
+                  onClick={() => setImportTab(tab.id as ImportSource)}
+                  role="tab"
+                  tabIndex={isActive ? 0 : -1}
                   type="button"
                 >
                   {tab.icon}
@@ -366,7 +387,12 @@ function WorkspaceInner() {
         </ul>
       </div>
 
-      <div className="relative rounded-[0.75rem] bg-white shadow-sm ring-1 ring-[color:var(--line)] transition-shadow focus-within:ring-2 focus-within:ring-[color:var(--accent)]">
+      <div
+        aria-labelledby={`import-tab-${activeTab}`}
+        className="relative rounded-[0.75rem] bg-white shadow-sm ring-1 ring-[color:var(--line)] transition-shadow focus-within:ring-2 focus-within:ring-[color:var(--accent)]"
+        id={`import-panel-${activeTab}`}
+        role="tabpanel"
+      >
         {!isPdfMode ? (
           <div className="flex min-h-[16rem] flex-col p-1.5">
             {!isTextMode ? (
@@ -384,7 +410,7 @@ function WorkspaceInner() {
                 {activeTab === "url" ? (
                   <div className="mt-3 rounded-[0.8rem] bg-[color:var(--paper-soft)] px-3 py-3 ring-1 ring-[color:var(--line)]">
                     <label className="mb-3 flex flex-col gap-2 text-left">
-                      <span className="text-[0.82rem] font-semibold text-[color:var(--ink-strong)]">缃戠珯瀵煎叆妯″紡</span>
+                      <span className="text-[0.82rem] font-semibold text-[color:var(--ink-strong)]">网站导入模式</span>
                       <select
                         className="rounded-md border border-[color:var(--line)] bg-white px-3 py-2 text-[0.85rem] text-[color:var(--ink-strong)]"
                         disabled={isExtracting}
@@ -510,11 +536,11 @@ function WorkspaceInner() {
                 {isExtracting ? (
                   <>
                     <Loader2 className="mr-1.5 size-3.5 animate-spin" />
-                    鍒嗘瀽涓?..
+                    分析中...
                   </>
                 ) : (
                   <>
-                    鎻愬彇鍐呭
+                    提取内容
                     <Sparkles className="ml-1.5 size-3.5 opacity-80" />
                   </>
                 )}
@@ -537,15 +563,18 @@ function WorkspaceInner() {
               type="file"
             />
 
-            <div
+            <button
+              aria-describedby="pdf-import-help"
               className={`flex h-[10rem] w-[18rem] flex-col items-center justify-center rounded-[1rem] border-2 border-dashed transition-colors ${
                 isExtracting
                   ? "border-slate-200 bg-slate-50"
                   : "cursor-pointer border-[color:var(--accent-line)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-layer)]"
               }`}
+              disabled={isExtracting}
               onClick={() => !isExtracting && pdfInputRef.current?.click()}
               onDragOver={(event) => event.preventDefault()}
               onDrop={handlePdfDrop}
+              type="button"
             >
               {isExtracting ? (
                 <div className="flex flex-col items-center text-[color:var(--ink-soft)]">
@@ -559,12 +588,14 @@ function WorkspaceInner() {
                   <span className="text-[0.8rem]">或将文件拖至此处</span>
                 </div>
               )}
-            </div>
+            </button>
 
             {error ? (
-              <p className="mt-4 text-[0.85rem] font-medium text-red-500">{error}</p>
+              <p className="mt-4 text-[0.85rem] font-medium text-red-500" id="pdf-import-help">
+                {error}
+              </p>
             ) : (
-              <p className="mt-6 max-w-[20rem] text-[0.85rem] text-[color:var(--ink-muted)]">
+              <p className="mt-6 max-w-[20rem] text-[0.85rem] text-[color:var(--ink-muted)]" id="pdf-import-help">
                 系统会尽量保留基础经历，并在进入编辑器后提示你重点核对需要确认的部分。
               </p>
             )}

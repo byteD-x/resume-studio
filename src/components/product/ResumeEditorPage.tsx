@@ -1,15 +1,18 @@
-"use client";
+﻿"use client";
 
 import { RotateCcw } from "lucide-react";
+import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
-import { startTransition, useDeferredValue, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
+import { startTransition, type ReactNode, useDeferredValue, useEffect, useEffectEvent, useMemo, useRef, useState } from "react";
 import { ResumeSectionEditor } from "@/components/product/ResumeSectionEditor";
 import { ResumeBasicsPanel } from "@/components/product/editor/ResumeBasicsPanel";
+import { ResumeDesignPanel } from "@/components/product/editor/ResumeDesignPanel";
 import { ResumeAiPanel } from "@/components/product/editor/ResumeAiPanel";
 import { EditorShortcutDialog } from "@/components/product/editor/EditorShortcutDialog";
 import {
   ResumeEditorSidebar,
   type EditorPanel,
+  type EditorPanelGroup,
   type EditorPanelItem,
 } from "@/components/product/editor/ResumeEditorSidebar";
 import { ResumeEditorToolbar } from "@/components/product/editor/ResumeEditorToolbar";
@@ -18,9 +21,11 @@ import { ResumePreviewPanel } from "@/components/product/editor/ResumePreviewPan
 import { ResumeTargetingPanel } from "@/components/product/editor/ResumeTargetingPanel";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
+import { getTemplateFamily } from "@/data/template-catalog";
 import { readClientAiConfig, writeClientAiConfig } from "@/lib/client-ai-config";
 import { hasResumeRenderableContent } from "@/lib/resume-content";
-import { createEmptyResumeDocument } from "@/lib/resume-document";
+import { createEmptyResumeDocument, getResumeTemplateLayoutPreset } from "@/lib/resume-document";
 import { useEditorHistory } from "@/lib/editor-history";
 import { isModKey, isTextEntryTarget } from "@/lib/editor-input";
 import {
@@ -46,13 +51,14 @@ import {
 import { buildResumeQualityReport } from "@/lib/resume-quality";
 import { buildTailoredVariantPlan, type TailoredVariantPlan } from "@/lib/resume-tailoring";
 import { analyzeResumeTargeting } from "@/lib/resume-targeting";
-import { buildResumeWorkbenchReport } from "@/lib/resume-workbench";
+import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
 import type { ResumeDocument, ResumeImportFieldSuggestion, ResumeSectionItem } from "@/types/resume";
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
 type FormPanel = Exclude<EditorPanel, "markdown">;
 type SectionPanel = (typeof editorSectionDefinitions)[number]["type"];
 type ImportReviewKind = "pdf" | "portfolio";
+type BasicsTextField = "name" | "headline" | "location" | "website" | "email" | "phone" | "summaryHtml" | "links";
 
 interface ResumeEditorSnapshot {
   document: ResumeDocument;
@@ -64,6 +70,14 @@ interface RecentDeletion {
   sectionTitle: string;
   item: ResumeSectionItem;
   index: number;
+}
+
+interface PendingEditorConfirmation {
+  title: string;
+  description: string;
+  confirmLabel: string;
+  confirmVariant?: "primary" | "secondary" | "ghost" | "danger";
+  onConfirm: () => void | Promise<void>;
 }
 
 async function getJson<T>(response: Response): Promise<T> {
@@ -165,6 +179,16 @@ function deriveMarkdownStatus(markdownDraft: string): EditorPanelItem["status"] 
   return trimmed.length >= 180 ? "ready" : "in_progress";
 }
 
+function deriveDesignStatus(document: ResumeDocument): EditorPanelItem["status"] {
+  const preset = getResumeTemplateLayoutPreset(document.meta.template);
+  const layoutChanged = JSON.stringify(document.layout) !== JSON.stringify(preset);
+  const customCssEnabled = document.layout.customCss.trim().length > 0;
+  const photoEnabled = document.basics.photoVisible && document.basics.photoUrl.trim().length > 0;
+
+  if (!layoutChanged && !photoEnabled && !customCssEnabled) return "empty";
+  return "ready";
+}
+
 function buildSidebarItems(
   document: ResumeDocument,
   markdownDraft: string,
@@ -175,7 +199,7 @@ function buildSidebarItems(
     {
       key: "basics",
       label: "基本信息",
-      hint: "姓名、职位、链接",
+      hint: "姓名、定位、链接",
       status: deriveBasicsStatus(document),
     },
     ...editorSectionDefinitions.map((definition) => {
@@ -193,6 +217,12 @@ function buildSidebarItems(
       } satisfies EditorPanelItem;
     }),
     {
+      key: "design",
+      label: "版式与外观",
+      hint: "模板、字体、间距、颜色",
+      status: deriveDesignStatus(document),
+    },
+    {
       key: "targeting",
       label: "岗位信息",
       hint: "岗位、关键词、JD",
@@ -201,7 +231,7 @@ function buildSidebarItems(
     {
       key: "ai",
       label: "AI",
-      hint: "设置、分析、定制版",
+      hint: "摘要、分析、定制版",
       status: deriveAiStatus(document, targetingAnalysis, tailoredPlan),
     },
     {
@@ -212,6 +242,45 @@ function buildSidebarItems(
       countLabel: markdownDraft.trim() ? `${markdownDraft.split("\n").length} 行` : undefined,
     },
   ];
+}
+
+const editorPanelGroupDefinitions = [
+  {
+    key: "foundation",
+    label: "核心信息",
+    description: "先补姓名、定位和岗位信息。",
+    panels: ["basics", "targeting"] as const,
+  },
+  {
+    key: "content",
+    label: "简历内容",
+    description: "集中整理经历、项目和技能。",
+    panels: ["experience", "projects", "education", "skills"] as const,
+  },
+  {
+    key: "advanced",
+    label: "版式工具",
+    description: "调整版式，处理 AI 与 Markdown。",
+    panels: ["design", "ai", "markdown"] as const,
+  },
+] satisfies Array<{
+  key: string;
+  label: string;
+  description: string;
+  panels: readonly EditorPanel[];
+}>;
+
+function buildSidebarGroups(items: EditorPanelItem[]): EditorPanelGroup[] {
+  const itemMap = new Map(items.map((item) => [item.key, item] as const));
+
+  return editorPanelGroupDefinitions.map((group) => ({
+    key: group.key,
+    label: group.label,
+    description: group.description,
+    items: group.panels
+      .map((panel) => itemMap.get(panel))
+      .filter((item): item is EditorPanelItem => Boolean(item)),
+  }));
 }
 
 function createBlankMarkdownDocument(current: ResumeDocument) {
@@ -243,6 +312,8 @@ function isSectionPanel(panel: EditorPanel): panel is SectionPanel {
 
 function resolveInitialEditorPanel(focus: string | null): EditorPanel {
   switch (focus) {
+    case "design":
+      return "design";
     case "ai":
       return "ai";
     case "targeting":
@@ -276,6 +347,27 @@ function resolveImportStatusMessage(kind: ImportReviewKind) {
   }
 
   return "先核对作品集导入结果。";
+}
+
+function mergeLayoutForTemplateSwitch(document: ResumeDocument, template: ResumeDocument["meta"]["template"]) {
+  const currentPreset = getResumeTemplateLayoutPreset(document.meta.template);
+  const nextPreset = getResumeTemplateLayoutPreset(template);
+  const mergedLayout: ResumeDocument["layout"] = {
+    ...nextPreset,
+  };
+
+  for (const key of Object.keys(nextPreset) as Array<keyof ResumeDocument["layout"]>) {
+    if (key === "customCss") {
+      mergedLayout.customCss = document.layout.customCss;
+      continue;
+    }
+
+    if (document.layout[key] !== currentPreset[key]) {
+      mergedLayout[key] = document.layout[key] as never;
+    }
+  }
+
+  return mergedLayout;
 }
 
 function buildImportReview(document: ResumeDocument) {
@@ -317,10 +409,10 @@ function buildImportReview(document: ResumeDocument) {
     title: kind === "pdf" ? "PDF 导入已完成" : "作品集导入已完成",
     description:
       kind === "pdf"
-        ? "先看抬头信息、章节归类和待核对项。"
-        : "先看基础信息、经历映射和待核对项。",
-    primaryActionLabel: kind === "pdf" ? "核对基本信息" : "先看基础信息",
-    secondaryActionLabel: kind === "pdf" ? "继续核对内容" : "继续整理内容",
+        ? "先核对抬头、章节归类和待办项。"
+        : "先核对基础信息、经历映射和待办项。",
+    primaryActionLabel: "核对基础信息",
+    secondaryActionLabel: "核对内容",
     pendingItems,
     pendingItemsPreview: pendingItems.slice(0, 3),
     pendingItemCount: pendingItems.length,
@@ -331,10 +423,10 @@ function buildImportReview(document: ResumeDocument) {
     remainingCount,
     sourcePath: kind === "portfolio" ? resolveImportSourcePath(document) : null,
     mappedStats: [
-      { label: "Basics", value: basicsCount },
-      { label: "Experience", value: experienceCount },
-      { label: "Projects", value: projectCount },
-      { label: "Education / Skills", value: educationCount + skillsCount },
+      { label: "基础信息", value: basicsCount },
+      { label: "工作经历", value: experienceCount },
+      { label: "项目经历", value: projectCount },
+      { label: "教育 / 技能", value: educationCount + skillsCount },
     ],
     reviewTasks,
     fieldSuggestions: fieldSuggestions.slice(0, 3),
@@ -363,6 +455,10 @@ function resolveInitialStatusMessage(document: ResumeDocument, focus: string | n
 
   if (focus === "targeting") {
     return "先定岗位和关键词。";
+  }
+
+  if (focus === "design") {
+    return "先调整版式和外观。";
   }
 
   if (focus === "ai") {
@@ -400,17 +496,18 @@ export function ResumeEditorPage({
   const [recentDeletion, setRecentDeletion] = useState<RecentDeletion | null>(null);
   const [isGeneratingVariant, setIsGeneratingVariant] = useState(false);
   const [isGeneratingAiSummary, setIsGeneratingAiSummary] = useState(false);
-  const [generatedAiSummary, setGeneratedAiSummary] = useState<string | null>(null);
+  const [generatedAiSummarySuggestions, setGeneratedAiSummarySuggestions] = useState<ResumeAssistSuggestion[]>([]);
   const [clientAiApiKey, setClientAiApiKey] = useState("");
   const [shortcutOpen, setShortcutOpen] = useState(false);
+  const [confirmation, setConfirmation] = useState<PendingEditorConfirmation | null>(null);
   const latestDocumentRef = useRef(seededDocument);
   const latestMarkdownRef = useRef(seededMarkdown);
   const latestMarkdownErrorRef = useRef<string | null>(null);
   const lastSavedRef = useRef(JSON.stringify(seededDocument));
-  const lastFormPanelRef = useRef<FormPanel>(
-    initialPanel === "targeting" || initialPanel === "ai" ? initialPanel : "basics",
-  );
+  const lastFormPanelRef = useRef<FormPanel>(initialPanel === "markdown" ? "basics" : initialPanel);
+  const editorSurfaceRef = useRef<HTMLElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
   const deferredDocument = useDeferredValue(document);
   const editorMode = activePanel === "markdown" ? "markdown" : "form";
   const history = useEditorHistory<ResumeEditorSnapshot>(120);
@@ -425,25 +522,21 @@ export function ResumeEditorPage({
   const targetingAnalysis = useMemo(() => analyzeResumeTargeting(document), [document]);
   const tailoredVariantPlan = useMemo(() => buildTailoredVariantPlan(document), [document]);
   const qualityReport = useMemo(() => buildResumeQualityReport(document), [document]);
-  const workbenchReport = useMemo(
-    () =>
-      buildResumeWorkbenchReport(document, {
-        qualityReport,
-        targetingAnalysis,
-      }),
-    [document, qualityReport, targetingAnalysis],
-  );
   const sidebarItems = useMemo(
     () => buildSidebarItems(document, markdownDraft, targetingAnalysis, tailoredVariantPlan),
     [document, markdownDraft, targetingAnalysis, tailoredVariantPlan],
   );
-  const nextTask = workbenchReport.openTasks[0] ?? null;
+  const sidebarGroups = useMemo(() => buildSidebarGroups(sidebarItems), [sidebarItems]);
+  const panelMetaMap = useMemo(() => new Map(sidebarItems.map((item) => [item.key, item] as const)), [sidebarItems]);
+  const activePanelMeta = panelMetaMap.get(activePanel) ?? sidebarItems[0];
+  const activePanelGroup =
+    sidebarGroups.find((group) => group.items.some((item) => item.key === activePanel)) ?? sidebarGroups[0];
   const highlightedDiagnostics = useMemo(
     () => [...qualityReport.blockingIssues, ...qualityReport.warnings].slice(0, 3),
     [qualityReport],
   );
 
-  useEffect(() => {
+  const syncClientAiConfig = useEffectEvent(() => {
     const config = readClientAiConfig();
     setClientAiApiKey(config.apiKey);
 
@@ -469,6 +562,10 @@ export function ResumeEditorPage({
         },
       );
     }
+  });
+
+  useEffect(() => {
+    syncClientAiConfig();
   }, []);
 
   const previewHtml = useMemo(
@@ -477,7 +574,7 @@ export function ResumeEditorPage({
         highlightedTarget:
           activePanel === "basics" || activePanel === "targeting"
             ? activePanel
-            : activePanel === "markdown" || activePanel === "ai"
+            : activePanel === "markdown" || activePanel === "ai" || activePanel === "design"
               ? undefined
               : { sectionType: activePanel },
       }),
@@ -487,11 +584,6 @@ export function ResumeEditorPage({
   const activeSection = useMemo(
     () => (isSectionPanel(activePanel) ? getEditorSection(document, activePanel) : null),
     [activePanel, document],
-  );
-
-  const activeSectionDefinition = useMemo(
-    () => editorSectionDefinitions.find((definition) => definition.type === activePanel) ?? null,
-    [activePanel],
   );
 
   const setEditorState = (
@@ -661,7 +753,16 @@ export function ResumeEditorPage({
     setRecentDeletion(null);
   };
 
-  const deleteSectionItem = (sectionType: SectionPanel, itemId: string) => {
+  const navigateBack = (fallbackPath: Route) => {
+    if (window.history.length > 1) {
+      router.back();
+      return;
+    }
+
+    router.push(fallbackPath);
+  };
+
+  const removeSectionItem = (sectionType: SectionPanel, itemId: string) => {
     const definition = editorSectionDefinitions.find((item) => item.type === sectionType);
     const section = getEditorSection(latestDocumentRef.current, sectionType);
     if (!definition || !section) return;
@@ -669,14 +770,6 @@ export function ResumeEditorPage({
     const index = section.items.findIndex((item) => item.id === itemId);
     if (index === -1) return;
     const target = section.items[index];
-
-    if (
-      hasMeaningfulItemContent(target) &&
-      !window.confirm(`删除“${target.title || definition.title}”？`)
-    ) {
-      return;
-    }
-
     const nextFocus = section.items[index + 1]?.id ?? section.items[index - 1]?.id ?? null;
 
     updateDocument(
@@ -706,6 +799,32 @@ export function ResumeEditorPage({
     });
     setFocusItemId(nextFocus);
     setActiveSectionItemId(nextFocus);
+  };
+
+  const deleteSectionItem = (sectionType: SectionPanel, itemId: string) => {
+    const definition = editorSectionDefinitions.find((item) => item.type === sectionType);
+    const section = getEditorSection(latestDocumentRef.current, sectionType);
+    if (!definition || !section) return;
+
+    const index = section.items.findIndex((item) => item.id === itemId);
+    if (index === -1) return;
+    const target = section.items[index];
+
+    if (!hasMeaningfulItemContent(target)) {
+      removeSectionItem(sectionType, itemId);
+      return;
+    }
+
+    setConfirmation({
+      title: `删除“${target.title || definition.title}”？`,
+      description: "删除后会从当前章节移除这条内容，但你仍可以通过撤销或“恢复”立即找回。",
+      confirmLabel: "删除条目",
+      confirmVariant: "danger",
+      onConfirm: () => {
+        setConfirmation(null);
+        removeSectionItem(sectionType, itemId);
+      },
+    });
   };
 
   const copySectionItem = async (sectionType: SectionPanel, itemId: string) => {
@@ -786,7 +905,7 @@ export function ResumeEditorPage({
     );
   };
 
-  const updateBasicsField = (field: keyof ResumeDocument["basics"], value: string) => {
+  const updateBasicsField = (field: BasicsTextField, value: string) => {
     updateDocument(
       (current) => {
         if (field === "summaryHtml") {
@@ -850,7 +969,143 @@ export function ResumeEditorPage({
     );
   };
 
-  const saveDocument = async (mode: "manual" | "auto") => {
+  const updateLayoutField = <K extends keyof ResumeDocument["layout"]>(
+    field: K,
+    value: ResumeDocument["layout"][K],
+  ) => {
+    updateDocument(
+      (current) => ({
+        ...current,
+        layout: {
+          ...current.layout,
+          [field]: value,
+        },
+      }),
+      {
+        historyLabel: "修改版式设置",
+        clearDeletion: true,
+      },
+    );
+  };
+
+  const updateTemplate = (template: ResumeDocument["meta"]["template"]) => {
+    updateDocument(
+      (current) => ({
+        ...current,
+        meta: {
+          ...current.meta,
+          template,
+        },
+        layout: mergeLayoutForTemplateSwitch(current, template),
+      }),
+      {
+        historyLabel: "切换简历模板",
+        clearDeletion: true,
+      },
+    );
+  };
+
+  const applyStylePreset = (presetId: "balanced" | "compact" | "editorial") => {
+    updateDocument(
+      (current) => {
+        const preset =
+          presetId === "compact"
+            ? {
+                marginsMm: 11,
+                lineHeight: 1.33,
+                paragraphGapMm: 2.2,
+                bodyFontSizePt: 9.2,
+                sectionTitleSizePt: 10.4,
+                itemTitleSizePt: 10.2,
+                metaFontSizePt: 8.6,
+                nameSizePt: 22,
+                headlineSizePt: 10.2,
+                sectionGapMm: 4.3,
+                itemGapMm: 3.2,
+                columnGapMm: getTemplateFamily(current.meta.template) === "two-column" ? 7 : 0,
+                listGapMm: 0.45,
+                sectionTitleStyle: "minimal" as const,
+                sectionTitleAlign: "left" as const,
+                pageShadowVisible: true,
+                showSectionDividers: false,
+              }
+            : presetId === "editorial"
+              ? {
+                  marginsMm: 16,
+                  lineHeight: 1.56,
+                  paragraphGapMm: 3.8,
+                  bodyFontSizePt: 9.9,
+                  sectionTitleSizePt: 12.4,
+                  itemTitleSizePt: 11.4,
+                  metaFontSizePt: 9.2,
+                  nameSizePt: 27,
+                  headlineSizePt: 11.6,
+                  sectionGapMm: 6.8,
+                  itemGapMm: 4.8,
+                  columnGapMm: getTemplateFamily(current.meta.template) === "two-column" ? 10 : 0,
+                  listGapMm: 0.9,
+                  sectionTitleStyle: "filled" as const,
+                  sectionTitleAlign: "left" as const,
+                  pageShadowVisible: true,
+                  showSectionDividers: true,
+                }
+              : {
+                  marginsMm: getResumeTemplateLayoutPreset(current.meta.template).marginsMm,
+                  lineHeight: getResumeTemplateLayoutPreset(current.meta.template).lineHeight,
+                  paragraphGapMm: getResumeTemplateLayoutPreset(current.meta.template).paragraphGapMm,
+                  bodyFontSizePt: getResumeTemplateLayoutPreset(current.meta.template).bodyFontSizePt,
+                  sectionTitleSizePt: getResumeTemplateLayoutPreset(current.meta.template).sectionTitleSizePt,
+                  itemTitleSizePt: getResumeTemplateLayoutPreset(current.meta.template).itemTitleSizePt,
+                  metaFontSizePt: getResumeTemplateLayoutPreset(current.meta.template).metaFontSizePt,
+                  nameSizePt: getResumeTemplateLayoutPreset(current.meta.template).nameSizePt,
+                  headlineSizePt: getResumeTemplateLayoutPreset(current.meta.template).headlineSizePt,
+                  sectionGapMm: getResumeTemplateLayoutPreset(current.meta.template).sectionGapMm,
+                  itemGapMm: getResumeTemplateLayoutPreset(current.meta.template).itemGapMm,
+                  columnGapMm: getResumeTemplateLayoutPreset(current.meta.template).columnGapMm,
+                  listGapMm: getResumeTemplateLayoutPreset(current.meta.template).listGapMm,
+                  sectionTitleStyle: getResumeTemplateLayoutPreset(current.meta.template).sectionTitleStyle,
+                  sectionTitleAlign: getResumeTemplateLayoutPreset(current.meta.template).sectionTitleAlign,
+                  pageShadowVisible: getResumeTemplateLayoutPreset(current.meta.template).pageShadowVisible,
+                  showSectionDividers: getResumeTemplateLayoutPreset(current.meta.template).showSectionDividers,
+                };
+
+        return {
+          ...current,
+          layout: {
+            ...current.layout,
+            ...preset,
+          },
+        };
+      },
+      {
+        historyLabel: "套用风格预设",
+        clearDeletion: true,
+      },
+    );
+  };
+
+  const updateBasicsVisualField = <
+    K extends "photoUrl" | "photoAlt" | "photoVisible" | "photoShape" | "photoPosition" | "photoSizeMm",
+  >(
+    field: K,
+    value: ResumeDocument["basics"][K],
+  ) => {
+    updateDocument(
+      (current) => ({
+        ...current,
+        basics: {
+          ...current.basics,
+          [field]: value,
+        },
+      }),
+      {
+        historyLabel: "修改头像与视觉设置",
+        clearDeletion: true,
+      },
+    );
+  };
+
+  const performSave = async (mode: "manual" | "auto") => {
     if (latestMarkdownErrorRef.current) {
       setSaveState("error");
       setStatusMessage("请先修正 Markdown");
@@ -875,7 +1130,8 @@ export function ResumeEditorPage({
       );
 
       const normalized = ensureEditorDocument(saved);
-      const nextMarkdown = serializeResumeToMarkdown(normalized);
+      const nextMarkdown =
+        editorMode === "markdown" ? latestMarkdownRef.current : serializeResumeToMarkdown(normalized);
       lastSavedRef.current = JSON.stringify(normalized);
       latestDocumentRef.current = normalized;
       latestMarkdownRef.current = nextMarkdown;
@@ -891,6 +1147,15 @@ export function ResumeEditorPage({
       setStatusMessage(error instanceof Error ? error.message : "保存失败");
       return false;
     }
+  };
+
+  const saveDocument = (mode: "manual" | "auto") => {
+    const nextSave = saveQueueRef.current.then(
+      () => performSave(mode),
+      () => performSave(mode),
+    );
+    saveQueueRef.current = nextSave.catch(() => false);
+    return nextSave;
   };
 
   const triggerAutosave = useEffectEvent(() => {
@@ -1016,23 +1281,23 @@ export function ResumeEditorPage({
     const fallbackPath = "/";
 
     if (latestMarkdownErrorRef.current) {
-      const confirmed = window.confirm("当前 Markdown 有误，离开后未保存修改可能丢失。仍要返回？");
-      if (!confirmed) return;
-      if (window.history.length > 1) {
-        router.back();
-      } else {
-        router.push(fallbackPath);
-      }
+      setConfirmation({
+        title: "Markdown 还存在解析错误",
+        description: "现在返回会放弃未保存的 Markdown 修改。确认后我会直接离开当前编辑页。",
+        confirmLabel: "仍然返回",
+        confirmVariant: "danger",
+        onConfirm: () => {
+          setConfirmation(null);
+          navigateBack(fallbackPath);
+        },
+      });
       return;
     }
 
-    await saveDocument("manual");
-    if (window.history.length > 1) {
-      router.back();
-      return;
-    }
+    const saved = await saveDocument("manual");
+    if (!saved) return;
 
-    router.push(fallbackPath);
+    navigateBack(fallbackPath);
   }
 
   const handleGlobalKeydown = useEffectEvent((event: KeyboardEvent) => {
@@ -1117,16 +1382,31 @@ export function ResumeEditorPage({
     return () => window.removeEventListener("keydown", handleGlobalKeydown);
   }, []);
 
+  const focusFormPanel = (panel: FormPanel, message = "继续编辑") => {
+    lastFormPanelRef.current = panel;
+    setActivePanel(panel);
+    setStatusMessage(message);
+
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        editorSurfaceRef.current?.scrollIntoView({
+          behavior: "smooth",
+          block: "start",
+        });
+      });
+    });
+  };
+
   const handlePanelSelect = (panel: EditorPanel) => {
+    const nextItem = panelMetaMap.get(panel);
+
     if (panel === "markdown") {
       setActivePanel("markdown");
-      setStatusMessage("已切换到 Markdown");
+      setStatusMessage(nextItem ? `已切换到${nextItem.label}` : "已切换到 Markdown");
       return;
     }
 
-    lastFormPanelRef.current = panel;
-    setActivePanel(panel);
-    setStatusMessage("继续编辑");
+    focusFormPanel(panel, nextItem ? `正在编辑${nextItem.label}` : "继续编辑");
   };
 
   const handleModeChange = (mode: "form" | "markdown") => {
@@ -1139,15 +1419,11 @@ export function ResumeEditorPage({
   };
 
   const handleFocusImportedBasics = () => {
-    setActivePanel("basics");
-    lastFormPanelRef.current = "basics";
-    setStatusMessage("先核对基本信息。");
+    focusFormPanel("basics", "先核对基本信息。");
   };
 
   const handleFocusImportedContent = () => {
-    setActivePanel("experience");
-    lastFormPanelRef.current = "experience";
-    setStatusMessage("继续整理导入内容。");
+    focusFormPanel("experience", "继续整理导入内容。");
   };
 
   const handleFocusImportTask = (focus: "basics" | "content") => {
@@ -1238,14 +1514,14 @@ export function ResumeEditorPage({
     );
   };
 
-  const applyGeneratedAiSummary = () => {
-    if (!generatedAiSummary) {
-      setStatusMessage("当前还没有可应用的 AI 摘要建议");
+  const applyGeneratedAiSummarySuggestion = (suggestion: ResumeAssistSuggestion) => {
+    if (typeof suggestion.nextValue !== "string") {
+      setStatusMessage("当前建议无法直接应用");
       return;
     }
 
-    updateBasicsField("summaryHtml", generatedAiSummary);
-    setStatusMessage("已应用 AI 摘要建议");
+    updateBasicsField("summaryHtml", suggestion.nextValue);
+    setStatusMessage(`已应用${suggestion.label}`);
   };
 
   async function handleGenerateAiSummary() {
@@ -1265,18 +1541,19 @@ export function ResumeEditorPage({
     setIsGeneratingAiSummary(true);
 
     try {
-      const result = await getJson<{ summary: string }>(
-        await fetch("/api/ai/summary", {
+      const result = await getJson<{ suggestions?: ResumeAssistSuggestion[] }>(
+        await fetch("/api/ai/assist", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
+            mode: "summary",
             document: latestDocumentRef.current,
             apiKey: clientAiApiKey,
           }),
         }),
       );
 
-      setGeneratedAiSummary(result.summary);
+      setGeneratedAiSummarySuggestions(Array.isArray(result.suggestions) ? result.suggestions : []);
       setStatusMessage("已生成 AI 摘要建议");
     } catch (error) {
       setStatusMessage(error instanceof Error ? error.message : "AI 摘要生成失败");
@@ -1421,38 +1698,37 @@ export function ResumeEditorPage({
 
   const handleFocusDiagnostic = (target: "basics" | "summary" | "content" | "targeting" | "export") => {
     if (target === "basics" || target === "summary") {
-      setActivePanel("basics");
-      lastFormPanelRef.current = "basics";
-      setStatusMessage(target === "summary" ? "鍏堣ˉ鎽樿銆?" : "鍏堝畬鍠勫熀鏈俊鎭€?");
+      focusFormPanel("basics", target === "summary" ? "先补摘要。" : "先完善基本信息。");
       return;
     }
 
     if (target === "targeting") {
-      setActivePanel("targeting");
-      lastFormPanelRef.current = "targeting";
-      setStatusMessage("鍏堣ˉ鍏呭矖浣嶅拰鍏抽敭璇嶃€?");
+      focusFormPanel("targeting", "先补充岗位和关键词。");
       return;
     }
 
     if (target === "content") {
-      setActivePanel("experience");
-      lastFormPanelRef.current = "experience";
-      setStatusMessage("鍏堟暣鐞嗙粡鍘嗗拰缁撴灉瑕佺偣銆?");
+      focusFormPanel("experience", "先整理经历和结果要点。");
       return;
     }
 
     void handleOpenPreview();
   };
 
-  /* eslint-disable react-hooks/set-state-in-effect */
   useEffect(() => {
     const focus = searchParams.get("focus");
     const onboarding = searchParams.get("onboarding");
 
     if (focus === "basics" || focus === "summary") {
+      lastFormPanelRef.current = "basics";
       setActivePanel("basics");
       if (focus === "summary") setStatusMessage("先补摘要。");
+    } else if (focus === "design") {
+      lastFormPanelRef.current = "design";
+      setActivePanel("design");
+      setStatusMessage("先调整版式和外观。");
     } else if (focus === "targeting") {
+      lastFormPanelRef.current = "targeting";
       setActivePanel("targeting");
       setStatusMessage("先定岗位和关键词。");
     } else if (focus === "ai") {
@@ -1474,117 +1750,24 @@ export function ResumeEditorPage({
       setStatusMessage("先核对作品集导入结果。");
     }
   }, [searchParams]);
-  /* eslint-enable react-hooks/set-state-in-effect */
 
-  const handleJumpToNextTask = () => {
-    if (!nextTask) {
-      void handleOpenPreview();
-      return;
-    }
 
-    switch (nextTask.action.type) {
-      case "focus-basics":
-      case "focus-summary":
-        setActivePanel("basics");
-        lastFormPanelRef.current = "basics";
-        break;
-      case "focus-targeting":
-        setActivePanel("targeting");
-        lastFormPanelRef.current = "targeting";
-        break;
-      case "apply-suggested-keywords":
-        applySuggestedKeywords();
-        setActivePanel("ai");
-        lastFormPanelRef.current = "ai";
-        return;
-      case "focus-export":
-        void handleOpenPreview();
-        return;
-      case "ensure-experience":
-      case "ensure-bullet":
-        setActivePanel("experience");
-        lastFormPanelRef.current = "experience";
-        break;
-      case "set-workflow":
-        const workflowState = nextTask.action.workflowState;
-        updateDocument(
-          (current) => ({
-            ...current,
-            meta: {
-              ...current.meta,
-              workflowState,
-            },
-          }),
-          {
-            historyLabel: "更新工作流阶段",
-            clearDeletion: true,
-            message: `已切换到“${workbenchReport.workflow.suggestedLabel}”阶段`,
-          },
-        );
-        return;
-      default:
-        return;
-    }
-
-    setStatusMessage(nextTask.title);
-  };
-
-  const renderCurrentPanel = () => {
-    if (activePanel === "basics") {
-      return <ResumeBasicsPanel document={document} onBasicsChange={updateBasicsField} />;
-    }
-
-    if (activePanel === "targeting") {
-      return <ResumeTargetingPanel document={document} onTargetingChange={updateTargetingField} />;
-    }
-
-    if (activePanel === "ai") {
-      return (
-        <ResumeAiPanel
-          analysis={targetingAnalysis}
-          apiKey={clientAiApiKey}
-          document={document}
-          generatedSummary={generatedAiSummary}
-          isGenerating={isGeneratingVariant}
-          isGeneratingSummary={isGeneratingAiSummary}
-          onAiChange={updateAiField}
-          onAiApiKeyChange={updateAiApiKey}
-          onAiPresetApply={applyAiPreset}
-          onApplyGeneratedSummary={applyGeneratedAiSummary}
-          onApplySuggestedKeywords={applySuggestedKeywords}
-          onGenerateSummary={() => void handleGenerateAiSummary()}
-          onGenerateTailoredVariant={() => void handleGenerateTailoredVariant()}
-          tailoredPlan={tailoredVariantPlan}
-        />
-      );
-    }
-
-    if (activePanel === "markdown") {
-      return (
-        <ResumeMarkdownPanel
-          onChange={(value) => applyMarkdownDraft(value, "已更新")}
-          onClear={() => {
-            if (window.confirm("清空 Markdown？")) {
-              applyMarkdownDraft("", "已清空");
-            }
-          }}
-          onInsertStarter={() => applyMarkdownDraft(markdownStarter, "已插入结构")}
-          parseError={markdownError}
-          value={markdownDraft}
-        />
-      );
-    }
-
-    if (!activeSectionDefinition || !activeSection) return null;
+  const renderSectionPanel = (sectionType: SectionPanel) => {
+    const definition = editorSectionDefinitions.find((item) => item.type === sectionType);
+    const section = getEditorSection(document, sectionType);
+    if (!definition || !section) return null;
 
     return (
       <ResumeSectionEditor
         activeItemId={activeSectionItemId}
         document={document}
-        definition={activeSectionDefinition}
+        definition={definition}
         focusItemId={focusItemId}
-        onActiveItemChange={setActiveSectionItemId}
-        onAddItem={(options) => insertSectionItem(activePanel, { afterItemId: options?.afterItemId })}
+        onActiveItemChange={(itemId) => {
+          setActivePanel(sectionType);
+          setActiveSectionItemId(itemId);
+        }}
+        onAddItem={(options) => insertSectionItem(sectionType, { afterItemId: options?.afterItemId })}
         onChange={(nextSection) =>
           updateDocument(
             (current) => ({
@@ -1592,53 +1775,159 @@ export function ResumeEditorPage({
               sections: current.sections.map((item) => (item.id === nextSection.id ? nextSection : item)),
             }),
             {
-              historyLabel: `修改${activeSectionDefinition.title}`,
+              historyLabel: `修改${definition.title}`,
               clearDeletion: true,
             },
           )
         }
-        onCopyItem={(itemId) => void copySectionItem(activePanel, itemId)}
-        onDeleteItem={(itemId) => deleteSectionItem(activePanel, itemId)}
+        onCopyItem={(itemId) => void copySectionItem(sectionType, itemId)}
+        onDeleteItem={(itemId) => deleteSectionItem(sectionType, itemId)}
         onDuplicateItem={(itemId) => {
-          const source = activeSection.items.find((item) => item.id === itemId);
+          const source = section.items.find((item) => item.id === itemId);
           if (source) {
-            insertSectionItem(activePanel, {
+            insertSectionItem(sectionType, {
               afterItemId: itemId,
               duplicateFrom: source,
             });
           }
         }}
-        onMoveItem={(itemId, direction) => moveSectionItem(activePanel, itemId, direction)}
-        section={activeSection}
+        onMoveItem={(itemId, direction) => moveSectionItem(sectionType, itemId, direction)}
+        section={section}
         writerProfile={document.meta.writerProfile}
       />
+    );
+  };
+
+  const renderEditorSurface = () => {
+    const groupItems = activePanelGroup?.items ?? [];
+
+    let panelContent: ReactNode;
+
+    if (editorMode === "markdown") {
+      panelContent = (
+        <ResumeMarkdownPanel
+          onChange={(value) => applyMarkdownDraft(value, "已更新")}
+          onClear={() => {
+            setConfirmation({
+              title: "清空 Markdown 草稿？",
+              description: "这会移除当前源码内容，但你仍可以通过撤销立即找回。",
+              confirmLabel: "清空 Markdown",
+              confirmVariant: "danger",
+              onConfirm: () => {
+                setConfirmation(null);
+                applyMarkdownDraft("", "已清空");
+              },
+            });
+          }}
+          onInsertStarter={() => applyMarkdownDraft(markdownStarter, "已插入结构")}
+          parseError={markdownError}
+          value={markdownDraft}
+        />
+      );
+    } else if (activePanel === "basics") {
+      panelContent = <ResumeBasicsPanel document={document} onBasicsChange={updateBasicsField} />;
+    } else if (activePanel === "design") {
+      panelContent = (
+        <ResumeDesignPanel
+          document={document}
+          onApplyPreset={applyStylePreset}
+          onLayoutChange={updateLayoutField}
+          onPhotoChange={updateBasicsVisualField}
+          onTemplateChange={updateTemplate}
+        />
+      );
+    } else if (activePanel === "targeting") {
+      panelContent = <ResumeTargetingPanel document={document} onTargetingChange={updateTargetingField} />;
+    } else if (activePanel === "ai") {
+      panelContent = (
+        <ResumeAiPanel
+          analysis={targetingAnalysis}
+          apiKey={clientAiApiKey}
+          document={document}
+          generatedSummarySuggestions={generatedAiSummarySuggestions}
+          isGenerating={isGeneratingVariant}
+          isGeneratingSummary={isGeneratingAiSummary}
+          onAiChange={updateAiField}
+          onAiApiKeyChange={updateAiApiKey}
+          onAiPresetApply={applyAiPreset}
+          onApplyGeneratedSummary={applyGeneratedAiSummarySuggestion}
+          onApplySuggestedKeywords={applySuggestedKeywords}
+          onGenerateSummary={() => void handleGenerateAiSummary()}
+          onGenerateTailoredVariant={() => void handleGenerateTailoredVariant()}
+          tailoredPlan={tailoredVariantPlan}
+        />
+      );
+    } else if (isSectionPanel(activePanel)) {
+      panelContent = renderSectionPanel(activePanel);
+    } else {
+      panelContent = null;
+    }
+
+    return (
+      <div className="resume-editor-stack">
+        <section className="editor-workbench-header">
+          <div className="editor-workbench-caption">
+            <span className="editor-workbench-label">{activePanelMeta?.label ?? "编辑"}</span>
+            <p className="editor-workbench-copy">
+              {(activePanelMeta?.hint ?? "专注当前任务，右侧预览会同步更新。") +
+                (activePanelGroup ? ` · ${activePanelGroup.label}` : "")}
+            </p>
+          </div>
+
+          <div className="editor-workbench-tabs" aria-label="当前工作区导航">
+            {groupItems.map((item) => (
+              <button
+                aria-pressed={item.key === activePanel}
+                className={`editor-workbench-tab ${item.key === activePanel ? "editor-workbench-tab-active" : ""}`}
+                key={item.key}
+                onClick={() => handlePanelSelect(item.key)}
+                type="button"
+              >
+                <span>{item.label}</span>
+                {item.countLabel ? <em>{item.countLabel}</em> : null}
+              </button>
+            ))}
+          </div>
+        </section>
+
+        <section
+          className="editor-surface-section editor-surface-section-active"
+          onFocusCapture={() => setActivePanel(activePanel)}
+          ref={editorSurfaceRef}
+        >
+          {panelContent}
+        </section>
+      </div>
     );
   };
 
   return (
     <main className="resume-editor-workspace">
       <ResumeEditorToolbar
+        currentPanelGroupLabel={activePanelGroup?.label ?? "工作区"}
         editorMode={editorMode}
         onBack={() => void handleBack()}
         onModeChange={handleModeChange}
         onOpenPreview={() => void handleOpenPreview()}
         onSave={() => void saveDocument("manual")}
+        onTemplateChange={updateTemplate}
         onTitleChange={updateResumeTitle}
         saveState={saveState}
         statusMessage={statusMessage}
+        template={document.meta.template}
         title={document.meta.title}
       />
 
       {importReview ? (
         <section className="resume-editor-import-banner">
-          <div>
+          <div className="resume-editor-import-overview">
             <p className="editor-workflow-kicker">导入校对</p>
             <div className="editor-workflow-head">
               <strong>{importReview.title}</strong>
               <span>
                 {importReview.remainingCount > 0
                   ? `${importReview.remainingCount} 个待核对项`
-                  : "已进入整理阶段"}
+                  : "可继续编辑"}
               </span>
             </div>
             <p className="editor-workflow-copy">{importReview.description}</p>
@@ -1652,18 +1941,6 @@ export function ResumeEditorPage({
               ) : (
                 <Badge tone="success">已完成首轮导入</Badge>
               )}
-              {importReview.reviewTaskCount > 0 ? (
-                <Badge tone="neutral">{importReview.reviewTaskCount} 个待处理任务</Badge>
-              ) : null}
-              {importReview.fieldSuggestionCount > 0 ? (
-                <Badge tone="neutral">{importReview.fieldSuggestionCount} 个字段核对建议</Badge>
-              ) : null}
-              {importReview.snapshotCount > 0 ? (
-                <Badge tone="neutral">{importReview.snapshotCount} 个原始片段</Badge>
-              ) : null}
-              {importReview.unmappedItemCount > 0 ? (
-                <Badge tone="warning">{importReview.unmappedItemCount} 个未映射提示</Badge>
-              ) : null}
             </div>
             <div className="resume-editor-import-stats">
               {importReview.mappedStats.map((stat) => (
@@ -1674,202 +1951,231 @@ export function ResumeEditorPage({
               ))}
             </div>
             <p className="resume-editor-import-note">
-              当前导入结果已结构化为可编辑草稿，建议先核对待确认项，再决定是否继续润色或补全。
+              当前结果已整理成可编辑草稿，建议先核对，再继续润色。
             </p>
-          </div>
-
-          <div className="resume-editor-import-list">
-            {(importReview.pendingItemsPreview.length > 0
-              ? importReview.pendingItemsPreview
-              : ["没有额外待核对项。"]).map((item) => (
-              <div className="resume-editor-import-item" key={item}>
-                <p>{item}</p>
-                {importReview.pendingItemCount > 0 ? (
-                  <div className="resume-editor-import-item-actions">
-                    <Button onClick={() => handleResolvePendingItem(item)} variant="ghost">
-                      标记已核对
-                    </Button>
-                  </div>
-                ) : null}
+            {highlightedDiagnostics.length > 0 ? (
+              <div className="resume-editor-inline-priority">
+                <div className="resume-editor-inline-priority-head">
+                  <strong>当前提醒</strong>
+                  <span>{highlightedDiagnostics.length} 项</span>
+                </div>
+                <div className="editor-priority-list">
+                  {highlightedDiagnostics.map((issue) => (
+                    <button
+                      className="editor-priority-chip"
+                      key={issue.id}
+                      onClick={() => handleFocusDiagnostic(issue.target)}
+                      type="button"
+                    >
+                      <div className="editor-priority-chip-copy">
+                        <div className="editor-priority-chip-head">
+                          <Badge tone={issue.severity === "blocker" ? "warning" : "neutral"}>
+                            {issue.severity === "blocker" ? "必改" : "建议"}
+                          </Badge>
+                          <strong>{issue.message}</strong>
+                        </div>
+                        <span>{issue.suggestion}</span>
+                      </div>
+                      <span className="editor-priority-chip-action">
+                        {issue.target === "export" ? "去检查" : "去处理"}
+                      </span>
+                    </button>
+                  ))}
+                </div>
               </div>
-            ))}
+            ) : null}
+            <div className="editor-workflow-actions">
+              <Button onClick={handleFocusImportedBasics} variant="secondary">
+                {importReview.primaryActionLabel}
+              </Button>
+              <Button onClick={handleFocusImportedContent}>
+                {importReview.secondaryActionLabel}
+              </Button>
+            </div>
           </div>
 
-          {importReview.unmappedItems.length > 0 ? (
-            <div className="resume-editor-import-review-tasks">
-              {importReview.unmappedItems.map((item) => (
-                <article className="resume-editor-import-review-task" key={item}>
-                  <div className="resume-editor-import-review-task-head">
-                    <strong>未映射内容提示</strong>
-                    <Badge tone="warning">需要补录</Badge>
-                  </div>
+          <section className="resume-editor-import-panel">
+            <div className="resume-editor-import-panel-head">
+              <strong>优先核对</strong>
+              <span>{importReview.pendingItemCount > 0 ? `${importReview.pendingItemCount} 项` : "已清空"}</span>
+            </div>
+            <div className="resume-editor-import-list">
+              {(importReview.pendingItemsPreview.length > 0
+                ? importReview.pendingItemsPreview
+                : ["没有额外待核对项。"]).map((item) => (
+                <div className="resume-editor-import-item" key={item}>
                   <p>{item}</p>
-                  <div className="resume-editor-import-task-actions">
-                    <Button onClick={handleFocusImportedContent} variant="secondary">
-                      打开内容编辑
-                    </Button>
-                    <Button onClick={() => handleResolveUnmappedItem(item)} variant="ghost">
-                      标记已核对
-                    </Button>
-                  </div>
-                </article>
+                  {importReview.pendingItemCount > 0 ? (
+                    <div className="resume-editor-import-item-actions">
+                      <Button onClick={() => handleResolvePendingItem(item)} variant="ghost">
+                        标记已核对
+                      </Button>
+                    </div>
+                  ) : null}
+                </div>
               ))}
             </div>
+          </section>
+
+          {importReview.unmappedItems.length > 0 ? (
+            <details className="resume-editor-import-disclosure" open>
+              <summary>
+                <strong>未映射内容</strong>
+                <span>{importReview.unmappedItemCount} 项</span>
+              </summary>
+              <div className="resume-editor-import-review-tasks">
+                {importReview.unmappedItems.map((item) => (
+                  <article className="resume-editor-import-review-task" key={item}>
+                    <div className="resume-editor-import-review-task-head">
+                      <strong>未映射内容提示</strong>
+                      <Badge tone="warning">需要补录</Badge>
+                    </div>
+                    <p>{item}</p>
+                    <div className="resume-editor-import-task-actions">
+                      <Button onClick={handleFocusImportedContent} variant="secondary">
+                        打开内容编辑
+                      </Button>
+                      <Button onClick={() => handleResolveUnmappedItem(item)} variant="ghost">
+                        标记已核对
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </details>
           ) : null}
 
           {importReview.fieldSuggestions.length > 0 ? (
-            <div className="resume-editor-import-review-tasks">
-              {importReview.fieldSuggestions.map((suggestion) => (
-                <article className="resume-editor-import-review-task" key={suggestion.id}>
-                  <div className="resume-editor-import-review-task-head">
-                    <strong>{suggestion.label}</strong>
-                    <Badge tone="neutral">{suggestion.sourceLabel}</Badge>
-                  </div>
-                  <p className="resume-editor-import-field-value">
-                    导入值：{stripHtmlToText(suggestion.importedValue) || "空"}
-                  </p>
-                  <p className="resume-editor-import-field-previous">
-                    原值：{stripHtmlToText(suggestion.previousValue) || "空"}
-                  </p>
-                  <div className="resume-editor-import-task-actions">
-                    <Button onClick={handleFocusImportedBasics} variant="secondary">
-                      打开基础信息
-                    </Button>
-                    <Button
-                      onClick={() => handleRestoreImportedFieldPreviousValue(suggestion)}
-                      variant="ghost"
-                    >
-                      恢复原值
-                    </Button>
-                    <Button onClick={() => handleResolveFieldSuggestion(suggestion.id)} variant="ghost">
-                      保留导入值
-                    </Button>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <details className="resume-editor-import-disclosure">
+              <summary>
+                <strong>字段核对</strong>
+                <span>{importReview.fieldSuggestionCount} 项</span>
+              </summary>
+              <div className="resume-editor-import-review-tasks">
+                {importReview.fieldSuggestions.map((suggestion) => (
+                  <article className="resume-editor-import-review-task" key={suggestion.id}>
+                    <div className="resume-editor-import-review-task-head">
+                      <strong>{suggestion.label}</strong>
+                      <Badge tone="neutral">{suggestion.sourceLabel}</Badge>
+                    </div>
+                    <p className="resume-editor-import-field-value">
+                      导入值：{stripHtmlToText(suggestion.importedValue) || "空"}
+                    </p>
+                    <p className="resume-editor-import-field-previous">
+                      原值：{stripHtmlToText(suggestion.previousValue) || "空"}
+                    </p>
+                    <div className="resume-editor-import-task-actions">
+                      <Button onClick={handleFocusImportedBasics} variant="secondary">
+                        打开基础信息
+                      </Button>
+                      <Button
+                        onClick={() => handleRestoreImportedFieldPreviousValue(suggestion)}
+                        variant="ghost"
+                      >
+                        恢复原值
+                      </Button>
+                      <Button onClick={() => handleResolveFieldSuggestion(suggestion.id)} variant="ghost">
+                        保留导入值
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </details>
           ) : null}
 
           {importReview.reviewTasks.length > 0 ? (
-            <div className="resume-editor-import-review-tasks">
-              {importReview.reviewTasks.map((task) => (
-                <article className="resume-editor-import-review-task" key={task.id}>
-                  <div className="resume-editor-import-review-task-head">
-                    <strong>{task.title}</strong>
-                    <Badge tone={task.priority === "high" ? "warning" : "neutral"}>
-                      {task.priority === "high" ? "优先处理" : "可稍后"}
-                    </Badge>
-                  </div>
-                  <p>{task.detail}</p>
-                  <div className="resume-editor-import-task-actions">
-                    <Button onClick={() => handleFocusImportTask(task.focus)} variant="secondary">
-                      {task.focus === "basics" ? "打开基础信息" : "打开内容编辑"}
-                    </Button>
-                    {task.priority === "medium" ? (
-                      <Button onClick={() => handleResolveImportTask(task.id)} variant="ghost">
-                        标记已完成
+            <details className="resume-editor-import-disclosure" open={importReview.unmappedItems.length === 0}>
+              <summary>
+                <strong>整理任务</strong>
+                <span>{importReview.reviewTaskCount} 项</span>
+              </summary>
+              <div className="resume-editor-import-review-tasks">
+                {importReview.reviewTasks.map((task) => (
+                  <article className="resume-editor-import-review-task" key={task.id}>
+                    <div className="resume-editor-import-review-task-head">
+                      <strong>{task.title}</strong>
+                      <Badge tone={task.priority === "high" ? "warning" : "neutral"}>
+                        {task.priority === "high" ? "优先处理" : "可稍后"}
+                      </Badge>
+                    </div>
+                    <p>{task.detail}</p>
+                    <div className="resume-editor-import-task-actions">
+                      <Button onClick={() => handleFocusImportTask(task.focus)} variant="secondary">
+                        {task.focus === "basics" ? "打开基础信息" : "打开内容编辑"}
                       </Button>
-                    ) : null}
-                  </div>
-                </article>
-              ))}
-            </div>
+                      {task.priority === "medium" ? (
+                        <Button onClick={() => handleResolveImportTask(task.id)} variant="ghost">
+                          标记已完成
+                        </Button>
+                      ) : null}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </details>
           ) : null}
 
           {importReview.snapshots.length > 0 ? (
-            <div className="resume-editor-import-snapshots">
-              {importReview.snapshots.map((snapshot) => (
-                <article className="resume-editor-import-snapshot" key={snapshot.id}>
-                  <div className="resume-editor-import-snapshot-head">
-                    <strong>{snapshot.label}</strong>
-                    <Badge tone="neutral">{snapshot.mappedTo}</Badge>
-                  </div>
-                  <p className="resume-editor-import-snapshot-source">{snapshot.source}</p>
-                  <p className="resume-editor-import-snapshot-excerpt">{snapshot.excerpt}</p>
-                  <div className="resume-editor-import-task-actions">
-                    <Button onClick={handleFocusImportedContent} variant="secondary">
-                      打开内容编辑
-                    </Button>
-                    <Button onClick={() => handleResolveSnapshot(snapshot.id)} variant="ghost">
-                      标记已核对
-                    </Button>
-                  </div>
-                </article>
-              ))}
-            </div>
+            <details className="resume-editor-import-disclosure">
+              <summary>
+                <strong>原始片段</strong>
+                <span>{importReview.snapshotCount} 项</span>
+              </summary>
+              <div className="resume-editor-import-snapshots">
+                {importReview.snapshots.map((snapshot) => (
+                  <article className="resume-editor-import-snapshot" key={snapshot.id}>
+                    <div className="resume-editor-import-snapshot-head">
+                      <strong>{snapshot.label}</strong>
+                      <Badge tone="neutral">{snapshot.mappedTo}</Badge>
+                    </div>
+                    <p className="resume-editor-import-snapshot-source">{snapshot.source}</p>
+                    <p className="resume-editor-import-snapshot-excerpt">{snapshot.excerpt}</p>
+                    <div className="resume-editor-import-task-actions">
+                      <Button onClick={handleFocusImportedContent} variant="secondary">
+                        打开内容编辑
+                      </Button>
+                      <Button onClick={() => handleResolveSnapshot(snapshot.id)} variant="ghost">
+                        标记已核对
+                      </Button>
+                    </div>
+                  </article>
+                ))}
+              </div>
+            </details>
           ) : null}
-
-          <div className="editor-workflow-actions">
-            <Button onClick={handleFocusImportedBasics} variant="secondary">
-              {importReview.primaryActionLabel}
-            </Button>
-            <Button onClick={handleFocusImportedContent}>
-              {importReview.secondaryActionLabel}
-            </Button>
-          </div>
         </section>
       ) : null}
-
-      <section className="editor-workflow-strip">
-        <div>
-          <p className="editor-workflow-kicker">当前阶段</p>
-          <div className="editor-workflow-head">
-            <strong>{workbenchReport.workflow.currentLabel}</strong>
-            <span>{workbenchReport.score} / 100</span>
-          </div>
-          <p className="editor-workflow-copy">{workbenchReport.workflow.currentDescription}</p>
-        </div>
-        <div>
-          <p className="editor-workflow-kicker">下一步</p>
-          <div className="editor-workflow-head">
-            <strong>{nextTask?.title ?? "可以进入预览导出"}</strong>
-            <span>{nextTask ? "下一项" : "可去预览"}</span>
-          </div>
-          <p className="editor-workflow-copy">
-            {nextTask?.detail ?? "继续检查版式与导出风险，确认后再导出 PDF。"}
-          </p>
-        </div>
-        <div className="editor-workflow-actions">
-          <Button onClick={() => handleJumpToNextTask()} variant="secondary">
-            {nextTask?.action.label ?? "进入预览导出"}
-          </Button>
-          <Button onClick={() => void handleOpenPreview()}>
-            预览导出
-          </Button>
-        </div>
-      </section>
-
-      {highlightedDiagnostics.length > 0 ? (
-        <section className="editor-diagnostic-strip">
-          <div className="editor-diagnostic-strip-head">
-            <div>
-              <p className="editor-workflow-kicker">优先优化</p>
-              <div className="editor-workflow-head">
-                <strong>先处理这几个最影响完成度的问题</strong>
-                <span>{highlightedDiagnostics.length} 项</span>
-              </div>
-              <p className="editor-workflow-copy">
-                这些建议直接来自当前草稿诊断，优先处理后，整份简历会更容易进入可导出状态。
-              </p>
+      {!importReview && highlightedDiagnostics.length > 0 ? (
+        <section className="editor-priority-strip">
+          <div className="editor-priority-head">
+            <div className="editor-priority-title">
+              <p className="editor-workflow-kicker">优先处理</p>
+              <strong>优先处理这 {highlightedDiagnostics.length} 项。</strong>
             </div>
           </div>
 
-          <div className="editor-diagnostic-list">
+          <div className="editor-priority-list">
             {highlightedDiagnostics.map((issue) => (
-              <article className="editor-diagnostic-item" key={issue.id}>
-                <div className="editor-diagnostic-copy">
-                  <div className="editor-diagnostic-head">
-                    <strong>{issue.message}</strong>
+              <button
+                className="editor-priority-chip"
+                key={issue.id}
+                onClick={() => handleFocusDiagnostic(issue.target)}
+                type="button"
+              >
+                <div className="editor-priority-chip-copy">
+                  <div className="editor-priority-chip-head">
                     <Badge tone={issue.severity === "blocker" ? "warning" : "neutral"}>
                       {issue.severity === "blocker" ? "必改" : "建议"}
                     </Badge>
+                    <strong>{issue.message}</strong>
                   </div>
-                  <p>{issue.suggestion}</p>
+                  <span>{issue.suggestion}</span>
                 </div>
-                <Button onClick={() => handleFocusDiagnostic(issue.target)} variant="secondary">
-                  {issue.target === "export" ? "去预览检查" : "去处理"}
-                </Button>
-              </article>
+                <span className="editor-priority-chip-action">
+                  {issue.target === "export" ? "去检查" : "去处理"}
+                </span>
+              </button>
             ))}
           </div>
         </section>
@@ -1879,7 +2185,7 @@ export function ResumeEditorPage({
         <section className="resume-editor-notice">
           <div>
             <strong>已删除“{recentDeletion.item.title || recentDeletion.sectionTitle}”</strong>
-            <p>可恢复</p>
+            <p>可撤销</p>
           </div>
           <Button onClick={() => restoreDeletedItem()} variant="secondary">
             <RotateCcw className="size-4" />
@@ -1889,14 +2195,17 @@ export function ResumeEditorPage({
       ) : null}
 
       <section className="resume-editor-layout">
-        <ResumeEditorSidebar activePanel={activePanel} items={sidebarItems} onSelect={handlePanelSelect} />
+        <ResumeEditorSidebar activePanel={activePanel} groups={sidebarGroups} onSelect={handlePanelSelect} />
 
         <div className="resume-editor-main">
-          {renderCurrentPanel()}
+          {renderEditorSurface()}
         </div>
 
         <ResumePreviewPanel
+          countLabel={activePanelMeta?.countLabel}
+          groupLabel={activePanelGroup?.label ?? "工作区"}
           html={previewHtml}
+          panelLabel={activePanelMeta?.label ?? "编辑"}
           saveLabel={
             saveState === "dirty"
               ? "未保存修改"
@@ -1909,7 +2218,18 @@ export function ResumeEditorPage({
         />
       </section>
 
+      <ConfirmDialog
+        cancelLabel="继续编辑"
+        confirmLabel={confirmation?.confirmLabel}
+        confirmVariant={confirmation?.confirmVariant ?? "primary"}
+        description={confirmation?.description}
+        onClose={() => setConfirmation(null)}
+        onConfirm={() => void confirmation?.onConfirm()}
+        open={Boolean(confirmation)}
+        title={confirmation?.title ?? "请确认"}
+      />
       <EditorShortcutDialog onClose={() => setShortcutOpen(false)} open={shortcutOpen} />
     </main>
   );
 }
+

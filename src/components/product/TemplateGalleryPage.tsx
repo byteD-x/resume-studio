@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import type { Route } from "next";
 import { FileArchive, LoaderCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -48,27 +49,18 @@ async function getJson<T>(response: Response): Promise<T> {
 function TemplatePreview({ template }: { template: TemplateCatalogItem }) {
   return (
     <div
-      className="flex min-h-[15rem] items-center justify-center border-b border-[color:var(--line)] px-6 py-8"
+      className="flex min-h-[15rem] items-center justify-center border-b border-[color:var(--line)] px-4 py-5"
       style={{ background: template.background }}
     >
-      <div className="w-full max-w-[17rem] rounded-[1.1rem] bg-white/90 px-5 py-5 shadow-[0_14px_30px_rgba(15,23,42,0.06)]">
-        <p className="text-[0.82rem] font-semibold tracking-[0.18em]" style={{ color: template.accent }}>
-          {template.name.toUpperCase()}
-        </p>
-        <div className="mt-5 grid grid-cols-[5rem_minmax(0,1fr)] gap-3">
-          <div className="grid gap-2">
-            <span className="block h-2 rounded-full bg-slate-200" />
-            <span className="block h-2 rounded-full bg-slate-200" />
-            <span className="block h-2 rounded-full bg-slate-200" />
-            <span className="block h-2 rounded-full bg-slate-200" />
-          </div>
-          <div className="grid gap-2">
-            <span className="block h-2 rounded-full bg-slate-200" />
-            <span className="block h-2 rounded-full bg-slate-200" />
-            <span className="block h-2 rounded-full bg-slate-200" />
-            <span className="block h-2 rounded-full bg-slate-200" />
-          </div>
-        </div>
+      <div className="w-full max-w-[15.5rem] overflow-hidden rounded-[1rem] border border-white/70 bg-white/80 shadow-[0_18px_36px_rgba(15,23,42,0.08)]">
+        <Image
+          alt={template.previewAlt}
+          className="block h-auto w-full"
+          height={1470}
+          loading="lazy"
+          src={template.previewImage}
+          width={1040}
+        />
       </div>
     </div>
   );
@@ -125,9 +117,9 @@ export function TemplateGalleryPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: "未命名简历",
-            starter: "guided",
+            starter: "template-sample",
             writerProfile,
-            template: template.template,
+            template: template.id,
           }),
         }),
       );
@@ -175,6 +167,7 @@ export function TemplateGalleryPage() {
               const active = writerProfile === profile.value;
               return (
                 <button
+                  aria-pressed={active}
                   key={profile.value}
                   className={`filter-chip ${active ? "filter-chip-active" : ""}`}
                   onClick={() => updateTemplateRoute({ profile: profile.value })}
@@ -194,6 +187,7 @@ export function TemplateGalleryPage() {
           <div className="flex flex-wrap gap-2">
             {templateCategories.map((category) => (
               <button
+                aria-pressed={activeCategory === category}
                 key={category}
                 className={`filter-chip ${activeCategory === category ? "filter-chip-active" : ""}`}
                 onClick={() => updateTemplateRoute({ category: category === "全部" ? null : category })}

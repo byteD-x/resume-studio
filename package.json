@@ -2,11 +2,15 @@
   "name": "resume-studio",
   "version": "0.1.0",
   "private": true,
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint src scripts tests *.ts *.mts --ext .ts,.tsx --no-warn-ignored",
+    "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "import:portfolio": "tsx scripts/import-portfolio.ts",
@@ -14,7 +18,8 @@
     "export:pdf": "tsx scripts/export-pdf.ts",
     "import:markdown": "tsx scripts/import-markdown.ts",
     "export:markdown": "tsx scripts/export-markdown.ts",
-    "validate:resume": "tsx scripts/validate-resume.ts"
+    "validate:resume": "tsx scripts/validate-resume.ts",
+    "generate:template-previews": "tsx scripts/generate-template-previews.ts"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

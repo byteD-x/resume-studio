@@ -7,7 +7,7 @@ Resume Studio is a local-first Next.js App Router application for writing, refin
 - Runtime: Next.js 16 App Router with Node.js route handlers
 - Storage: local filesystem under `data/resumes/<id>`
 - Editing model: one `document.json` per resume draft
-- UI model: Dashboard, resume library, editor route, preview route, and optional demo identity route
+- UI model: Dashboard, resume library, editor route, preview route, and import/template entry routes
 - Export: HTML preview rendered to PDF through Playwright Chromium
 
 ## Core flow
@@ -24,6 +24,7 @@ Resume Studio is a local-first Next.js App Router application for writing, refin
 ## Data model
 
 The canonical source of truth is `data/resumes/<id>/document.json`.
+When `RESUME_STUDIO_DATA_DIR` is provided, storage is redirected to that writable directory instead.
 
 Key fields:
 

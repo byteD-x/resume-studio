@@ -40,12 +40,15 @@ AI 只围绕两个核心场景定制开发：
 ## 本地开发
 
 ```bash
+nvm use
 npm install
 npx playwright install chromium
 npm run dev
 ```
 
 访问 `http://localhost:3000`。
+
+推荐使用 Node.js 20 及以上版本，仓库附带了 [`.nvmrc`](./.nvmrc)。
 
 如果你想在本地自托管模型，也可以切回 Ollama：
 
@@ -88,9 +91,47 @@ RESUME_STUDIO_AI_API_KEY=...
 
 默认推荐让用户使用 Groq 或 OpenRouter 这类云服务免费模型；如果是内网或私有化部署，再切回本地 Ollama。
 
+## 环境变量
+
+可参考 [`.env.example`](./.env.example)：
+
+- `RESUME_STUDIO_AI_API_KEY` / `OPENAI_COMPATIBLE_API_KEY` / `OPENAI_API_KEY`
+  服务端远程 AI 路由的兜底密钥
+- `RESUME_STUDIO_DATA_DIR`
+  可选的本地数据目录覆盖，默认仍为 `data/resumes`
+
+`RESUME_STUDIO_DATA_DIR` 对以下场景特别有用：
+
+- 在不同环境隔离草稿数据
+- 让 Playwright / CI 使用独立测试数据目录
+- 部署时把文档输出重定向到可写挂载目录
+
+### AI / URL 导入安全限制
+
+- 服务端 AI 代理默认只允许：
+  - 内置可信云服务域名
+  - 开发环境下的本地 `localhost/127.0.0.1` Ollama
+- 如需接入额外的 OpenAI-compatible 服务，使用：
+
+```bash
+RESUME_STUDIO_ALLOWED_AI_HOSTS=your-ai.example.com,another-ai.example.com
+```
+
+- 生产环境默认拒绝私网 / 本地 AI 地址；只有在明确受信任的部署环境里，才应设置：
+
+```bash
+RESUME_STUDIO_ALLOW_PRIVATE_AI_HOSTS=true
+```
+
+- 网站 URL 导入默认只允许公网 `http(s)` 地址，并拒绝本地 / 私网目标。只有在受控环境下才应设置：
+
+```bash
+RESUME_STUDIO_ALLOW_PRIVATE_URL_IMPORTS=true
+```
+
 ## 安全边界
 
-- `API Key` 只保存在当前浏览器
+- `API Key` 只保存在当前浏览器会话
 - `API Key` 不会写入 `data/resumes/<id>/document.json`
 - 导入后生成的简历文档也不会落盘保存 `API Key`
 
@@ -101,6 +142,12 @@ RESUME_STUDIO_AI_API_KEY=...
 - `src/components`：编辑器、导入页和通用 UI
 - `src/lib`：schema、存储、导入解析、AI、预览与导出逻辑
 - `data/resumes`：本地简历文档和导出产物
+
+## 部署约束
+
+- 这是一个本地优先项目，运行时需要可写文件系统来保存 `document.json`、导入中间产物和导出的 PDF
+- PDF 导出依赖 Playwright Chromium，部署前需要确保对应浏览器可安装或已预装
+- 如果运行环境没有持久化磁盘，建议显式配置 `RESUME_STUDIO_DATA_DIR` 到可写且可持久化的位置
 
 ## CLI
 
@@ -117,6 +164,7 @@ npm run import:markdown -- ./resume.md
 
 ```bash
 npm run lint
+npm run typecheck
 npm run test:unit
 npm run test:e2e
 npm run build

@@ -3,6 +3,7 @@ import path from "node:path";
 import {
   createEmptyResumeDocument,
   createGuidedResumeDocument,
+  createTemplateStarterDocument,
   type ResumeStarterPreset,
   validateResumeDocument,
   withUpdatedTimestamp,
@@ -12,18 +13,42 @@ import type { ResumeDashboardSummary } from "@/types/resume-manager";
 import type { ResumeWriterProfile } from "@/types/resume";
 import { nowIso, slugify } from "@/lib/utils";
 
-const DATA_ROOT = path.join(process.cwd(), "data", "resumes");
+function resolveStorageRoot() {
+  const configuredRoot = process.env.RESUME_STUDIO_DATA_DIR?.trim();
+  if (configuredRoot) {
+    return path.isAbsolute(configuredRoot)
+      ? configuredRoot
+      : path.join(/*turbopackIgnore: true*/ process.cwd(), configuredRoot);
+  }
+
+  return path.join(/*turbopackIgnore: true*/ process.cwd(), "data", "resumes");
+}
+
+export function getStorageRoot() {
+  return resolveStorageRoot();
+}
+
+function legacySlugify(value: string) {
+  const normalized = value
+    .toLowerCase()
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+
+  return normalized || "resume";
+}
 
 function getResumeDir(id: string) {
-  return path.join(DATA_ROOT, slugify(id));
+  return path.join(getStorageRoot(), slugify(id));
+}
+
+function getLegacyResumeDir(id: string) {
+  return path.join(getStorageRoot(), legacySlugify(id));
 }
 
 function getDocumentPath(id: string) {
   return path.join(getResumeDir(id), "document.json");
-}
-
-function getExportDir(id: string) {
-  return path.join(getResumeDir(id), "exports");
 }
 
 async function ensureDir(value: string) {
@@ -37,6 +62,20 @@ async function pathExists(value: string) {
   } catch {
     return false;
   }
+}
+
+async function resolveResumeDir(id: string) {
+  const currentDir = getResumeDir(id);
+  if (await pathExists(currentDir)) {
+    return currentDir;
+  }
+
+  const legacyDir = getLegacyResumeDir(id);
+  if (legacyDir !== currentDir && await pathExists(legacyDir)) {
+    return legacyDir;
+  }
+
+  return currentDir;
 }
 
 async function createUniqueResumeId(base: string) {
@@ -53,11 +92,11 @@ async function createUniqueResumeId(base: string) {
 }
 
 export async function ensureStorageRoot() {
-  await ensureDir(DATA_ROOT);
+  await ensureDir(getStorageRoot());
 }
 
 export async function readResumeDocument(id: string) {
-  const documentPath = getDocumentPath(id);
+  const documentPath = path.join(await resolveResumeDir(id), "document.json");
   const raw = await fs.readFile(documentPath, "utf8");
   return validateResumeDocument(JSON.parse(raw));
 }
@@ -81,8 +120,9 @@ export async function ensureResumeDocument(id: string, title?: string) {
 }
 
 export async function listResumeDocuments() {
-  await ensureStorageRoot();
-  const entries = await fs.readdir(DATA_ROOT, { withFileTypes: true });
+  const dataRoot = getStorageRoot();
+  await ensureDir(dataRoot);
+  const entries = await fs.readdir(dataRoot, { withFileTypes: true });
   const documents: ResumeDocument[] = [];
 
   for (const entry of entries) {
@@ -109,7 +149,9 @@ export async function createResumeDocument(
 ) {
   const id = await createUniqueResumeId(title);
   const document =
-    options.starter === "guided"
+    options.starter === "template-sample"
+      ? createTemplateStarterDocument(id, title, options.writerProfile, options.template)
+      : options.starter === "guided"
       ? createGuidedResumeDocument(id, title, options.writerProfile, options.template)
       : createEmptyResumeDocument(id, title, {
           writerProfile: options.writerProfile,
@@ -138,7 +180,7 @@ export async function writeImportArtifact(
   name: string,
   payload: unknown,
 ) {
-  const importDir = path.join(getResumeDir(id), "imports");
+  const importDir = path.join(await resolveResumeDir(id), "imports");
   await ensureDir(importDir);
   const filePath = path.join(importDir, name);
   await fs.writeFile(filePath, `${JSON.stringify(payload, null, 2)}\n`);
@@ -146,7 +188,7 @@ export async function writeImportArtifact(
 }
 
 export async function writeExportedPdf(id: string, buffer: Buffer) {
-  const exportDir = getExportDir(id);
+  const exportDir = path.join(await resolveResumeDir(id), "exports");
   await ensureDir(exportDir);
   const fileName = `${nowIso().replace(/[:.]/g, "-")}.pdf`;
   await fs.writeFile(path.join(exportDir, fileName), buffer);
@@ -169,5 +211,5 @@ export async function duplicateResumeDocument(sourceId: string, nextTitle?: stri
 }
 
 export async function deleteResumeDocument(id: string) {
-  await fs.rm(getResumeDir(id), { recursive: true, force: true });
+  await fs.rm(await resolveResumeDir(id), { recursive: true, force: true });
 }

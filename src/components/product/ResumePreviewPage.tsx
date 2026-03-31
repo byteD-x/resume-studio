@@ -1,5 +1,6 @@
 "use client";
 
+import type { Route } from "next";
 import Link from "next/link";
 import { ArrowLeft, Download, LoaderCircle } from "lucide-react";
 import { useMemo, useState } from "react";
@@ -20,6 +21,24 @@ async function downloadBlob(response: Response, fallbackName: string) {
   anchor.download = fallbackName;
   anchor.click();
   window.URL.revokeObjectURL(url);
+}
+
+function buildEditorFocusHref(
+  documentId: string,
+  target: "basics" | "summary" | "content" | "targeting" | "export",
+): Route {
+  switch (target) {
+    case "targeting":
+      return `/studio/${documentId}?focus=targeting` as Route;
+    case "content":
+      return `/studio/${documentId}?focus=content` as Route;
+    case "export":
+      return `/studio/${documentId}?focus=design` as Route;
+    case "summary":
+    case "basics":
+    default:
+      return `/studio/${documentId}?focus=summary` as Route;
+  }
 }
 
 export function ResumePreviewPage({
@@ -100,7 +119,7 @@ export function ResumePreviewPage({
             <ArrowLeft className="size-4" />
             返回编辑
           </Link>
-          <Button disabled={hasBlockingIssues} onClick={() => void exportPdf()}>
+          <Button disabled={hasBlockingIssues || busyAction !== null} onClick={() => void exportPdf()}>
             {busyAction === "export" ? (
               <LoaderCircle className="size-4 animate-spin" />
             ) : (
@@ -155,9 +174,16 @@ export function ResumePreviewPage({
                     <p>{item.title}</p>
                     <span>{item.detail}</span>
                   </div>
-                  <span className={`workspace-check-tag ${item.done ? "workspace-check-tag-done" : ""}`}>
-                    {item.done ? "已完成" : item.required ? "待补充" : "建议优化"}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className={`workspace-check-tag ${item.done ? "workspace-check-tag-done" : ""}`}>
+                      {item.done ? "已完成" : item.required ? "待补充" : "建议优化"}
+                    </span>
+                    {!item.done ? (
+                      <Link className="btn btn-ghost" href={buildEditorFocusHref(initialDocument.meta.id, item.target)}>
+                        去处理
+                      </Link>
+                    ) : null}
+                  </div>
                 </div>
               ))}
             </div>
@@ -224,7 +250,12 @@ export function ResumePreviewPage({
                       <p>{issue.message}</p>
                       <span>{issue.suggestion}</span>
                     </div>
-                    <span className="workspace-check-tag">必须处理</span>
+                    <div className="flex items-center gap-2">
+                      <span className="workspace-check-tag">必须处理</span>
+                      <Link className="btn btn-ghost" href={buildEditorFocusHref(initialDocument.meta.id, issue.target)}>
+                        去处理
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -241,7 +272,12 @@ export function ResumePreviewPage({
                       <p>{issue.message}</p>
                       <span>{issue.suggestion}</span>
                     </div>
-                    <span className="workspace-check-tag">建议优化</span>
+                    <div className="flex items-center gap-2">
+                      <span className="workspace-check-tag">建议优化</span>
+                      <Link className="btn btn-ghost" href={buildEditorFocusHref(initialDocument.meta.id, issue.target)}>
+                        去处理
+                      </Link>
+                    </div>
                   </div>
                 ))}
               </div>

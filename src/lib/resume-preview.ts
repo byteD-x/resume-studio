@@ -1,23 +1,38 @@
 import type { ResumeDocument, ResumeSection, ResumeSectionItem } from "@/types/resume";
+import { getTemplateCatalogItem } from "@/data/template-catalog";
 import {
   getResumeRenderableSections,
   hasMeaningfulRichText,
   hasResumeRenderableContent,
   hasResumeSectionItemContent,
 } from "@/lib/resume-content";
-import { escapeHtml, sanitizeRichTextHtml } from "@/lib/utils";
+import { escapeHtml, sanitizeHref, sanitizeImageSrc, sanitizeRichTextHtml } from "@/lib/utils";
 
 interface PreviewBuildOptions {
   highlightedTarget?: "basics" | "targeting" | { sectionType: ResumeSection["type"] };
 }
 
+function sanitizeCustomCss(value: string) {
+  return value
+    .replace(/<\/style/gi, "<\\/style")
+    .replace(/@import/gi, "")
+    .replace(/url\s*\(/gi, "")
+    .replace(/expression\s*\(/gi, "")
+    .replace(/behavior\s*:/gi, "")
+    .replace(/-moz-binding/gi, "")
+    .replace(/javascript:/gi, "");
+}
+
 function renderLinks(document: ResumeDocument) {
   return document.basics.links
     .filter((link) => link.label.trim() && link.url.trim())
-    .map(
-      (link) =>
-        `<a class="resume-link" href="${escapeHtml(link.url)}">${escapeHtml(link.label)}</a>`,
-    )
+    .map((link) => {
+      const href = sanitizeHref(link.url);
+      if (!href) return "";
+
+      return `<a class="resume-link" href="${escapeHtml(href)}" rel="noreferrer" target="_blank">${escapeHtml(link.label)}</a>`;
+    })
+    .filter(Boolean)
     .join("");
 }
 
@@ -120,6 +135,8 @@ function getPreviewDensity(document: ResumeDocument) {
 }
 
 function buildEmptyPreviewState(document: ResumeDocument, accent: string) {
+  const customCss = document.layout.customCss.trim();
+
   return `<!DOCTYPE html>
 <html lang="${escapeHtml(document.meta.locale)}">
   <head>
@@ -128,15 +145,15 @@ function buildEmptyPreviewState(document: ResumeDocument, accent: string) {
     <style>
       :root {
         --accent: ${accent};
-        --ink: #182132;
-        --ink-soft: #5f6b7d;
-        --line: rgba(24, 33, 50, 0.12);
-        --paper: #fffdf8;
+        --ink: ${escapeHtml(document.layout.textColor)};
+        --ink-soft: ${escapeHtml(document.layout.mutedTextColor)};
+        --line: ${escapeHtml(document.layout.dividerColor)};
+        --paper: ${escapeHtml(document.layout.paperColor)};
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        background: ${document.meta.template === "modern-two-column" ? "#f3ede4" : "#ede6dc"};
+        background: ${escapeHtml(document.layout.pageBackground)};
         color: var(--ink);
         font-family: "${escapeHtml(document.layout.bodyFont)}", "Segoe UI", sans-serif;
       }
@@ -172,14 +189,14 @@ function buildEmptyPreviewState(document: ResumeDocument, accent: string) {
       h1 {
         margin: 0;
         font-family: "${escapeHtml(document.layout.headingFont)}", "Times New Roman", serif;
-        font-size: 22pt;
+        font-size: ${document.layout.nameSizePt}pt;
         line-height: 1.1;
       }
       p {
         margin: 4mm auto 0;
         max-width: 88mm;
         color: var(--ink-soft);
-        font-size: 10.5pt;
+        font-size: ${document.layout.bodyFontSizePt + 0.8}pt;
         line-height: 1.65;
       }
       .empty-notes {
@@ -193,7 +210,7 @@ function buildEmptyPreviewState(document: ResumeDocument, accent: string) {
         padding: 3mm 3.4mm;
         border-radius: 4mm;
         background: rgba(255, 255, 255, 0.86);
-        font-size: 9.5pt;
+        font-size: ${document.layout.metaFontSizePt + 0.4}pt;
         color: var(--ink);
       }
       @page {
@@ -201,18 +218,19 @@ function buildEmptyPreviewState(document: ResumeDocument, accent: string) {
         margin: 0;
       }
     </style>
+    ${customCss ? `<style id="resume-custom-css">${sanitizeCustomCss(customCss)}</style>` : ""}
   </head>
   <body>
-    <div class="page template-${escapeHtml(document.meta.template)}">
+    <div class="page resume-document template-${escapeHtml(document.meta.template)}">
       <div class="empty-shell">
         <section class="empty-card">
           <div class="empty-mark" aria-hidden="true"></div>
-          <h1>开始填写</h1>
-          <p>内容会按当前模板排版。</p>
+          <h1>从这里开始</h1>
+          <p>右侧会按当前模板实时排版。</p>
           <div class="empty-notes">
-            <div class="empty-note">先填写姓名和职位。</div>
-            <div class="empty-note">再补充经历、项目或技能。</div>
-            <div class="empty-note">完成后导出 PDF。</div>
+            <div class="empty-note">先写姓名、职位和联系方式。</div>
+            <div class="empty-note">再补经历、项目与技能。</div>
+            <div class="empty-note">确认后即可导出 PDF。</div>
           </div>
         </section>
       </div>
@@ -225,12 +243,30 @@ export function buildResumePreviewHtml(
   document: ResumeDocument,
   options?: PreviewBuildOptions,
 ) {
-  const isModern = document.meta.template === "modern-two-column";
+  const templateDefinition = getTemplateCatalogItem(document.meta.template);
+  const isModern = templateDefinition.family === "two-column";
   const accent = document.layout.accentColor;
+  const customCss = document.layout.customCss.trim();
   if (!hasResumeRenderableContent(document)) {
     return buildEmptyPreviewState(document, accent);
   }
   const density = getPreviewDensity(document);
+  const safePhotoSrc = sanitizeImageSrc(document.basics.photoUrl);
+  const hasPhoto = document.basics.photoVisible && safePhotoSrc.length > 0;
+  const photoInSidebar = hasPhoto && isModern && document.basics.photoPosition === "sidebar";
+  const headerTextAlign = document.layout.headerAlign === "center" ? "center" : "left";
+  const contactJustify = document.layout.headerAlign === "center" ? "center" : "flex-start";
+  const sectionDivider = document.layout.showSectionDividers ? "1px solid var(--line)" : "0";
+  const sectionHeaderBackground =
+    document.layout.sectionTitleStyle === "filled"
+      ? "color-mix(in srgb, var(--accent) 12%, white)"
+      : "transparent";
+  const sectionHeaderPadding =
+    document.layout.sectionTitleStyle === "filled"
+      ? "1.8mm 2.2mm"
+      : isModern
+        ? "0 0 2mm"
+        : "2.2mm 0 0";
   const visibleSections = density.visibleSections;
   const asideSections =
     isModern
@@ -265,28 +301,29 @@ export function buildResumePreviewHtml(
     <style>
       :root {
         --accent: ${accent};
-        --ink: #182132;
-        --ink-soft: #49556a;
-        --line: rgba(24, 33, 50, 0.15);
-        --paper: #fffdf8;
-        --shell-gap: ${isModern ? "10mm" : "0"};
+        --ink: ${escapeHtml(document.layout.textColor)};
+        --ink-soft: ${escapeHtml(document.layout.mutedTextColor)};
+        --line: ${escapeHtml(document.layout.dividerColor)};
+        --paper: ${escapeHtml(document.layout.paperColor)};
+        --link: ${escapeHtml(document.layout.linkColor)};
+        --shell-gap: ${isModern ? `${document.layout.columnGapMm}mm` : "0"};
         --column-padding: ${isModern ? "5mm" : "0"};
-        --section-gap: ${isModern ? "6mm" : "5mm"};
+        --section-gap: ${document.layout.sectionGapMm}mm;
         --section-header-gap: ${isModern ? "3mm" : "3.2mm"};
-        --item-gap: ${isModern ? "5mm" : "4.2mm"};
-        --body-size: 9.7pt;
-        --bullet-size: 9.6pt;
-        --meta-size: 9pt;
+        --item-gap: ${document.layout.itemGapMm}mm;
+        --body-size: ${document.layout.bodyFontSizePt}pt;
+        --bullet-size: ${Math.max(document.layout.bodyFontSizePt - 0.1, 8)}pt;
+        --meta-size: ${document.layout.metaFontSizePt}pt;
         --tag-size: 8.5pt;
-        --name-size: ${isModern ? "24pt" : "26pt"};
-        --headline-size: ${isModern ? "11pt" : "10.5pt"};
-        --section-title-size: ${isModern ? "11pt" : "12pt"};
-        --item-title-size: 11pt;
+        --name-size: ${document.layout.nameSizePt}pt;
+        --headline-size: ${document.layout.headlineSizePt}pt;
+        --section-title-size: ${document.layout.sectionTitleSizePt}pt;
+        --item-title-size: ${document.layout.itemTitleSizePt}pt;
       }
       * { box-sizing: border-box; }
       body {
         margin: 0;
-        background: ${isModern ? "#f3ede4" : "#ede6dc"};
+        background: ${escapeHtml(document.layout.pageBackground)};
         color: var(--ink);
         font-family: "${escapeHtml(document.layout.bodyFont)}", "Segoe UI", sans-serif;
       }
@@ -296,6 +333,7 @@ export function buildResumePreviewHtml(
         margin: 0 auto;
         padding: ${document.layout.marginsMm}mm;
         background: var(--paper);
+        box-shadow: ${document.layout.pageShadowVisible ? "0 18px 42px rgba(15, 23, 42, 0.12)" : "none"};
       }
       .resume-shell {
         display: ${isModern ? "grid" : "block"};
@@ -307,6 +345,22 @@ export function buildResumePreviewHtml(
         margin-bottom: ${isModern ? "8mm" : "6mm"};
         padding-bottom: ${isModern ? "6mm" : "0"};
         position: relative;
+        text-align: ${headerTextAlign};
+      }
+      .masthead-layout {
+        display: grid;
+        grid-template-columns: ${
+          hasPhoto && !photoInSidebar
+            ? document.basics.photoPosition === "top-left"
+              ? `${document.basics.photoSizeMm}mm minmax(0, 1fr)`
+              : `minmax(0, 1fr) ${document.basics.photoSizeMm}mm`
+            : "1fr"
+        };
+        gap: 4mm;
+        align-items: start;
+      }
+      .masthead-copy {
+        min-width: 0;
       }
       .masthead h1 {
         margin: 0;
@@ -331,15 +385,34 @@ export function buildResumePreviewHtml(
         font-size: 9pt;
       }
       .contact-row {
-        justify-content: ${isModern ? "flex-start" : "center"};
+        justify-content: ${contactJustify};
       }
       .resume-links {
         margin-top: ${isModern ? "2mm" : "3mm"};
-        justify-content: ${isModern ? "flex-start" : "center"};
+        justify-content: ${contactJustify};
       }
       .resume-link {
-        color: var(--accent);
+        color: var(--link);
         text-decoration: none;
+      }
+      .resume-photo-wrap {
+        width: ${document.basics.photoSizeMm}mm;
+        justify-self: ${document.basics.photoPosition === "top-left" ? "start" : "end"};
+      }
+      .resume-photo {
+        display: block;
+        width: 100%;
+        aspect-ratio: 1;
+        object-fit: cover;
+        border: 1px solid color-mix(in srgb, var(--accent) 18%, var(--line));
+        border-radius: ${
+          document.basics.photoShape === "circle"
+            ? "999px"
+            : document.basics.photoShape === "rounded"
+              ? "8px"
+              : "0"
+        };
+        background: color-mix(in srgb, var(--accent) 8%, white);
       }
       .resume-section-highlighted {
         position: relative;
@@ -370,12 +443,14 @@ export function buildResumePreviewHtml(
         page-break-inside: avoid;
       }
       .section-header {
-        border-bottom: ${isModern ? "1px solid var(--line)" : "0"};
-        border-top: ${isModern ? "0" : "1px solid var(--line)"};
+        border-bottom: ${document.layout.sectionTitleStyle === "line" ? sectionDivider : "0"};
+        border-top: ${!isModern && document.layout.sectionTitleStyle === "line" ? sectionDivider : "0"};
         margin-bottom: var(--section-header-gap);
-        padding: ${isModern ? "0 0 2mm" : "2.2mm 0 0"};
+        padding: ${sectionHeaderPadding};
         break-after: avoid;
         page-break-after: avoid;
+        background: ${sectionHeaderBackground};
+        border-radius: ${document.layout.sectionTitleStyle === "filled" ? "6px" : "0"};
       }
       .section-header h2 {
         margin: 0;
@@ -383,7 +458,8 @@ export function buildResumePreviewHtml(
         font-family: "${escapeHtml(document.layout.headingFont)}", "Times New Roman", serif;
         font-size: var(--section-title-size);
         letter-spacing: ${isModern ? "0.08em" : "0.03em"};
-        text-transform: ${isModern ? "uppercase" : "none"};
+        text-transform: ${document.layout.sectionTitleStyle === "minimal" ? "none" : isModern ? "uppercase" : "none"};
+        text-align: ${document.layout.sectionTitleAlign};
       }
       .resume-item + .resume-item {
         margin-top: var(--item-gap);
@@ -432,9 +508,9 @@ export function buildResumePreviewHtml(
         margin: 0 0 2mm;
       }
       .rich-text a {
-        color: var(--accent);
+        color: var(--link);
         text-decoration: none;
-        border-bottom: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+        border-bottom: 1px solid color-mix(in srgb, var(--link) 22%, transparent);
       }
       .rich-text blockquote {
         margin: 0 0 ${document.layout.paragraphGapMm}mm;
@@ -496,7 +572,7 @@ export function buildResumePreviewHtml(
         line-height: ${document.layout.lineHeight};
       }
       li + li {
-        margin-top: 0.8mm;
+        margin-top: ${document.layout.listGapMm}mm;
       }
       .tag-row {
         display: flex;
@@ -545,7 +621,9 @@ export function buildResumePreviewHtml(
       .density-compact .tag-row {
         gap: 5px;
       }
-      .template-modern-two-column .masthead::after {
+      .template-aurora-grid .masthead::after,
+      .template-campus-line .masthead::after,
+      .template-engineer-pro .masthead::after {
         content: "";
         position: absolute;
         left: 0;
@@ -554,56 +632,84 @@ export function buildResumePreviewHtml(
         height: 2px;
         background: var(--accent);
       }
-      .template-classic-single-column .page {
+      .template-portfolio-brief .page {
         box-shadow: inset 0 0 0 1px rgba(24, 33, 50, 0.06);
       }
-      .template-classic-single-column .masthead {
-        text-align: center;
+      .template-portfolio-brief .masthead-layout {
+        grid-template-columns: ${
+          hasPhoto && !photoInSidebar
+            ? document.basics.photoPosition === "top-left"
+              ? `${document.basics.photoSizeMm}mm minmax(0, 1fr)`
+              : `minmax(0, 1fr) ${document.basics.photoSizeMm}mm`
+            : "1fr"
+        };
       }
-      .template-classic-single-column .resume-item {
+      .template-portfolio-brief .resume-item {
         padding-bottom: 3mm;
         border-bottom: 1px dashed rgba(24, 33, 50, 0.08);
       }
-      .template-classic-single-column .resume-item:last-child {
+      .template-portfolio-brief .resume-item:last-child {
         border-bottom: 0;
         padding-bottom: 0;
       }
       .masthead-empty {
         display: none;
       }
+      .sidebar-column .resume-photo-wrap {
+        margin-bottom: 2mm;
+      }
       @page {
         size: A4;
         margin: 0;
       }
     </style>
+    ${customCss ? `<style id="resume-custom-css">${sanitizeCustomCss(customCss)}</style>` : ""}
   </head>
   <body>
-    <div class="page template-${escapeHtml(document.meta.template)} density-${density.mode}">
-      <header class="masthead${document.basics.name.trim() || document.basics.headline.trim() || document.basics.location.trim() || document.basics.email.trim() || document.basics.phone.trim() || document.basics.website.trim() || document.basics.links.length > 0 ? "" : " masthead-empty"}">
-        ${document.basics.name.trim() ? `<h1>${escapeHtml(document.basics.name)}</h1>` : ""}
-        ${
-          document.basics.headline
-            ? `<p class="headline">${escapeHtml(document.basics.headline)}</p>`
-            : ""
-        }
-        ${
-          [document.basics.location, document.basics.email, document.basics.phone, document.basics.website]
-            .filter(Boolean)
-            .length > 0
-            ? `<div class="contact-row">${
-                [document.basics.location, document.basics.email, document.basics.phone, document.basics.website]
-                  .filter(Boolean)
-                  .map((item) => `<span>${escapeHtml(item)}</span>`)
-                  .join("")
-              }</div>`
-            : ""
-        }
-        ${document.basics.links.length > 0 ? `<div class="resume-links">${renderLinks(document)}</div>` : ""}
+    <div class="page resume-document template-${escapeHtml(document.meta.template)} density-${density.mode}">
+      <header class="masthead${document.basics.name.trim() || document.basics.headline.trim() || document.basics.location.trim() || document.basics.email.trim() || document.basics.phone.trim() || document.basics.website.trim() || document.basics.links.length > 0 || hasPhoto ? "" : " masthead-empty"}">
+        <div class="masthead-layout">
+          ${
+            hasPhoto && !photoInSidebar && document.basics.photoPosition === "top-left"
+              ? `<div class="resume-photo-wrap"><img alt="${escapeHtml(document.basics.photoAlt || `${document.basics.name || "头像"}`)}" class="resume-photo" src="${escapeHtml(safePhotoSrc)}" /></div>`
+              : ""
+          }
+          <div class="masthead-copy">
+            ${document.basics.name.trim() ? `<h1>${escapeHtml(document.basics.name)}</h1>` : ""}
+            ${
+              document.basics.headline
+                ? `<p class="headline">${escapeHtml(document.basics.headline)}</p>`
+                : ""
+            }
+            ${
+              [document.basics.location, document.basics.email, document.basics.phone, document.basics.website]
+                .filter(Boolean)
+                .length > 0
+                ? `<div class="contact-row">${
+                    [document.basics.location, document.basics.email, document.basics.phone, document.basics.website]
+                      .filter(Boolean)
+                      .map((item) => `<span>${escapeHtml(item)}</span>`)
+                      .join("")
+                  }</div>`
+                : ""
+            }
+            ${document.basics.links.length > 0 ? `<div class="resume-links">${renderLinks(document)}</div>` : ""}
+          </div>
+          ${
+            hasPhoto && !photoInSidebar && document.basics.photoPosition !== "top-left"
+              ? `<div class="resume-photo-wrap"><img alt="${escapeHtml(document.basics.photoAlt || `${document.basics.name || "头像"}`)}" class="resume-photo" src="${escapeHtml(safePhotoSrc)}" /></div>`
+              : ""
+          }
+        </div>
       </header>
       <div class="resume-shell">
         ${
           isModern
-            ? `<aside class="column sidebar-column">${summarySection}${asideSections.map((section) => renderSection(section, options)).join("")}</aside>
+            ? `<aside class="column sidebar-column">${
+                photoInSidebar
+                  ? `<div class="resume-photo-wrap"><img alt="${escapeHtml(document.basics.photoAlt || `${document.basics.name || "头像"}`)}" class="resume-photo" src="${escapeHtml(safePhotoSrc)}" /></div>`
+                  : ""
+              }${summarySection}${asideSections.map((section) => renderSection(section, options)).join("")}</aside>
                <main class="column main-column">${mainSections.map((section) => renderSection(section, options)).join("")}</main>`
             : `<main class="column main-column">${summarySection}${mainSections.map((section) => renderSection(section, options)).join("")}</main>`
         }
