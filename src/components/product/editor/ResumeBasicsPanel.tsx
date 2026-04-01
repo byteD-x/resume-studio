@@ -2,22 +2,39 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ResumeAssistPanel } from "@/components/product/editor/ResumeAssistPanel";
+import { RichTextField } from "@/components/product/editor/RichTextField";
 import { readClientAiConfig } from "@/lib/client-ai-config";
 import { handleSanitizedPaste } from "@/lib/editor-input";
 import { buildBasicsAssistPack } from "@/lib/resume-assistant";
 import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
+import { stripHtml } from "@/lib/utils";
 import type { ResumeDocument } from "@/types/resume";
 
 type BasicsTextField = "name" | "headline" | "location" | "website" | "email" | "phone" | "summaryHtml" | "links";
 
+const profileFields = [
+  ["name", "姓名", "你的姓名"],
+  ["headline", "定位", "例如：AI 应用工程师"],
+  ["location", "地区", "城市或远程"],
+  ["website", "个人网站", "https://your-site.com"],
+] as const;
+
+const contactFields = [
+  ["email", "邮箱", "name@example.com"],
+  ["phone", "电话", "+86 138 0000 0000"],
+] as const;
+
 export function ResumeBasicsPanel({
   document,
   onBasicsChange,
+  onSummaryHtmlChange,
 }: {
   document: ResumeDocument;
   onBasicsChange: (field: BasicsTextField, value: string) => void;
+  onSummaryHtmlChange: (value: string) => void;
 }) {
   const linksValue = document.basics.links.map((link) => `${link.label} ${link.url}`).join("\n");
+  const summaryText = stripHtml(document.basics.summaryHtml).replace(/\s+/g, " ").trim();
   const assistPack = useMemo(() => buildBasicsAssistPack(document), [document]);
   const [remoteSuggestions, setRemoteSuggestions] = useState<ResumeAssistSuggestion[]>([]);
   const [remoteError, setRemoteError] = useState<string | null>(null);
@@ -58,13 +75,13 @@ export function ResumeBasicsPanel({
       });
 
       if (!response.ok) {
-        throw new Error((await response.text()) || "远程摘要建议生成失败");
+        throw new Error((await response.text()) || "Failed to generate summary suggestions");
       }
 
       const result = (await response.json()) as { suggestions?: ResumeAssistSuggestion[] };
       setRemoteSuggestions(Array.isArray(result.suggestions) ? result.suggestions : []);
     } catch (error) {
-      setRemoteError(error instanceof Error ? error.message : "远程摘要建议生成失败");
+      setRemoteError(error instanceof Error ? error.message : "Failed to generate summary suggestions");
     } finally {
       setRemoteLoading(false);
     }
@@ -74,7 +91,6 @@ export function ResumeBasicsPanel({
     <section className="resume-editor-panel">
       <div className="resume-editor-panel-head">
         <div>
-          <p className="resume-editor-panel-kicker">基本信息</p>
           <h2 className="resume-editor-panel-title">抬头信息</h2>
         </div>
       </div>
@@ -82,15 +98,9 @@ export function ResumeBasicsPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>身份信息</h3>
-          <p>姓名、定位与城市。</p>
         </div>
         <div className="resume-editor-field-grid">
-          {[
-            ["name", "姓名", "你的姓名"],
-            ["headline", "当前定位", "例如：高级前端工程师"],
-            ["location", "城市", "城市或远程"],
-            ["website", "个人站点", "https://your-site.com"],
-          ].map(([field, label, placeholder]) => (
+          {profileFields.map(([field, label, placeholder]) => (
             <label className="field-shell" key={field}>
               <span className="field-label">{label}</span>
               <input
@@ -127,13 +137,9 @@ export function ResumeBasicsPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>联系方式</h3>
-          <p>保留常用联系渠道。</p>
         </div>
         <div className="resume-editor-field-grid">
-          {[
-            ["email", "邮箱", "name@example.com"],
-            ["phone", "手机号", "你的手机号"],
-          ].map(([field, label, placeholder]) => (
+          {contactFields.map(([field, label, placeholder]) => (
             <label className="field-shell" key={field}>
               <span className="field-label">{label}</span>
               <input
@@ -162,51 +168,44 @@ export function ResumeBasicsPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>职业摘要</h3>
-          <p>用两三句话概括方向、优势和结果。</p>
         </div>
-        <label className="field-shell">
-          <span className="field-label">职业摘要</span>
-          <textarea
-            autoComplete="off"
-            className="textarea-control min-h-44"
-            name="summary"
-            onChange={(event) => onBasicsChange("summaryHtml", event.target.value)}
-            onPaste={(event) =>
-              handleSanitizedPaste(event, {
-                currentValue: document.basics.summaryHtml.replace(/<[^>]+>/g, "\n").replace(/\n+/g, "\n").trim(),
-                mode: "multiline",
-                onValueChange: (nextValue) => onBasicsChange("summaryHtml", nextValue),
-              })
-            }
-            placeholder="例如：5 年前端经验，主导过中后台与设计系统建设。"
-            value={document.basics.summaryHtml.replace(/<[^>]+>/g, "\n").replace(/\n+/g, "\n").trim()}
-          />
-        </label>
+
+        <RichTextField
+          ariaLabel="职业摘要"
+          helper="适合写你最核心的方向、优势和代表性价值。"
+          label="摘要"
+          minHeight={176}
+          onChange={onSummaryHtmlChange}
+          placeholder="概括你的方向、优势，以及你能为目标岗位带来的结果。"
+          value={document.basics.summaryHtml}
+        />
 
         <ResumeAssistPanel
-          description=""
-          getCurrentValue={() => document.basics.summaryHtml.replace(/<[^>]+>/g, "\n").replace(/\n+/g, "\n").trim()}
+          getCurrentValue={() => summaryText}
           issues={assistPack.issues}
           onApply={(suggestion) => {
             if (typeof suggestion.nextValue === "string") {
-              onBasicsChange("summaryHtml", suggestion.nextValue);
+              onSummaryHtmlChange(suggestion.nextValue);
             }
           }}
           onGenerateRemote={() => void handleGenerateRemoteAssist()}
           remoteDisabled={!usesRemoteProvider || remoteLoading}
           remoteError={remoteError}
-          remoteHint={usesRemoteProvider ? "使用当前配置生成。" : "先配置 AI 模型。"}
+          remoteHint={
+            usesRemoteProvider
+              ? "使用当前 AI 配置生成摘要建议。"
+              : "请先在 AI 面板完成配置，再生成远程摘要建议。"
+          }
           remoteLabel="生成摘要"
           remoteLoading={remoteLoading}
           suggestions={combinedSuggestions}
-          title="摘要建议"
+          title="摘要润色"
         />
       </div>
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>附加链接</h3>
-          <p>只保留最能证明能力的链接。</p>
         </div>
         <label className="field-shell">
           <span className="field-label">链接</span>

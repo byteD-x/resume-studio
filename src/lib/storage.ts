@@ -123,16 +123,14 @@ export async function listResumeDocuments() {
   const dataRoot = getStorageRoot();
   await ensureDir(dataRoot);
   const entries = await fs.readdir(dataRoot, { withFileTypes: true });
-  const documents: ResumeDocument[] = [];
-
-  for (const entry of entries) {
-    if (!entry.isDirectory()) continue;
-    try {
-      documents.push(await readResumeDocument(entry.name));
-    } catch {
-      continue;
-    }
-  }
+  const documents = (
+    await Promise.allSettled(
+      entries
+        .filter((entry) => entry.isDirectory())
+        .map(async (entry) => readResumeDocument(entry.name)),
+    )
+  )
+    .flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
 
   return documents.sort((left, right) =>
     right.meta.updatedAt.localeCompare(left.meta.updatedAt),
@@ -212,4 +210,9 @@ export async function duplicateResumeDocument(sourceId: string, nextTitle?: stri
 
 export async function deleteResumeDocument(id: string) {
   await fs.rm(await resolveResumeDir(id), { recursive: true, force: true });
+}
+
+export async function deleteResumeDocuments(ids: string[]) {
+  const uniqueIds = Array.from(new Set(ids));
+  await Promise.all(uniqueIds.map((id) => deleteResumeDocument(id)));
 }

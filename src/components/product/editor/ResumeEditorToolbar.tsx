@@ -1,13 +1,14 @@
 "use client";
 
-import { ArrowLeft, Code2, Eye, FilePenLine, History, LayoutTemplate, Redo2, Save, Undo2 } from "lucide-react";
+import type { Route } from "next";
+import { ArrowLeft, ExternalLink, Keyboard, MoreHorizontal, Redo2, Save, Undo2 } from "lucide-react";
+import Link from "next/link";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { resumeTemplateOptions } from "@/data/template-catalog";
-import type { ResumeTemplate } from "@/types/resume";
+import type { ResumeLineageMeta } from "@/lib/resume-lineage";
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
-type EditorMode = "form" | "markdown";
+export type WorkspaceView = "edit" | "split" | "preview";
 
 function saveStateLabel(saveState: SaveState) {
   switch (saveState) {
@@ -22,172 +23,176 @@ function saveStateLabel(saveState: SaveState) {
   }
 }
 
+function lineageBadgeTone(kind: ResumeLineageMeta["kind"]): "accent" | "neutral" | "success" {
+  if (kind === "variant") return "accent";
+  if (kind === "source") return "success";
+  return "neutral";
+}
+
+function lineageShortLabel(meta: ResumeLineageMeta) {
+  if (meta.kind === "variant") return "定制版";
+  if (meta.kind === "source") return meta.childCount > 0 ? `主简历 · ${meta.childCount}` : "主简历";
+  return "草稿";
+}
+
 export function ResumeEditorToolbar({
   title,
-  template,
   saveState,
   statusMessage,
-  editorMode,
-  currentPanelGroupLabel,
+  workspaceView = "split",
+  lineage = null,
+  parentStudioHref = null,
   canUndo,
   canRedo,
-  undoLabel,
-  redoLabel,
-  recentHistoryLabels,
   onTitleChange,
-  onTemplateChange,
-  onModeChange,
+  onWorkspaceViewChange = () => undefined,
   onUndo,
   onRedo,
   onBack,
   onSave,
   onOpenPreview,
+  onOpenShortcuts = () => undefined,
+  undoLabel,
+  redoLabel,
+  recentHistoryLabels,
 }: {
   title: string;
-  template: ResumeTemplate;
   saveState: SaveState;
   statusMessage: string;
-  editorMode: EditorMode;
-  currentPanelGroupLabel: string;
+  workspaceView?: WorkspaceView;
+  lineage?: ResumeLineageMeta | null;
+  parentStudioHref?: Route | null;
   canUndo: boolean;
   canRedo: boolean;
   undoLabel: string | null;
   redoLabel: string | null;
   recentHistoryLabels: string[];
   onTitleChange: (value: string) => void;
-  onTemplateChange: (template: ResumeTemplate) => void;
-  onModeChange: (mode: EditorMode) => void;
+  onWorkspaceViewChange?: (mode: WorkspaceView) => void;
   onUndo: () => void;
   onRedo: () => void;
   onBack: () => void;
   onSave: () => void;
   onOpenPreview: () => void;
+  onOpenShortcuts?: () => void;
 }) {
   return (
     <section className="editor-toolbar">
-      <div className="editor-toolbar-primary">
-        <button className="btn btn-ghost" onClick={onBack} type="button">
-          <ArrowLeft className="size-4" />
-          返回
-        </button>
+      <div className="editor-toolbar-shell">
+        <div className="editor-toolbar-left">
+          <button aria-label="返回" className="btn btn-ghost editor-toolbar-back" onClick={onBack} type="button">
+            <ArrowLeft className="size-4" />
+          </button>
 
-        <div className="editor-toolbar-titleblock">
-          <div className="editor-toolbar-heading">
-            <div>
-              <p className="editor-toolbar-kicker">编辑台</p>
-              <div className="editor-toolbar-crumbs">
-                <Badge tone="neutral">{currentPanelGroupLabel}</Badge>
-              </div>
+          <div className="editor-toolbar-titleblock">
+            <div className="editor-toolbar-heading">
+              <input
+                aria-label="简历标题"
+                className="editor-toolbar-titleinput"
+                onChange={(event) => onTitleChange(event.target.value)}
+                placeholder="未命名简历"
+                value={title}
+              />
+
+              {lineage ? (
+                <div className="editor-toolbar-lineage">
+                  <Badge tone={lineageBadgeTone(lineage.kind)}>{lineageShortLabel(lineage)}</Badge>
+                  {lineage.kind === "variant" && parentStudioHref ? (
+                    <Link className="editor-toolbar-lineage-link" href={parentStudioHref}>
+                      查看来源
+                    </Link>
+                  ) : null}
+                </div>
+              ) : null}
             </div>
 
-            <div className="editor-toolbar-mode">
-              <p className="editor-toolbar-mode-label">编辑方式</p>
-              <div className="editor-toolbar-mode-switch" aria-label="编辑方式切换">
-                <button
-                  aria-pressed={editorMode === "form"}
-                  className={`editor-mode-tab ${editorMode === "form" ? "editor-mode-tab-active" : ""}`}
-                  onClick={() => onModeChange("form")}
-                  type="button"
-                >
-                  <FilePenLine className="size-4" />
-                  表单
-                </button>
-                <button
-                  aria-pressed={editorMode === "markdown"}
-                  className={`editor-mode-tab ${editorMode === "markdown" ? "editor-mode-tab-active" : ""}`}
-                  onClick={() => onModeChange("markdown")}
-                  type="button"
-                >
-                  <Code2 className="size-4" />
-                  Markdown
-                </button>
-              </div>
+            <div className="editor-toolbar-meta">
+              <span className={`editor-toolbar-save editor-toolbar-save-${saveState}`}>
+                <span aria-hidden className="editor-toolbar-save-dot" />
+                {saveStateLabel(saveState)}
+              </span>
+              <span className="editor-toolbar-message" title={statusMessage}>
+                {statusMessage}
+              </span>
             </div>
           </div>
+        </div>
 
-          <input
-            aria-label="简历标题"
-            className="editor-toolbar-titleinput"
-            onChange={(event) => onTitleChange(event.target.value)}
-            placeholder="未命名简历"
-            value={title}
-          />
+        <div aria-label="工作区视图" className="editor-toolbar-center" role="tablist">
+          {[
+            { key: "edit", label: "编辑" },
+            { key: "split", label: "分屏" },
+            { key: "preview", label: "预览" },
+          ].map((item) => (
+            <button
+              key={item.key}
+              aria-selected={workspaceView === item.key}
+              className={`editor-toolbar-viewtab ${workspaceView === item.key ? "editor-toolbar-viewtab-active" : ""}`}
+              onClick={() => onWorkspaceViewChange(item.key as WorkspaceView)}
+              role="tab"
+              type="button"
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
 
-          <div aria-live="polite" className="editor-toolbar-meta">
-            <Badge tone={saveState === "error" ? "warning" : "neutral"}>{saveStateLabel(saveState)}</Badge>
-            <span className="editor-toolbar-hint">{statusMessage}</span>
-          </div>
+        <div className="editor-toolbar-actions">
+          <Button className="editor-toolbar-export" onClick={onOpenPreview}>
+            <ExternalLink className="size-4 shrink-0" />
+            预览 / 导出
+          </Button>
 
-          <div className="editor-toolbar-history" aria-label="编辑历史">
-            <div className="editor-toolbar-history-actions">
+          <details className="editor-toolbar-menu">
+            <summary aria-label="更多操作" className="editor-toolbar-menu-trigger">
+              <MoreHorizontal className="size-4" />
+            </summary>
+
+            <div className="editor-toolbar-menu-popover">
+              <button className="editor-toolbar-menu-item" onClick={onSave} type="button">
+                <Save className="size-4" />
+                立即保存
+              </button>
               <button
-                aria-label={undoLabel ? `撤销：${undoLabel}` : "撤销"}
-                className="editor-history-button"
+                className="editor-toolbar-menu-item"
                 disabled={!canUndo}
                 onClick={onUndo}
-                title={undoLabel ? `撤销：${undoLabel}` : "没有可撤销的操作"}
+                title={undoLabel ?? undefined}
                 type="button"
               >
                 <Undo2 className="size-4" />
-                <span>{undoLabel ?? "撤销"}</span>
+                撤销
               </button>
               <button
-                aria-label={redoLabel ? `重做：${redoLabel}` : "重做"}
-                className="editor-history-button"
+                className="editor-toolbar-menu-item"
                 disabled={!canRedo}
                 onClick={onRedo}
-                title={redoLabel ? `重做：${redoLabel}` : "没有可重做的操作"}
+                title={redoLabel ?? undefined}
                 type="button"
               >
                 <Redo2 className="size-4" />
-                <span>{redoLabel ?? "重做"}</span>
+                重做
               </button>
-            </div>
+              <button className="editor-toolbar-menu-item" onClick={onOpenShortcuts} type="button">
+                <Keyboard className="size-4" />
+                快捷键
+              </button>
 
-            {recentHistoryLabels.length > 0 ? (
-              <div className="editor-toolbar-history-list">
-                <span className="editor-toolbar-history-label">
-                  <History className="size-3.5" />
-                  最近编辑
-                </span>
-                <div className="editor-toolbar-history-chips">
-                  {recentHistoryLabels.map((label, index) => (
-                    <span className="editor-history-chip" key={`${label}-${index}`}>
-                      {label}
-                    </span>
-                  ))}
+              {recentHistoryLabels.length > 0 ? (
+                <div className="editor-toolbar-menu-history">
+                  <span className="editor-toolbar-menu-label">最近修改</span>
+                  <div className="editor-toolbar-menu-chips">
+                    {recentHistoryLabels.slice(0, 3).map((label) => (
+                      <span className="editor-toolbar-menu-chip" key={label}>
+                        {label}
+                      </span>
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ) : null}
-          </div>
+              ) : null}
+            </div>
+          </details>
         </div>
-      </div>
-
-      <div className="editor-toolbar-actions">
-        <label className="editor-toolbar-template">
-          <LayoutTemplate className="size-4" />
-          <select
-            aria-label="选择简历模板"
-            className="input-control"
-            onChange={(event) => onTemplateChange(event.target.value as ResumeTemplate)}
-            value={template}
-          >
-            {resumeTemplateOptions.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-
-        <Button onClick={onSave} variant="secondary">
-          <Save className="size-4" />
-          保存
-        </Button>
-        <button className="btn btn-ghost" onClick={onOpenPreview} type="button">
-          <Eye className="size-4" />
-          导出预览
-        </button>
       </div>
     </section>
   );

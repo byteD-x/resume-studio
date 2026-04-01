@@ -1,0 +1,41 @@
+
+@media (max-width: 767px) {
+  .resume-editor-workspace .editor-toolbar {
+    padding: 8px 12px 9px;
+  }
+
+  .resume-editor-layout {
+    gap: 12px;
+    padding: 10px 10px 12px;
+  }
+
+  .editor-toolbar-heading,
+  .editor-toolbar-actions,
+  .editor-preview-controls {
+    flex-wrap: wrap;
+  }
+
+  .editor-toolbar-titleinput {
+    width: 100%;
+  }
+
+  .editor-toolbar-message {
+    white-space: normal;
+  }
+
+  .editor-compact-alert {
+    flex-wrap: wrap;
+    padding-block: 8px;
+  }
+
+  .editor-compact-alert-text {
+    white-space: normal;
+  }
+
+  .editor-sidebar,
+  .resume-editor-main .resume-editor-stack,
+  .resume-editor-right,
+  .resume-editor-right .editor-preview-panel {
+    border-radius: 16px;
+  }
+}

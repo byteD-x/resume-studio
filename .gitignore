@@ -15,6 +15,7 @@
 /test-results
 /playwright-report
 /.tmp
+/.tmp-tsx
 
 # next.js
 /.next/

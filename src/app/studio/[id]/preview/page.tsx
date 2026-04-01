@@ -22,8 +22,11 @@ export default async function ResumePreviewRoutePage({
   let lineage = null;
 
   try {
-    document = await readResumeDocument(id);
-    const summaries = await listResumeSummaries();
+    const [loadedDocument, summaries] = await Promise.all([
+      readResumeDocument(id),
+      listResumeSummaries(),
+    ]);
+    document = loadedDocument;
     lineage = buildResumeLineageMap(summaries).get(id) ?? null;
   } catch {
     notFound();

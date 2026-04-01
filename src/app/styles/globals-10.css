@@ -1,0 +1,360 @@
+
+.resume-editor-source-gutter span {
+  display: block;
+  padding-right: 0.75rem;
+}
+
+.resume-editor-source-input {
+  width: 100%;
+  min-height: 35rem;
+  padding: 1.15rem 1.2rem;
+  border: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.96)),
+    #fff;
+  color: var(--ink-strong);
+  font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", monospace;
+  font-size: 0.92rem;
+  line-height: 1.75;
+  letter-spacing: -0.01em;
+  resize: vertical;
+  outline: none;
+  tab-size: 2;
+}
+
+.resume-editor-source-footer {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.resume-editor-source-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.resume-editor-source-note {
+  margin: 0;
+  max-width: 30rem;
+  color: var(--ink-soft);
+  font-size: 0.87rem;
+  line-height: 1.65;
+  text-align: right;
+}
+
+.resume-editor-source-note-error {
+  color: var(--danger);
+}
+
+.ai-config-stack {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.ai-config-provider-grid,
+.resume-ai-analysis-grid,
+.resume-ai-metric-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ai-config-provider-card,
+.ai-config-preset-card,
+.ai-config-surface,
+.ai-config-advanced,
+.ai-config-empty,
+.resume-ai-surface,
+.resume-ai-metric-card {
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-radius: 0.9rem;
+}
+
+.ai-config-provider-card {
+  padding: 0.8rem 0.92rem;
+  background: rgba(255, 255, 255, 0.86);
+  text-align: left;
+  transition: border-color 140ms ease, background-color 140ms ease;
+}
+
+.ai-config-provider-card strong {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.ai-config-provider-card-idle:hover,
+.ai-config-preset-card-idle:hover {
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.ai-config-provider-card-active {
+  border-color: color-mix(in srgb, var(--accent-strong) 18%, white);
+  background: color-mix(in srgb, var(--accent-soft) 52%, white);
+}
+
+.ai-config-surface,
+.resume-ai-surface {
+  padding: 0.92rem;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.ai-config-surface-soft,
+.resume-ai-surface-soft {
+  background: color-mix(in srgb, var(--paper-soft) 64%, white);
+}
+
+.ai-config-head,
+.ai-config-preset-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.ai-config-head-wrap {
+  flex-wrap: wrap;
+}
+
+.ai-config-heading,
+.resume-ai-surface-title {
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.ai-config-preset-list,
+.resume-ai-analysis-stack {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ai-config-preset-card {
+  padding: 0.82rem 0.92rem;
+  background: rgba(255, 255, 255, 0.78);
+  text-align: left;
+  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.ai-config-preset-card-active {
+  border-color: color-mix(in srgb, var(--accent-strong) 18%, white);
+  background: rgba(255, 255, 255, 0.98);
+  box-shadow: 0 6px 14px rgba(15, 23, 42, 0.04);
+}
+
+.ai-config-preset-copy {
+  min-width: 0;
+}
+
+.ai-config-preset-copy strong {
+  display: block;
+  font-size: 0.88rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.ai-config-preset-copy span {
+  display: block;
+  margin-top: 0.18rem;
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+}
+
+.ai-config-preset-meta,
+.ai-config-inline-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ai-config-connection-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.ai-config-field-grow {
+  flex: 1;
+}
+
+.ai-config-action-slot {
+  align-self: flex-start;
+}
+
+.ai-config-health {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.82rem 0.92rem;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: 0.82rem;
+  background: color-mix(in srgb, var(--paper-soft) 64%, white);
+}
+
+.ai-config-health-copy,
+.resume-ai-surface-body,
+.resume-ai-empty-copy {
+  margin: 0.22rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.ai-config-advanced {
+  padding: 0.92rem;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.ai-config-advanced-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+  color: var(--ink-strong);
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.ai-config-advanced-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ai-config-advanced-fields {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 0.82rem;
+}
+
+.ai-config-empty {
+  padding: 0.92rem;
+  border-style: dashed;
+  background: color-mix(in srgb, var(--paper-soft) 64%, white);
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.resume-ai-surface-body {
+  margin-top: 0.5rem;
+}
+
+.resume-ai-surface-actions {
+  margin-top: 0.72rem;
+}
+
+.resume-ai-keyword-list,
+.resume-ai-badge-row,
+.resume-ai-action-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.resume-ai-empty-state {
+  margin-top: 0.72rem;
+}
+
+.resume-ai-metric-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.resume-ai-metric-card {
+  padding: 0.88rem 0.92rem;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.resume-ai-metric-card span {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.resume-ai-metric-card strong {
+  display: block;
+  margin-top: 0.3rem;
+  color: var(--ink-strong);
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.editor-shortcut-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(21, 26, 36, 0.32);
+  backdrop-filter: blur(8px);
+}
+
+.app-dialog-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 1rem;
+  background: rgba(21, 26, 36, 0.32);
+  backdrop-filter: blur(8px);
+}
+
+.app-dialog {
+  width: min(540px, calc(100vw - 2rem));
+  border: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
+  border-radius: 1.2rem;
+  background: rgba(255, 255, 255, 0.97);
+  box-shadow: var(--shadow-medium);
+  padding: 1.1rem;
+}
+
+.app-confirm-dialog {
+  display: grid;
+  gap: 1rem;
+}
+
+.app-dialog-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.app-dialog-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+.app-dialog-title {
+  margin: 0.4rem 0 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+  letter-spacing: -0.03em;
+}
+
+.app-dialog-copy {
+  margin: 0.45rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
+.app-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}

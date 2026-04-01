@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "编辑",
-  description: "修改内容并预览。",
+  description: "编辑内容与实时预览。",
 };
 
 export default async function ResumeStudioPage({
@@ -22,8 +22,11 @@ export default async function ResumeStudioPage({
   let lineage = null;
 
   try {
-    document = await readResumeDocument(id);
-    const summaries = await listResumeSummaries();
+    const [loadedDocument, summaries] = await Promise.all([
+      readResumeDocument(id),
+      listResumeSummaries(),
+    ]);
+    document = loadedDocument;
     lineage = buildResumeLineageMap(summaries).get(id) ?? null;
   } catch {
     notFound();

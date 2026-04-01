@@ -1,0 +1,360 @@
+
+:root {
+  --font-body: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  --font-display: "Iowan Old Style", "Songti SC", "Noto Serif SC", serif;
+  --shell: oklch(0.986 0.003 95);
+  --shell-strong: oklch(0.972 0.005 95);
+  --paper: oklch(0.996 0.002 95);
+  --paper-soft: oklch(0.984 0.004 95);
+  --paper-muted: oklch(0.968 0.006 95);
+  --ink-strong: oklch(0.26 0.018 255);
+  --ink-soft: oklch(0.47 0.016 255);
+  --ink-muted: oklch(0.58 0.014 255);
+  --line: oklch(0.908 0.006 95);
+  --line-strong: oklch(0.81 0.018 246);
+  --accent-strong: oklch(0.43 0.08 249);
+  --accent-soft: oklch(0.956 0.016 247);
+  --accent-muted: oklch(0.916 0.013 247);
+  --danger: oklch(0.56 0.18 24);
+  --success: oklch(0.61 0.1 165);
+  --shadow-soft: 0 2px 8px rgba(15, 23, 42, 0.04);
+  --shadow-medium: 0 4px 12px rgba(15, 23, 42, 0.06);
+  --shadow-paper: 0 8px 24px rgba(15, 23, 42, 0.08);
+  --page-shell-gutter: clamp(0.9rem, 2vw, 2.5rem);
+  --page-shell-max: 1680px;
+  --workspace-shell-max: 1860px;
+  --studio-sticky-top: 3.5rem;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+  background: var(--shell);
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink-strong);
+  font-family:
+    var(--font-body),
+    "PingFang SC",
+    "Hiragino Sans GB",
+    "Microsoft YaHei",
+    sans-serif;
+  text-rendering: optimizeLegibility;
+  background: #fdfcfb;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
+
+::selection {
+  background: rgba(64, 95, 173, 0.16);
+}
+
+.app-backdrop {
+  display: none;
+}
+
+.app-grid {
+  display: none;
+}
+
+.page-wrap,
+.workspace-page,
+.preview-page {
+  width: min(var(--page-shell-max), calc(100vw - (var(--page-shell-gutter) * 2)));
+  margin: 0 auto;
+}
+
+.page-wrap {
+  padding: 2.25rem 0 4.5rem;
+}
+
+.workspace-page,
+.preview-page {
+  padding: 1.5rem 0 3.5rem;
+}
+
+.site-header {
+  position: sticky;
+  top: 0;
+  z-index: 40;
+  border-bottom: 1px solid rgba(190, 194, 203, 0.34);
+  background: rgba(251, 249, 245, 0.9);
+  backdrop-filter: blur(12px);
+}
+
+.site-header-inner {
+  width: min(var(--page-shell-max), calc(100vw - (var(--page-shell-gutter) * 2)));
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.2rem;
+  padding: 0.8rem 0;
+}
+
+.site-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.7rem;
+}
+
+.site-brand-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.1rem;
+  height: 2.1rem;
+  border-radius: 0.42rem;
+  background: color-mix(in srgb, var(--accent-strong) 88%, white);
+  color: white;
+  box-shadow: 0 2px 8px rgba(45, 73, 144, 0.15);
+}
+
+.site-brand-title {
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.site-brand-subtitle {
+  margin: 0.18rem 0 0;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  letter-spacing: 0.06em;
+}
+
+.site-nav {
+  display: none;
+  align-items: center;
+  gap: 0.1rem;
+}
+
+.site-nav-link {
+  position: relative;
+  border-radius: 999px;
+  padding: 0.42rem 0.62rem;
+  font-size: 0.89rem;
+  font-weight: 600;
+  color: var(--ink-soft);
+  transition: color 160ms ease, background-color 160ms ease;
+}
+
+.site-nav-link:hover {
+  color: var(--ink-strong);
+  background: transparent;
+}
+
+.site-nav-link-active {
+  color: var(--ink-strong);
+}
+
+.site-nav-link-active::after {
+  content: "";
+  position: absolute;
+  left: 0.9rem;
+  right: 0.9rem;
+  bottom: 0.45rem;
+  height: 2px;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--accent-strong) 90%, white);
+}
+
+.hero-title,
+.section-title,
+.workspace-title {
+  font-family:
+    var(--font-display),
+    "Iowan Old Style",
+    "Songti SC",
+    "Noto Serif SC",
+    serif;
+  letter-spacing: -0.055em;
+  line-height: 0.96;
+  text-wrap: balance;
+}
+
+.hero-title {
+  margin: 1rem 0 0;
+  max-width: 9ch;
+  font-size: clamp(2.9rem, 6.6vw, 4.7rem);
+}
+
+.section-title {
+  margin: 0.55rem 0 0;
+  font-size: clamp(1.9rem, 3.8vw, 2.75rem);
+}
+
+.workspace-title {
+  margin: 0;
+  font-size: clamp(2.1rem, 3.8vw, 3rem);
+}
+
+.hero-description,
+.page-header-text,
+.workspace-copy {
+  color: var(--ink-soft);
+  line-height: 1.68;
+}
+
+.hero-description {
+  margin-top: 1rem;
+  max-width: 32rem;
+  font-size: 0.97rem;
+}
+
+.page-header-text {
+  margin-top: 0.8rem;
+  max-width: 34rem;
+  font-size: 0.94rem;
+}
+
+.workspace-copy {
+  margin-top: 0.55rem;
+  max-width: 28rem;
+  font-size: 0.92rem;
+}
+
+.section-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+.page-header-row {
+  display: grid;
+  gap: 1.5rem;
+  align-items: start;
+  grid-template-columns: minmax(0, 1fr);
+  margin-bottom: 2rem;
+}
+
+.page-header-copy,
+.workspace-header,
+.editor-panel,
+.workspace-sidebar-card,
+.workspace-preview-card,
+.auth-form-panel,
+.auth-brand-panel,
+.library-row,
+.empty-surface {
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: var(--shadow-soft);
+}
+
+.page-header-copy,
+.auth-brand-panel,
+.auth-form-panel,
+.library-row,
+.empty-surface,
+.editor-panel,
+.workspace-sidebar-card,
+.workspace-preview-card,
+.workspace-header {
+  border-radius: 0.75rem;
+}
+
+.page-header-copy {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.section-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--accent-strong);
+}
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  min-height: 2.55rem;
+  padding: 0.45rem 0.8rem;
+  border-radius: 0.5rem;
+  border: 1px solid transparent;
+  font-size: 0.94rem;
+  font-weight: 600;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease,
+    color 140ms ease,
+    box-shadow 140ms ease;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.btn-primary {
+  background: color-mix(in srgb, var(--accent-strong) 96%, white);
+  color: white;
+  box-shadow: 0 2px 8px rgba(48, 76, 148, 0.1);
+}
+
+.btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(48, 76, 148, 0.15);
+}
+
+.btn-secondary {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.95);
+  color: var(--ink-strong);
+}
+
+.btn-secondary:hover,
+.btn-ghost:hover {
+  background: var(--paper-soft);
+}
+
+.btn-ghost {
+  border-color: var(--line);
+  background: rgba(255, 255, 255, 0.64);
+  color: var(--ink-soft);
+}
+
+.btn-danger {
+  border-color: rgba(219, 39, 39, 0.12);
+  background: rgba(254, 242, 242, 0.9);
+  color: var(--danger);
+}
+
+.btn:focus-visible,
+.input-control:focus-visible,
+.textarea-control:focus-visible,
+.filter-chip:focus-visible,
+.selection-tile:focus-visible,
+.search-input:focus-visible,
+.workspace-toolbar-select:focus-visible,
+.icon-button:focus-visible,
+.workspace-step:focus-visible,

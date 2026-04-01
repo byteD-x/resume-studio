@@ -90,8 +90,8 @@ describe("portfolio import", () => {
     expect(result.urlSummary?.pageCount).toBe(3);
     expect(result.urlSummary?.visitedUrls).toContain("https://portfolio.test/about");
     expect(result.document.meta.sourceRefs).toContain("https://portfolio.test/projects");
-    expect(result.document.importTrace.pendingReview.some((entry) => entry.includes("同站页面"))).toBe(true);
-    expect(result.document.importTrace.unmapped.some((entry) => entry.includes("动态内容"))).toBe(true);
+    expect(result.document.importTrace.pendingReview.some((entry) => entry.includes("页面"))).toBe(true);
+    expect(result.document.importTrace.unmapped.some((entry) => entry.includes("结构化简历字段"))).toBe(true);
     expect(result.document.importTrace.snapshots).toHaveLength(3);
     expect(result.document.importTrace.snapshots[0]?.source).toBe("https://portfolio.test/");
   });

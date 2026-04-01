@@ -14,7 +14,6 @@ export function ResumeTargetingPanel({
     <section className="resume-editor-panel">
       <div className="resume-editor-panel-head">
         <div>
-          <p className="resume-editor-panel-kicker">岗位定向</p>
           <h2 className="resume-editor-panel-title">岗位信息</h2>
         </div>
       </div>
@@ -22,7 +21,6 @@ export function ResumeTargetingPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>目标信息</h3>
-          <p>岗位、公司和链接会一起决定这份版本要强调什么。</p>
         </div>
 
         <div className="resume-editor-field-grid">
@@ -91,7 +89,6 @@ export function ResumeTargetingPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>关键词</h3>
-          <p>只保留强相关的技能词、领域词和角色词。</p>
         </div>
         <label className="field-shell">
           <span className="field-label">关键词</span>
@@ -117,7 +114,6 @@ export function ResumeTargetingPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>职位描述</h3>
-          <p>贴入 JD 原文，用于提取关键词和匹配缺口。</p>
         </div>
         <label className="field-shell">
           <span className="field-label">JD 原文</span>
@@ -142,7 +138,6 @@ export function ResumeTargetingPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>版本备注</h3>
-          <p>记录这一版的强调点和需要继续补强的方向。</p>
         </div>
         <label className="field-shell">
           <span className="field-label">备注</span>

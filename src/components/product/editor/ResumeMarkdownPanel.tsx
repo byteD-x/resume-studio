@@ -87,10 +87,8 @@ export function ResumeMarkdownPanel({
     <section className="resume-editor-panel resume-editor-source-panel">
       <div className="resume-editor-panel-head">
         <div>
-          <p className="resume-editor-panel-kicker">Markdown</p>
           <h2 className="resume-editor-panel-title">Markdown 源码</h2>
-          <p className="resume-editor-panel-copy">直接编辑 Markdown 内容。</p>
-        </div>
+          </div>
 
         <div className="resume-editor-panel-actions">
           <Button onClick={onInsertStarter} variant="secondary">

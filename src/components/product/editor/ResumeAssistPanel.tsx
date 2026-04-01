@@ -35,8 +35,19 @@ function renderCompareList(lines: string[]) {
   );
 }
 
+function buildMetaLine(issues: ResumeAssistIssue[], suggestions: ResumeAssistSuggestion[]) {
+  const parts: string[] = [];
+  if (issues.length > 0) {
+    parts.push(`${issues.length} 项待处理`);
+  }
+  if (suggestions.length > 0) {
+    parts.push(`${suggestions.length} 条参考`);
+  }
+  return parts.length > 0 ? parts.join(" · ") : null;
+}
+
 export function ResumeAssistPanel({
-  title = "AI 写作建议",
+  title = "写作辅助",
   description = "",
   issues,
   suggestions,
@@ -47,7 +58,7 @@ export function ResumeAssistPanel({
   remoteError = null,
   remoteHint = null,
   remoteLoading = false,
-  remoteLabel = "生成远程建议",
+  remoteLabel = "生成",
 }: {
   title?: string;
   description?: string;
@@ -65,45 +76,62 @@ export function ResumeAssistPanel({
   const [expandedSuggestionId, setExpandedSuggestionId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState(() => Boolean(remoteError) || issues.length > 0);
 
+  const metaLine = buildMetaLine(issues, suggestions);
+  const hasBody =
+    issues.length > 0 || suggestions.length > 0 || Boolean(remoteError) || Boolean(description);
+
   if (issues.length === 0 && suggestions.length === 0 && !onGenerateRemote && !remoteError && !remoteHint) {
     return null;
   }
 
   return (
     <section className="resume-assist-panel">
-      <div className="resume-assist-panel-head">
-        <div>
-          <p className="resume-assist-panel-kicker">
-            <Sparkles className="size-4" />
-            {title}
+      <div className="resume-assist-toolbar">
+        <div className="resume-assist-toolbar-text">
+          <p className="resume-assist-title">
+            <Sparkles aria-hidden className="resume-assist-title-icon" />
+            <span>{title}</span>
           </p>
-          {description ? <p className="resume-assist-panel-copy">{description}</p> : null}
+          {metaLine ? <span className="resume-assist-toolbar-meta">{metaLine}</span> : null}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
-          <Badge tone="neutral">建议</Badge>
-          {issues.length > 0 ? <Badge tone="warning">{issues.length} 个问题</Badge> : null}
-          {suggestions.length > 0 ? <Badge tone="neutral">{suggestions.length} 条建议</Badge> : null}
+
+        <div className="resume-assist-toolbar-actions">
           {onGenerateRemote ? (
-            <Button disabled={remoteDisabled || remoteLoading} onClick={onGenerateRemote} variant="secondary">
-              {remoteLoading ? <LoaderCircle className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+            <Button
+              className="resume-assist-generate-btn"
+              disabled={remoteDisabled || remoteLoading}
+              onClick={onGenerateRemote}
+              title={remoteDisabled && remoteHint ? remoteHint : undefined}
+              variant="secondary"
+            >
+              {remoteLoading ? <LoaderCircle className="size-3.5 animate-spin" /> : <Sparkles className="size-3.5" />}
               {remoteLabel}
             </Button>
           ) : null}
-          <button
-            className={`resume-assist-compare-toggle ${expanded ? "resume-assist-compare-toggle-active" : ""}`}
-            onClick={() => setExpanded((current) => !current)}
-            type="button"
-          >
-            <ChevronDown className="size-4" />
-            {expanded ? "收起建议" : "展开建议"}
-          </button>
+
+          {hasBody ? (
+            <button
+              aria-expanded={expanded}
+              className={`resume-assist-expand ${expanded ? "resume-assist-expand-open" : ""}`}
+              onClick={() => setExpanded((current) => !current)}
+              type="button"
+            >
+              <span>{expanded ? "收起" : "详情"}</span>
+              <ChevronDown aria-hidden className="resume-assist-expand-chevron" />
+            </button>
+          ) : null}
         </div>
       </div>
 
-      {expanded ? (
-        <>
-          {remoteHint ? <p className="resume-assist-panel-copy">{remoteHint}</p> : null}
-          {remoteError ? <p className="text-sm text-[color:var(--danger-strong)]">{remoteError}</p> : null}
+      {description ? <p className="resume-assist-panel-lead">{description}</p> : null}
+
+      {expanded && hasBody ? (
+        <div className="resume-assist-panel-body">
+          {remoteError ? (
+            <p className="resume-assist-remote-error" role="alert">
+              {remoteError}
+            </p>
+          ) : null}
 
           {issues.length > 0 ? (
             <div className="resume-assist-issue-list">
@@ -112,7 +140,7 @@ export function ResumeAssistPanel({
                   <div className="resume-assist-issue-head">
                     <strong>{issue.title}</strong>
                     <Badge tone={issue.tone === "warning" ? "warning" : "neutral"}>
-                      {issue.tone === "warning" ? "优先处理" : "说明"}
+                      {issue.tone === "warning" ? "优先" : "说明"}
                     </Badge>
                   </div>
                   <p>{issue.detail}</p>
@@ -139,24 +167,17 @@ export function ResumeAssistPanel({
                   {expandedSuggestionId === suggestion.id ? (
                     <div className="resume-assist-compare-grid">
                       <div className="resume-assist-compare-card">
-                        <span className="resume-assist-compare-label">当前内容</span>
+                        <span className="resume-assist-compare-label">当前</span>
                         {renderCompareList(normalizeValue(getCurrentValue?.(suggestion)))}
                       </div>
                       <div className="resume-assist-compare-card">
-                        <span className="resume-assist-compare-label">建议内容</span>
+                        <span className="resume-assist-compare-label">建议</span>
                         {renderCompareList(normalizeValue(suggestion.nextValue))}
                       </div>
                     </div>
                   ) : null}
                   <div className="resume-assist-actions">
                     <div className="resume-assist-actions-meta">
-                      <Badge tone="neutral">
-                        {suggestion.target === "summary"
-                          ? "更新摘要"
-                          : suggestion.target === "tags"
-                            ? "更新技能"
-                            : "更新要点"}
-                      </Badge>
                       <button
                         className={`resume-assist-compare-toggle ${expandedSuggestionId === suggestion.id ? "resume-assist-compare-toggle-active" : ""}`}
                         onClick={() =>
@@ -164,8 +185,8 @@ export function ResumeAssistPanel({
                         }
                         type="button"
                       >
-                        <ChevronDown className="size-4" />
-                        {expandedSuggestionId === suggestion.id ? "收起对比" : "查看对比"}
+                        <ChevronDown className="size-3.5" />
+                        {expandedSuggestionId === suggestion.id ? "收起对比" : "对比"}
                       </button>
                     </div>
                     <Button onClick={() => onApply(suggestion)} variant="secondary">
@@ -176,7 +197,7 @@ export function ResumeAssistPanel({
               ))}
             </div>
           ) : null}
-        </>
+        </div>
       ) : null}
     </section>
   );

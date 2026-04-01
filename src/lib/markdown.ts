@@ -15,14 +15,25 @@ const turndown = new TurndownService({
   strongDelimiter: "**",
 });
 
-turndown.keep(["u"]);
+turndown.keep(["span", "u"]);
+
+function shouldPreserveHtmlInMarkdown(html: string) {
+  return /<span\b| style=|<u\b/i.test(html);
+}
 
 export function markdownToHtml(markdown: string) {
   return sanitizeRichTextHtml(marked.parse(markdown) as string);
 }
 
 export function htmlToMarkdown(html: string) {
-  return turndown.turndown(html || "");
+  const sanitized = sanitizeRichTextHtml(html || "");
+
+  if (!sanitized) return "";
+  if (shouldPreserveHtmlInMarkdown(sanitized)) {
+    return sanitized;
+  }
+
+  return turndown.turndown(sanitized);
 }
 
 export function normalizeMarkdown(markdown: string) {

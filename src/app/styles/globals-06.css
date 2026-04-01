@@ -1,0 +1,362 @@
+
+.template-import-file {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.9rem;
+  padding: 0.85rem 0.9rem;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.92);
+}
+
+.template-import-file-ready {
+  border-color: color-mix(in srgb, var(--accent-strong) 12%, white);
+  background: color-mix(in srgb, var(--accent-soft) 42%, white);
+}
+
+.template-import-file strong {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.template-import-file span {
+  display: block;
+  margin-top: 0.28rem;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.template-import-actions,
+.template-import-benefits,
+.resume-editor-import-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.resume-editor-import-overview {
+  display: grid;
+  gap: 0.82rem;
+}
+
+.template-import-helper,
+.resume-editor-import-meta {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.65;
+}
+
+.resume-editor-import-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.7rem;
+  margin-top: 0.85rem;
+}
+
+.resume-editor-import-stat {
+  padding: 0.72rem 0.78rem;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.82);
+}
+
+.resume-editor-import-stat span {
+  display: block;
+  color: var(--ink-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.resume-editor-import-stat strong {
+  display: block;
+  margin-top: 0.34rem;
+  color: var(--ink-strong);
+  font-size: 1.04rem;
+}
+
+.resume-editor-import-note {
+  margin: 0.7rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.65;
+}
+
+.resume-editor-import-panel,
+.resume-editor-import-disclosure {
+  display: grid;
+  gap: 0.65rem;
+  align-content: start;
+}
+
+.resume-editor-import-panel-head,
+.resume-editor-import-disclosure summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  padding: 0.05rem 0;
+  list-style: none;
+  cursor: pointer;
+}
+
+.resume-editor-import-disclosure summary::-webkit-details-marker {
+  display: none;
+}
+
+.resume-editor-import-panel-head strong,
+.resume-editor-import-disclosure summary strong {
+  color: var(--ink-strong);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.resume-editor-import-panel-head span,
+.resume-editor-import-disclosure summary span {
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.auth-page-wrap {
+  width: min(460px, calc(100vw - 2rem));
+  margin: 0 auto;
+  display: grid;
+  gap: 1rem;
+  align-items: start;
+  padding: 3rem 0 3.8rem;
+}
+
+.auth-brand-panel,
+.auth-form-panel {
+  padding: clamp(1.3rem, 2vw, 1.8rem);
+}
+
+.auth-brand-panel {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.auth-brand-note {
+  margin: 0.7rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.auth-brand-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: minmax(0, 1fr);
+  margin-top: 1.7rem;
+}
+
+.auth-brand-card {
+  padding: 0.95rem 0;
+  border-top: 1px solid var(--line);
+}
+
+.auth-brand-steps {
+  display: grid;
+  gap: 0.8rem;
+  margin-top: 1.7rem;
+}
+
+.auth-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.8rem;
+}
+
+.auth-status-inline {
+  margin: 0.8rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.88rem;
+  line-height: 1.55;
+}
+
+.preview-frame-shell {
+  width: 100%;
+  min-width: 0;
+}
+
+.preview-frame-fit {
+  display: flex;
+  justify-content: center;
+  align-items: start;
+  width: 100%;
+  min-height: var(--preview-frame-height, 320px);
+  height: var(--preview-frame-height, 320px);
+}
+
+.preview-frame-stage {
+  flex: none;
+  transform-origin: top center;
+}
+
+.preview-frame {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  background: white;
+}
+
+
+
+.resume-editor-workspace .btn {
+  min-height: 2.3rem;
+  padding: 0.34rem 0.7rem;
+  border-radius: 0.46rem;
+  font-size: 0.88rem;
+}
+
+.resume-editor-workspace .icon-button {
+  width: 1.95rem;
+  height: 1.95rem;
+}
+
+.resume-editor-workspace .field-shell {
+  gap: 0.38rem;
+}
+
+.resume-editor-workspace .field-label {
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: none;
+  color: var(--ink-soft);
+}
+
+.resume-editor-workspace .input-control,
+.resume-editor-workspace .textarea-control,
+.resume-editor-workspace .workspace-toolbar-select {
+  border-radius: 0.42rem;
+  padding: 0.45rem 0.62rem;
+  background: rgba(255, 255, 255, 0.97);
+  border-color: color-mix(in srgb, var(--line) 88%, transparent);
+}
+
+.resume-editor-workspace .textarea-control {
+  line-height: 1.62;
+}
+
+.resume-editor-workspace .input-control:focus-visible,
+.resume-editor-workspace .textarea-control:focus-visible,
+.resume-editor-workspace .workspace-toolbar-select:focus-visible {
+  box-shadow: 0 0 0 3px rgba(64, 95, 173, 0.06);
+}
+
+.editor-toolbar {
+  position: sticky;
+  top: var(--studio-sticky-top);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.editor-toolbar-titleblock {
+  display: grid;
+  gap: 0.4rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.editor-toolbar-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.editor-toolbar-titleinput {
+  width: min(38rem, 100%);
+  margin-top: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ink-strong);
+  font-family:
+    var(--font-display),
+    "Iowan Old Style",
+    "Songti SC",
+    "Noto Serif SC",
+    serif;
+  font-size: clamp(1.55rem, 2.5vw, 2.05rem);
+  font-weight: 600;
+  letter-spacing: -0.05em;
+  line-height: 1;
+  outline: none;
+}
+
+.editor-toolbar-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+  margin-top: 0.28rem;
+}
+
+.editor-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.editor-workflow-kicker {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  color: var(--ink-muted);
+  text-transform: uppercase;
+}
+
+.editor-workflow-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+  margin-top: 0.38rem;
+}
+
+.editor-workflow-head strong {
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.editor-workflow-head span {
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+  white-space: nowrap;
+}
+
+.editor-workflow-copy {
+  margin: 0.34rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.86rem;
+  line-height: 1.62;
+}
+
+.editor-workflow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}

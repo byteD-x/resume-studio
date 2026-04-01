@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/Button";
@@ -28,9 +28,11 @@ export function ConfirmDialog({
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLElement | null>(null);
   const closeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [isConfirming, setIsConfirming] = useState(false);
 
   useEffect(() => {
     if (!open) {
+      setIsConfirming(false);
       return undefined;
     }
 
@@ -41,6 +43,10 @@ export function ConfirmDialog({
     });
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (isConfirming) {
+        return;
+      }
+
       if (event.key === "Escape") {
         onClose();
         return;
@@ -75,14 +81,35 @@ export function ConfirmDialog({
       window.removeEventListener("keydown", handleKeyDown);
       previousFocus?.focus();
     };
-  }, [onClose, open]);
+  }, [isConfirming, onClose, open]);
 
   if (!open) return null;
 
   const descriptionId = description ? "app-confirm-dialog-description" : undefined;
+  const handleClose = () => {
+    if (isConfirming) {
+      return;
+    }
+
+    onClose();
+  };
+
+  const handleConfirm = async () => {
+    if (isConfirming) {
+      return;
+    }
+
+    setIsConfirming(true);
+
+    try {
+      await onConfirm();
+    } finally {
+      setIsConfirming(false);
+    }
+  };
 
   return (
-    <div className="app-dialog-overlay" onClick={onClose} role="presentation">
+    <div className="app-dialog-overlay" onClick={handleClose} role="presentation">
       <section
         aria-describedby={descriptionId}
         aria-labelledby="app-confirm-dialog-title"
@@ -107,7 +134,8 @@ export function ConfirmDialog({
           <button
             aria-label="关闭确认对话框"
             className="icon-button"
-            onClick={onClose}
+            disabled={isConfirming}
+            onClick={handleClose}
             ref={closeButtonRef}
             type="button"
           >
@@ -116,10 +144,10 @@ export function ConfirmDialog({
         </div>
 
         <div className="app-dialog-actions">
-          <Button onClick={onClose} variant="secondary">
+          <Button disabled={isConfirming} onClick={handleClose} variant="secondary">
             {cancelLabel}
           </Button>
-          <Button onClick={() => void onConfirm()} variant={confirmVariant}>
+          <Button disabled={isConfirming} onClick={() => void handleConfirm()} variant={confirmVariant}>
             {confirmLabel}
           </Button>
         </div>

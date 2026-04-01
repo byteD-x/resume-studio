@@ -1,0 +1,364 @@
+
+.editor-toolbar-save-dirty .editor-toolbar-save-dot {
+  background: #d29a32;
+}
+
+.editor-toolbar-save-saving {
+  color: #2b5bd7;
+}
+
+.editor-toolbar-save-saving .editor-toolbar-save-dot {
+  background: #2b5bd7;
+}
+
+.editor-toolbar-save-error {
+  color: #b34a33;
+}
+
+.editor-toolbar-save-error .editor-toolbar-save-dot {
+  background: #d05e42;
+}
+
+.editor-toolbar-message {
+  max-width: 14rem;
+  overflow: hidden;
+  color: #617082;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor-toolbar-center {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px;
+  border: 1px solid rgba(213, 219, 227, 0.94);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.78);
+}
+
+.editor-toolbar-viewtab {
+  min-height: 28px;
+  padding-inline: 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #617082;
+  font-size: 0.79rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.editor-toolbar-viewtab-active {
+  background: #16202d;
+  color: white;
+}
+
+.editor-toolbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.editor-toolbar-export {
+  padding-inline: 12px !important;
+}
+
+.editor-toolbar-menu {
+  position: relative;
+}
+
+.editor-toolbar-menu summary {
+  list-style: none;
+}
+
+.editor-toolbar-menu summary::-webkit-details-marker {
+  display: none;
+}
+
+.editor-toolbar-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(213, 219, 227, 0.94);
+  background: rgba(255, 255, 255, 0.82);
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.editor-toolbar-menu[open] .editor-toolbar-menu-trigger {
+  border-color: rgba(43, 91, 215, 0.2);
+  background: rgba(234, 241, 255, 0.9);
+  color: var(--accent-strong);
+}
+
+.editor-toolbar-menu-popover {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  z-index: 20;
+  display: grid;
+  gap: 6px;
+  min-width: 220px;
+  padding: 10px;
+  border: 1px solid rgba(213, 219, 227, 0.94);
+  border-radius: 16px;
+  background: rgba(255, 252, 248, 0.98);
+  box-shadow: 0 18px 44px rgba(18, 31, 50, 0.14);
+}
+
+.editor-toolbar-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 38px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: var(--ink-strong);
+  font-size: 0.84rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+
+.editor-toolbar-menu-item:hover:not(:disabled) {
+  background: rgba(241, 235, 226, 0.86);
+}
+
+.editor-toolbar-menu-item:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.editor-toolbar-menu-history {
+  display: grid;
+  gap: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(218, 223, 231, 0.92);
+}
+
+.editor-toolbar-menu-label {
+  color: #7a8796;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.editor-toolbar-menu-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.editor-toolbar-menu-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 0 10px;
+  border-radius: 999px;
+  background: #f4efe8;
+  color: #617082;
+  font-size: 0.74rem;
+  font-weight: 600;
+}
+
+.editor-workbench-header {
+  display: grid;
+  gap: 10px;
+  padding: 0 0 8px;
+  border-bottom: 1px solid rgba(217, 224, 231, 0.88);
+}
+
+.editor-workbench-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+  gap: 10px;
+}
+
+.editor-workbench-caption {
+  min-width: 0;
+}
+
+.editor-workbench-titleblock {
+  display: grid;
+  gap: 3px;
+}
+
+.editor-workbench-label {
+  color: #7a8796;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.editor-workbench-title {
+  color: #16202d;
+  font-size: 0.98rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  line-height: 1.2;
+}
+
+.editor-workbench-copy {
+  max-width: 32rem;
+  color: #617082;
+  font-size: 0.75rem;
+  line-height: 1.45;
+}
+
+.editor-workbench-controls {
+  display: grid;
+  gap: 4px;
+  justify-items: end;
+}
+
+.editor-workbench-modehint {
+  color: #7a8796;
+  font-size: 0.7rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.editor-workbench-notices {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.editor-workbench-notices .editor-compact-alert {
+  flex: 1 1 220px;
+}
+
+.editor-workbench-notices .editor-compact-alert-text {
+  display: -webkit-box;
+  white-space: normal;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.editor-input-mode {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px;
+  border: 1px solid rgba(214, 221, 229, 0.92);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.88);
+}
+
+.editor-input-mode-tab {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #617082;
+  font-size: 0.77rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.editor-input-mode-tab-active {
+  background: #16202d;
+  color: #fff;
+}
+
+.editor-surface-section {
+  padding-top: 8px;
+}
+
+.editor-surface-section .resume-editor-panel {
+  padding: 0 0 6px;
+}
+
+.resume-editor-group {
+  margin-top: 18px;
+  padding-top: 18px;
+}
+
+.resume-editor-group-head {
+  margin-bottom: 10px;
+}
+
+.resume-editor-field-grid {
+  gap: 12px;
+}
+
+.field-label {
+  font-size: 0.74rem;
+}
+
+.field-help {
+  font-size: 0.8rem;
+}
+
+.field-shell-rich {
+  display: grid;
+  gap: 8px;
+}
+
+.editor-item-card {
+  padding: 14px 15px;
+  border-radius: 16px;
+}
+
+.resume-editor-workspace .input-control,
+.resume-editor-workspace .textarea-control,
+.resume-editor-workspace .workspace-toolbar-select {
+  min-height: 40px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  line-height: 1.55;
+}
+
+.resume-editor-workspace .textarea-control {
+  min-height: 132px;
+  line-height: 1.7;
+}
+
+/* Resume Editor Preview */
+.editor-preview-panel {
+  height: 100%;
+}
+
+.editor-preview-header {
+  display: grid;
+  gap: 10px;
+}
+
+.editor-preview-header-main {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.editor-preview-heading {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.editor-preview-eyebrow {
+  color: #7a8796;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.editor-preview-title {
+  color: #16202d;
+  font-size: 0.96rem;
+  font-weight: 700;
+}

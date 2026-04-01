@@ -1,0 +1,359 @@
+
+.resume-editor-journey {
+  display: grid;
+  gap: 1rem;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--paper-soft) 52%, white);
+}
+
+.resume-editor-journey-main,
+.resume-editor-journey-side {
+  min-width: 0;
+}
+
+.resume-editor-journey-grid,
+.resume-editor-task-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.resume-editor-journey-grid {
+  margin-top: 0.95rem;
+}
+
+.resume-editor-journey-step {
+  display: grid;
+  gap: 0.3rem;
+  padding: 0.9rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.8);
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 140ms ease, background-color 140ms ease, box-shadow 140ms ease;
+}
+
+.resume-editor-journey-step:hover {
+  border-color: color-mix(in srgb, var(--line-strong) 60%, white);
+}
+
+.resume-editor-journey-step-active {
+  border-color: color-mix(in srgb, var(--accent-strong) 22%, white);
+  background: color-mix(in srgb, var(--accent-soft) 54%, white);
+  box-shadow: 0 8px 18px rgba(15, 23, 42, 0.04);
+}
+
+.resume-editor-journey-step-head,
+.resume-editor-journey-side-head,
+.resume-editor-task-card-head {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.resume-editor-journey-step-head strong,
+.resume-editor-journey-side-head strong,
+.resume-editor-task-card-head strong {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.resume-editor-journey-step-head span {
+  color: var(--ink-muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.resume-editor-journey-step p,
+.resume-editor-task-card p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.resume-editor-task-card {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.92rem 0.96rem;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.86);
+}
+
+.resume-editor-task-card-ready {
+  margin-top: 0.95rem;
+}
+
+.resume-editor-onboarding {
+  display: grid;
+  gap: 0.95rem;
+  margin-bottom: 1rem;
+  padding: 1rem 1.05rem;
+  border: 1px solid color-mix(in srgb, var(--accent-strong) 14%, white);
+  border-radius: 1rem;
+  background: color-mix(in srgb, var(--accent-soft) 34%, white);
+}
+
+.resume-editor-onboarding-head strong,
+.resume-editor-onboarding-step strong {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: var(--ink-strong);
+}
+
+.resume-editor-onboarding-grid {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.resume-editor-onboarding-step {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 0.9rem 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 0.95rem;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.resume-editor-onboarding-step span {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.65rem;
+  height: 1.65rem;
+  border-radius: 999px;
+  background: white;
+  color: var(--accent-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.resume-editor-onboarding-step p {
+  margin: 0.24rem 0 0;
+  color: var(--ink-soft);
+  font-size: 0.84rem;
+  line-height: 1.6;
+}
+
+.editor-priority-strip {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 1rem;
+  padding: 0.76rem 0.88rem;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+  border-radius: 0.88rem;
+  background: color-mix(in srgb, var(--paper-soft) 42%, white);
+}
+
+.editor-priority-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.editor-priority-title {
+  display: grid;
+  gap: 0.34rem;
+}
+
+.editor-priority-title strong {
+  color: var(--ink-strong);
+  font-size: 0.98rem;
+  font-weight: 700;
+}
+
+.editor-priority-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+}
+
+.resume-editor-inline-priority {
+  display: grid;
+  gap: 0.65rem;
+  margin-top: 0.2rem;
+  padding-top: 0.8rem;
+  border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+}
+
+.resume-editor-inline-priority-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.resume-editor-inline-priority-head strong {
+  color: var(--ink-strong);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.resume-editor-inline-priority-head span {
+  color: var(--ink-muted);
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.editor-priority-chip {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.9rem;
+  flex: 1 1 18rem;
+  min-height: 3.2rem;
+  padding: 0.64rem 0.74rem;
+  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
+  border-radius: 0.84rem;
+  background: rgba(255, 255, 255, 0.92);
+  text-align: left;
+  transition: border-color 140ms ease, background-color 140ms ease, transform 140ms ease;
+  cursor: pointer;
+}
+
+.editor-priority-chip:hover {
+  border-color: color-mix(in srgb, var(--accent-strong) 22%, white);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.editor-priority-chip-copy {
+  min-width: 0;
+}
+
+.editor-priority-chip-head {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.editor-priority-chip-head strong {
+  color: var(--ink-strong);
+  font-size: 0.88rem;
+}
+
+.editor-priority-chip-copy span {
+  display: block;
+  margin-top: 0.22rem;
+  color: var(--ink-soft);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.editor-priority-chip-action {
+  flex: none;
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.resume-editor-stack {
+  display: grid;
+  gap: 1rem;
+}
+
+.editor-surface-section {
+  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 0.5rem;
+  background: rgba(255, 255, 255, 0.97);
+}
+
+.editor-surface-section-active {
+  border-color: color-mix(in srgb, var(--accent-strong) 18%, white);
+  box-shadow: 0 0 0 3px rgba(64, 95, 173, 0.04);
+}
+
+.editor-surface-section .resume-editor-panel,
+.editor-surface-section .editor-sidebar-block {
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+  padding: 0;
+}
+
+.field-help {
+  display: inline-block;
+  margin-top: 0.48rem;
+  color: var(--ink-muted);
+  font-size: 0.78rem;
+}
+
+.resume-editor-toggle-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.editor-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.2rem;
+  padding: 0.42rem 0.68rem;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: 0.78rem;
+  background: rgba(248, 246, 241, 0.9);
+  color: var(--ink-strong);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.editor-toggle input {
+  margin: 0;
+}
+
+.field-shell-color {
+  gap: 0.5rem;
+}
+
+.color-control {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.7rem;
+  align-items: center;
+}
+
+.color-input {
+  width: 2.75rem;
+  height: 2.75rem;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 0.75rem;
+  background: white;
+  cursor: pointer;
+}
+
+.resume-editor-import-banner {
+  display: grid;
+  gap: 0.85rem;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  margin-top: 1rem;
+  padding: 0.88rem 0.94rem;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-radius: 0.88rem;
+  background: color-mix(in srgb, var(--paper-soft) 44%, white);
+}
+
+.resume-editor-import-banner > :first-child,
+.resume-editor-import-banner > .editor-workflow-actions {
+  grid-column: 1 / -1;
+}
+
+.resume-editor-import-disclosure[open] {
+  padding-top: 0.15rem;
+  border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+}

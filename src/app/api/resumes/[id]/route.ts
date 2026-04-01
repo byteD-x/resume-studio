@@ -1,9 +1,12 @@
 import { NextRequest } from "next/server";
 import {
+  deleteResumeDocuments,
   deleteResumeDocument,
+  listResumeSummaries,
   readResumeDocument,
   writeResumeDocument,
 } from "@/lib/storage";
+import { buildResumeLineageMap } from "@/lib/resume-lineage";
 import { validateResumeDocument } from "@/lib/resume-document";
 
 export const runtime = "nodejs";
@@ -52,10 +55,22 @@ export async function PUT(
 }
 
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   const { id } = await params;
+  const scope = request.nextUrl.searchParams.get("scope");
+
+  if (scope === "lineage") {
+    const summaries = await listResumeSummaries();
+    const lineage = buildResumeLineageMap(summaries).get(id);
+
+    if (lineage && lineage.parentId === null) {
+      await deleteResumeDocuments([id, ...lineage.childIds]);
+      return new Response(null, { status: 204 });
+    }
+  }
+
   await deleteResumeDocument(id);
   return new Response(null, { status: 204 });
 }

@@ -1,0 +1,248 @@
+import { expect, test } from "@playwright/test";
+
+test("library and editor surface tailored variant lineage", async ({ page, request }) => {
+  const sourceResponse = await request.post("/api/resumes", {
+    data: { title: `Lineage Source ${Date.now()}` },
+  });
+  const source = await sourceResponse.json();
+  let variantId: string | null = null;
+
+  try {
+    await request.put(`/api/resumes/${source.meta.id}`, {
+      data: {
+        ...source,
+        targeting: {
+          ...source.targeting,
+          role: "Frontend Engineer",
+          company: "Acme",
+          focusKeywords: ["React", "Next.js"],
+        },
+        sections: [
+          {
+            id: "experience",
+            type: "experience",
+            title: "Experience",
+            visible: true,
+            layout: "stacked-list",
+            contentHtml: "",
+            items: [
+              {
+                id: "exp-1",
+                title: "Frontend Engineer",
+                subtitle: "Acme",
+                location: "",
+                dateRange: "2024-2026",
+                meta: "",
+                summaryHtml: "<p>Built Next.js and React application flows.</p>",
+                bulletPoints: ["Shipped a reusable React UI workflow."],
+                tags: ["React", "Next.js"],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const variantResponse = await request.post(`/api/resumes/${source.meta.id}/generate-tailored-variant`, {
+      data: { title: "Acme Tailored Variant" },
+    });
+    const variant = await variantResponse.json();
+    variantId = variant.document.meta.id;
+
+    await page.goto("/resumes");
+    await expect(page.locator(".library-master-detail")).toBeVisible();
+    await expect(page.getByRole("button", { name: /Lineage Source/ }).first()).toBeVisible();
+    await expect(page.getByText("Acme Tailored Variant")).toBeVisible();
+    await expect(page.getByText(/Lineage Source/)).toBeVisible();
+
+    await page.goto(`/studio/${variantId}`);
+    await expect(page.getByRole("button", { name: "查看来源主稿" })).toBeVisible();
+  } finally {
+    if (variantId) {
+      await request.delete(`/api/resumes/${variantId}`);
+    }
+    await request.delete(`/api/resumes/${source.meta.id}`);
+  }
+});
+
+test("library can generate the first tailored variant from a ready source draft", async ({ page, request }) => {
+  const sourceResponse = await request.post("/api/resumes", {
+    data: { title: `Library Generate ${Date.now()}` },
+  });
+  const source = await sourceResponse.json();
+  let variantId: string | null = null;
+
+  try {
+    await request.put(`/api/resumes/${source.meta.id}`, {
+      data: {
+        ...source,
+        targeting: {
+          ...source.targeting,
+          role: "Frontend Engineer",
+          company: "Acme",
+          focusKeywords: ["React", "Next.js"],
+        },
+        sections: [
+          {
+            id: "experience",
+            type: "experience",
+            title: "Experience",
+            visible: true,
+            layout: "stacked-list",
+            contentHtml: "",
+            items: [
+              {
+                id: "exp-1",
+                title: "Frontend Engineer",
+                subtitle: "Acme",
+                location: "",
+                dateRange: "2024-2026",
+                meta: "",
+                summaryHtml: "<p>Built React and Next.js product flows.</p>",
+                bulletPoints: ["Delivered resume workflow surfaces for multiple job targets."],
+                tags: ["React", "Next.js"],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    await page.goto("/resumes");
+    await Promise.all([
+      page.waitForURL(/\/studio\/[^/?]+\?focus=ai$/),
+      page.locator(".library-detail-actions").getByRole("button", { name: "直接生成定制版", exact: true }).click(),
+    ]);
+    variantId = page.url().match(/\/studio\/([^/?]+)/)?.[1] ?? null;
+
+    await expect(page.getByRole("button", { name: "查看来源主稿" })).toBeVisible();
+  } finally {
+    if (variantId) {
+      await request.delete(`/api/resumes/${variantId}`);
+    }
+    await request.delete(`/api/resumes/${source.meta.id}`);
+  }
+});
+
+test("library can delete a standalone draft from the detail actions", async ({ page, request }) => {
+  const firstResponse = await request.post("/api/resumes", {
+    data: { title: `Standalone Delete ${Date.now()}` },
+  });
+  const secondResponse = await request.post("/api/resumes", {
+    data: { title: `Standalone Keep ${Date.now()}` },
+  });
+  const first = await firstResponse.json();
+  const second = await secondResponse.json();
+
+  try {
+    await page.goto("/resumes");
+    await page.getByRole("button", { name: new RegExp(first.meta.title) }).first().click();
+    await page.locator(".library-detail-actions").getByRole("button", { name: "删除简历" }).click();
+    await page.locator(".app-dialog").getByRole("button", { name: "删除简历" }).click();
+
+    await expect(page.getByRole("button", { name: new RegExp(first.meta.title) })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: new RegExp(second.meta.title) }).first()).toBeVisible();
+  } finally {
+    await request.delete(`/api/resumes/${first.meta.id}`).catch(() => null);
+    await request.delete(`/api/resumes/${second.meta.id}`).catch(() => null);
+  }
+});
+
+test("library supports consecutive deletions without manual refresh", async ({ page, request }) => {
+  const firstResponse = await request.post("/api/resumes", {
+    data: { title: `Consecutive Delete A ${Date.now()}` },
+  });
+  const secondResponse = await request.post("/api/resumes", {
+    data: { title: `Consecutive Delete B ${Date.now()}` },
+  });
+  const thirdResponse = await request.post("/api/resumes", {
+    data: { title: `Consecutive Keep ${Date.now()}` },
+  });
+  const first = await firstResponse.json();
+  const second = await secondResponse.json();
+  const third = await thirdResponse.json();
+
+  try {
+    await page.goto("/resumes");
+
+    await page.getByRole("button", { name: new RegExp(first.meta.title) }).first().click();
+    await page.locator(".library-detail-actions").getByRole("button", { name: "删除简历" }).click();
+    await page.locator(".app-dialog").getByRole("button", { name: "删除简历" }).click();
+    await expect(page.getByRole("button", { name: new RegExp(first.meta.title) })).toHaveCount(0);
+
+    await page.getByRole("button", { name: new RegExp(second.meta.title) }).first().click();
+    await page.locator(".library-detail-actions").getByRole("button", { name: "删除简历" }).click();
+    await page.locator(".app-dialog").getByRole("button", { name: "删除简历" }).click();
+    await expect(page.getByRole("button", { name: new RegExp(second.meta.title) })).toHaveCount(0);
+
+    await expect(page.getByRole("button", { name: new RegExp(third.meta.title) }).first()).toBeVisible();
+  } finally {
+    await request.delete(`/api/resumes/${first.meta.id}`).catch(() => null);
+    await request.delete(`/api/resumes/${second.meta.id}`).catch(() => null);
+    await request.delete(`/api/resumes/${third.meta.id}`).catch(() => null);
+  }
+});
+
+test("library can cascade delete a source draft together with its variants", async ({ page, request }) => {
+  const sourceResponse = await request.post("/api/resumes", {
+    data: { title: `Cascade Source ${Date.now()}` },
+  });
+  const source = await sourceResponse.json();
+  let variantId: string | null = null;
+
+  try {
+    await request.put(`/api/resumes/${source.meta.id}`, {
+      data: {
+        ...source,
+        targeting: {
+          ...source.targeting,
+          role: "Frontend Engineer",
+          company: "Acme",
+          focusKeywords: ["React", "Next.js"],
+        },
+        sections: [
+          {
+            id: "experience",
+            type: "experience",
+            title: "Experience",
+            visible: true,
+            layout: "stacked-list",
+            contentHtml: "",
+            items: [
+              {
+                id: "exp-1",
+                title: "Frontend Engineer",
+                subtitle: "Acme",
+                location: "",
+                dateRange: "2024-2026",
+                meta: "",
+                summaryHtml: "<p>Built React and Next.js product flows.</p>",
+                bulletPoints: ["Delivered reusable workflow tooling."],
+                tags: ["React", "Next.js"],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const variantResponse = await request.post(`/api/resumes/${source.meta.id}/generate-tailored-variant`, {
+      data: { title: "Cascade Variant" },
+    });
+    const variant = await variantResponse.json();
+    variantId = variant.document.meta.id;
+
+    await page.goto("/resumes");
+    await page.getByRole("button", { name: new RegExp(source.meta.title) }).first().click();
+    await page.locator(".library-detail-actions").getByRole("button", { name: "删除整组" }).click();
+    await page.locator(".app-dialog").getByRole("button", { name: "删除整组" }).click();
+
+    await expect(page.getByRole("button", { name: new RegExp(source.meta.title) })).toHaveCount(0);
+    await expect(page.getByText("Cascade Variant")).toHaveCount(0);
+  } finally {
+    if (variantId) {
+      await request.delete(`/api/resumes/${variantId}`).catch(() => null);
+    }
+    await request.delete(`/api/resumes/${source.meta.id}`).catch(() => null);
+  }
+});

@@ -1,0 +1,408 @@
+"use client";
+
+import { ChevronDown, ChevronUp, Copy, Files, GripVertical, Trash2 } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ResumeAssistPanel } from "@/components/product/editor/ResumeAssistPanel";
+import { RichTextField } from "@/components/product/editor/RichTextField";
+import { readClientAiConfig } from "@/lib/client-ai-config";
+import { handleSanitizedPaste } from "@/lib/editor-input";
+import { htmlFieldToText, type EditorSectionDefinition } from "@/lib/resume-editor";
+import { buildItemAssistPack } from "@/lib/resume-assistant";
+import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
+import type { ResumeDocument, ResumeSectionItem, ResumeWriterProfile } from "@/types/resume";
+
+export function ResumeSectionItemCard({
+  active,
+  document,
+  expanded,
+  index,
+  item,
+  onActivate,
+  onChange,
+  onCopy,
+  onDelete,
+  onDuplicate,
+  onMove,
+  onToggle,
+  registerTitleInput,
+  sectionType,
+  total,
+  writerProfile,
+}: {
+  active: boolean;
+  document: ResumeDocument;
+  expanded: boolean;
+  index: number;
+  item: ResumeSectionItem;
+  onActivate: () => void;
+  onChange: (nextItem: ResumeSectionItem) => void;
+  onCopy: () => void;
+  onDelete: () => void;
+  onDuplicate: () => void;
+  onMove: (direction: "up" | "down") => void;
+  onToggle: () => void;
+  registerTitleInput: (element: HTMLInputElement | null) => void;
+  sectionType: EditorSectionDefinition["type"];
+  total: number;
+  writerProfile: ResumeWriterProfile;
+}) {
+  const metaSummary = [item.subtitle, item.dateRange, item.location].filter(Boolean).join(" · ");
+  const itemLabel = item.title.trim() || "未命名条目";
+  const detailPanelId = `${item.id}-panel`;
+  const assistPack = useMemo(
+    () => buildItemAssistPack(sectionType, item, writerProfile),
+    [item, sectionType, writerProfile],
+  );
+  const [remoteSuggestions, setRemoteSuggestions] = useState<ResumeAssistSuggestion[]>([]);
+  const [remoteError, setRemoteError] = useState<string | null>(null);
+  const [remoteLoading, setRemoteLoading] = useState(false);
+  const usesRemoteProvider = document.ai.provider === "openai-compatible";
+  const targetingKeywordsKey = document.targeting.focusKeywords.join("|");
+  const itemBulletsKey = item.bulletPoints.join("|");
+  const itemTagsKey = item.tags.join("|");
+  const combinedSuggestions =
+    remoteSuggestions.length > 0 ? [...remoteSuggestions, ...assistPack.suggestions] : assistPack.suggestions;
+
+  useEffect(() => {
+    setRemoteSuggestions([]);
+    setRemoteError(null);
+  }, [
+    document.ai.provider,
+    document.ai.model,
+    document.ai.baseUrl,
+    document.targeting.role,
+    document.targeting.jobDescription,
+    targetingKeywordsKey,
+    item.id,
+    item.title,
+    item.subtitle,
+    item.meta,
+    item.summaryHtml,
+    itemBulletsKey,
+    itemTagsKey,
+  ]);
+
+  async function handleGenerateRemoteAssist() {
+    setRemoteLoading(true);
+    setRemoteError(null);
+
+    try {
+      const response = await fetch("/api/ai/assist", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mode: "section",
+          document,
+          sectionType,
+          item,
+          apiKey: readClientAiConfig().apiKey,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error((await response.text()) || "远程写作建议生成失败");
+      }
+
+      const result = (await response.json()) as { suggestions?: ResumeAssistSuggestion[] };
+      setRemoteSuggestions(Array.isArray(result.suggestions) ? result.suggestions : []);
+    } catch (error) {
+      setRemoteError(error instanceof Error ? error.message : "远程写作建议生成失败");
+    } finally {
+      setRemoteLoading(false);
+    }
+  }
+
+  return (
+    <article
+      className={`editor-item-card ${expanded ? "editor-item-card-expanded" : ""} ${active ? "editor-item-card-active" : ""}`}
+      onFocusCapture={onActivate}
+    >
+      <div className="editor-item-head">
+        <button
+          aria-expanded={expanded}
+          aria-label={`${expanded ? "收起" : "展开"}${itemLabel}`}
+          className="editor-item-summary"
+          onClick={onToggle}
+          type="button"
+        >
+          <span aria-hidden="true" className="editor-item-grip">
+            <GripVertical className="size-4" />
+          </span>
+          <p className="editor-item-title">{item.title.trim() || "未命名"}</p>
+          <p className="editor-item-subtitle">{metaSummary || "待补充"}</p>
+        </button>
+
+        <div className="editor-item-actions">
+          <button
+            aria-label={`复制${itemLabel}的内容`}
+            className="icon-button"
+            onClick={onCopy}
+            title="复制条目内容"
+            type="button"
+          >
+            <Copy className="size-4" />
+          </button>
+          <button
+            aria-label={`复制整个${itemLabel}`}
+            className="icon-button"
+            onClick={onDuplicate}
+            title="复制整个条目"
+            type="button"
+          >
+            <Files className="size-4" />
+          </button>
+          <button
+            aria-label={`上移${itemLabel}`}
+            className="icon-button"
+            disabled={index === 0}
+            onClick={() => onMove("up")}
+            title="上移"
+            type="button"
+          >
+            <ChevronUp className="size-4" />
+          </button>
+          <button
+            aria-label={`下移${itemLabel}`}
+            className="icon-button"
+            disabled={index === total - 1}
+            onClick={() => onMove("down")}
+            title="下移"
+            type="button"
+          >
+            <ChevronDown className="size-4" />
+          </button>
+          <button
+            aria-label={`删除${itemLabel}`}
+            className="icon-button"
+            onClick={onDelete}
+            title="删除条目"
+            type="button"
+          >
+            <Trash2 className="size-4" />
+          </button>
+        </div>
+      </div>
+
+      {expanded ? (
+        <div id={detailPanelId}>
+          <div className="editor-field-grid editor-item-primary-fields">
+            <label className="field-shell">
+              <span className="field-label">{sectionType === "education" ? "学校 / 机构" : "名称"}</span>
+              <input
+                className="input-control"
+                onChange={(event) => onChange({ ...item, title: event.target.value })}
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.title,
+                    mode: "single-line",
+                    onValueChange: (nextValue) => onChange({ ...item, title: nextValue }),
+                  })
+                }
+                ref={registerTitleInput}
+                value={item.title}
+              />
+            </label>
+            <label className="field-shell">
+              <span className="field-label">副标题</span>
+              <input
+                className="input-control"
+                onChange={(event) => onChange({ ...item, subtitle: event.target.value })}
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.subtitle,
+                    mode: "single-line",
+                    onValueChange: (nextValue) => onChange({ ...item, subtitle: nextValue }),
+                  })
+                }
+                value={item.subtitle}
+              />
+            </label>
+            <label className="field-shell">
+              <span className="field-label">时间范围</span>
+              <input
+                className="input-control"
+                onChange={(event) => onChange({ ...item, dateRange: event.target.value })}
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.dateRange,
+                    mode: "single-line",
+                    onValueChange: (nextValue) => onChange({ ...item, dateRange: nextValue }),
+                  })
+                }
+                placeholder="2023.06 - 2024.02"
+                value={item.dateRange}
+              />
+            </label>
+          </div>
+
+          <details className="editor-item-secondary">
+            <summary>补充信息</summary>
+            <div className="editor-item-secondary-fields">
+              <label className="field-shell">
+                <span className="field-label">地点</span>
+                <input
+                  className="input-control"
+                  onChange={(event) => onChange({ ...item, location: event.target.value })}
+                  onPaste={(event) =>
+                    handleSanitizedPaste(event, {
+                      currentValue: item.location,
+                      mode: "single-line",
+                      onValueChange: (nextValue) => onChange({ ...item, location: nextValue }),
+                    })
+                  }
+                  value={item.location}
+                />
+              </label>
+
+              <label className="field-shell">
+                <span className="field-label">备注</span>
+                <input
+                  className="input-control"
+                  onChange={(event) => onChange({ ...item, meta: event.target.value })}
+                  onPaste={(event) =>
+                    handleSanitizedPaste(event, {
+                      currentValue: item.meta,
+                      mode: "single-line",
+                      onValueChange: (nextValue) => onChange({ ...item, meta: nextValue }),
+                    })
+                  }
+                  placeholder="团队或技术栈"
+                  value={item.meta}
+                />
+              </label>
+
+              <RichTextField
+                ariaLabel="Item summary"
+                minHeight={144}
+                onChange={(nextValue) =>
+                  onChange({
+                    ...item,
+                    summaryHtml: nextValue,
+                  })
+                }
+                placeholder="Add role scope, context, or method notes."
+                value={item.summaryHtml}
+              />
+            </div>
+          </details>
+
+          {sectionType === "skills" ? (
+            <label className="field-shell editor-item-block">
+              <span className="field-label">技能</span>
+              <textarea
+                className="textarea-control min-h-24"
+                onChange={(event) =>
+                  onChange({
+                    ...item,
+                    tags: event.target.value
+                      .split(/[，,\n、;；|]+/)
+                      .map((value) => value.trim())
+                      .filter(Boolean),
+                  })
+                }
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.tags.join(", "),
+                    mode: "skills",
+                    onValueChange: (nextValue) =>
+                      onChange({
+                        ...item,
+                        tags: nextValue
+                          .split(/[，,]+/)
+                          .map((value) => value.trim())
+                          .filter(Boolean),
+                      }),
+                  })
+                }
+                placeholder="React, TypeScript, Node.js"
+                value={item.tags.join(", ")}
+              />
+            </label>
+          ) : (
+            <label className="field-shell editor-item-block">
+              <span className="field-label">要点</span>
+              <textarea
+                className="textarea-control min-h-32"
+                onChange={(event) =>
+                  onChange({
+                    ...item,
+                    bulletPoints: event.target.value
+                      .split("\n")
+                      .map((line) => line.trim())
+                      .filter(Boolean),
+                  })
+                }
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.bulletPoints.join("\n"),
+                    mode: "bullets",
+                    onValueChange: (nextValue) =>
+                      onChange({
+                        ...item,
+                        bulletPoints: nextValue
+                          .split("\n")
+                          .map((line) => line.trim())
+                          .filter(Boolean),
+                      }),
+                  })
+                }
+                placeholder="每行一条"
+                value={item.bulletPoints.join("\n")}
+              />
+            </label>
+          )}
+
+          <ResumeAssistPanel
+            description=""
+            getCurrentValue={(suggestion) => {
+              if (suggestion.target === "summary") {
+                return htmlFieldToText(item.summaryHtml);
+              }
+
+              if (suggestion.target === "bullets") {
+                return item.bulletPoints;
+              }
+
+              if (suggestion.target === "tags") {
+                return item.tags;
+              }
+
+              return null;
+            }}
+            issues={assistPack.issues}
+            onApply={(suggestion) => {
+              if (suggestion.target === "summary" && typeof suggestion.nextValue === "string") {
+                onChange({
+                  ...item,
+                  summaryHtml: suggestion.nextValue,
+                });
+              }
+
+              if (suggestion.target === "bullets" && Array.isArray(suggestion.nextValue)) {
+                onChange({
+                  ...item,
+                  bulletPoints: suggestion.nextValue,
+                });
+              }
+
+              if (suggestion.target === "tags" && Array.isArray(suggestion.nextValue)) {
+                onChange({
+                  ...item,
+                  tags: suggestion.nextValue,
+                });
+              }
+            }}
+            onGenerateRemote={() => void handleGenerateRemoteAssist()}
+            remoteDisabled={!usesRemoteProvider || remoteLoading}
+            remoteError={remoteError}
+            remoteHint={usesRemoteProvider ? "基于当前条目生成。" : "请先在「AI」面板配置模型。"}
+            remoteLabel={sectionType === "skills" ? "生成技能" : "生成建议"}
+            remoteLoading={remoteLoading}
+            suggestions={combinedSuggestions}
+            title={sectionType === "skills" ? "技能" : "润色"}
+          />
+        </div>
+      ) : null}
+    </article>
+  );
+}

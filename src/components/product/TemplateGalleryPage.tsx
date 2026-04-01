@@ -139,9 +139,6 @@ export function TemplateGalleryPage() {
           <h1 className="text-[1.8rem] font-bold tracking-tight text-[color:var(--ink-strong)]">
             新建简历
           </h1>
-          <p className="mt-1.5 text-[0.92rem] text-[color:var(--ink-soft)]">
-            先按求职语境筛选，再挑一个版式进入编辑器起稿。
-          </p>
           <p aria-live="polite" className="mt-2 text-[0.85rem] text-[color:var(--accent-strong)] empty:hidden">
             {status}
           </p>
@@ -150,7 +147,7 @@ export function TemplateGalleryPage() {
         <div className="flex flex-wrap gap-3">
           <ButtonLink href="/import" variant="secondary">
             <FileArchive aria-hidden="true" className="size-4" />
-            解析源文件或导入线上经历
+            导入简历
           </ButtonLink>
         </div>
       </section>
@@ -198,13 +195,6 @@ export function TemplateGalleryPage() {
             ))}
           </div>
         </div>
-      </section>
-
-      <section className="template-recommendation">
-        <strong>建议这样开启</strong>
-        <p>
-          先按当前求职场景筛出合适版式，创建后优先补齐抬头、摘要和经历要点；如果你已经有旧简历或网站资料，也可以直接切到导入链路。
-        </p>
       </section>
 
       {templates.length > 0 ? (

@@ -23,7 +23,62 @@ export function escapeHtml(value: string) {
 }
 
 export function sanitizeRichTextHtml(value: string) {
-  return value
+  const withSafeInlineStyles = value.replace(
+    /\sstyle\s*=\s*("([^"]*)"|'([^']*)')/gi,
+    (_match, _quoted, doubleQuoted, singleQuoted) => {
+      const source = typeof doubleQuoted === "string" ? doubleQuoted : (singleQuoted ?? "");
+      const safeStyle = source
+        .split(";")
+        .map((part: string) => part.trim())
+        .filter(Boolean)
+        .map((part: string) => {
+          const [property, ...rest] = part.split(":");
+          if (!property || rest.length === 0) return null;
+          const key = property.trim().toLowerCase();
+          const rawValue = rest.join(":").trim();
+          if (!rawValue) return null;
+
+          if (key === "color" && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(rawValue)) {
+            return `color: ${rawValue}`;
+          }
+
+          if (key === "font-size" && /^(?:\d+(?:\.\d+)?)(?:px|pt|em|rem|%)$/i.test(rawValue)) {
+            return `font-size: ${rawValue}`;
+          }
+
+          if (
+            key === "font-family" &&
+            /^[\w\s"',.-]+$/i.test(rawValue)
+          ) {
+            return `font-family: ${rawValue}`;
+          }
+
+          if (key === "font-weight" && /^(?:normal|bold|[1-9]00)$/i.test(rawValue)) {
+            return `font-weight: ${rawValue}`;
+          }
+
+          if (key === "font-style" && /^(?:normal|italic)$/i.test(rawValue)) {
+            return `font-style: ${rawValue}`;
+          }
+
+          if (key === "text-decoration" && /^(?:none|underline)$/i.test(rawValue)) {
+            return `text-decoration: ${rawValue}`;
+          }
+
+          if (key === "text-align" && /^(?:left|center|right)$/i.test(rawValue)) {
+            return `text-align: ${rawValue}`;
+          }
+
+          return null;
+        })
+        .filter(Boolean)
+        .join("; ");
+
+      return safeStyle ? ` style="${safeStyle}"` : "";
+    },
+  );
+
+  return withSafeInlineStyles
     .replace(/<script[\s\S]*?>[\s\S]*?<\/script>/gi, "")
     .replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, "")
     .replace(/<\/?(?:iframe|object|embed|link|meta|base|form|input|button|textarea|select|option|svg|math)[^>]*>/gi, "")

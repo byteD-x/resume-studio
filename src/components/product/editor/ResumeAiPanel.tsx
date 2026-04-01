@@ -65,7 +65,6 @@ export function ResumeAiPanel({
     <section className="resume-editor-panel">
       <div className="resume-editor-panel-head">
         <div>
-          <p className="resume-editor-panel-kicker">AI</p>
           <h2 className="resume-editor-panel-title">AI 辅助</h2>
         </div>
       </div>
@@ -93,11 +92,11 @@ export function ResumeAiPanel({
             onApply={onApplyGeneratedSummary}
             onGenerateRemote={onGenerateSummary}
             remoteDisabled={!usesRemoteProvider || isGeneratingSummary}
-            remoteHint={usesRemoteProvider ? "生成后先比对，再决定是否应用。" : "先配置 AI 模型。"}
+            remoteHint={usesRemoteProvider ? "生成后可对比再应用。" : "请先在上方配置模型。"}
             remoteLabel="生成摘要"
             remoteLoading={isGeneratingSummary}
             suggestions={generatedSummarySuggestions}
-            title="摘要建议"
+            title="摘要润色"
           />
         </div>
       </div>
@@ -105,7 +104,6 @@ export function ResumeAiPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>岗位分析</h3>
-          <p>根据岗位和 JD 查看匹配缺口。</p>
         </div>
 
         <div className="resume-ai-badge-row">
@@ -166,7 +164,6 @@ export function ResumeAiPanel({
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
           <h3>定制版生成</h3>
-          <p>确认取舍后再生成岗位版。</p>
         </div>
 
         <div className="resume-ai-metric-grid">

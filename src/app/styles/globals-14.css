@@ -1,0 +1,222 @@
+
+/* Resume Editor Rich Text */
+.resume-editor-field-grid > .rich-text-field {
+  grid-column: 1 / -1;
+}
+
+.field-shell > .rich-text-field {
+  width: 100%;
+}
+
+.rich-text-field {
+  display: grid;
+  gap: 10px;
+}
+
+.rich-text-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px 10px;
+  border: 1px solid rgba(214, 221, 229, 0.92);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.84);
+}
+
+.rich-text-toolbar-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rich-text-toolbar-group + .rich-text-toolbar-group {
+  padding-left: 8px;
+  border-left: 1px solid rgba(217, 224, 231, 0.88);
+}
+
+.rich-text-select,
+.rich-text-button,
+.rich-text-color-shell {
+  min-height: 32px;
+  border: 1px solid rgba(214, 221, 229, 0.92);
+  border-radius: 10px;
+  background: rgba(255, 252, 248, 0.94);
+}
+
+.rich-text-select {
+  min-width: 92px;
+  padding: 0 10px;
+  color: #1c2430;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.rich-text-select-size {
+  min-width: 74px;
+}
+
+.rich-text-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  padding: 0;
+  color: #617082;
+  cursor: pointer;
+}
+
+.rich-text-button-active {
+  border-color: rgba(43, 91, 215, 0.24);
+  background: rgba(234, 241, 255, 0.96);
+  color: #2b5bd7;
+}
+
+.rich-text-color-shell {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  padding: 0 4px;
+}
+
+.rich-text-color {
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.rich-text-surface {
+  position: relative;
+  border: 1px solid rgba(214, 221, 229, 0.92);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.rich-text-surface:focus-within {
+  border-color: rgba(43, 91, 215, 0.28);
+  box-shadow: 0 0 0 4px rgba(43, 91, 215, 0.08);
+}
+
+.rich-text-placeholder {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  left: 16px;
+  color: #8a96a5;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  pointer-events: none;
+}
+
+.rich-text-editor {
+  min-height: inherit;
+}
+
+.rich-text-editor .tiptap,
+.rich-text-editor .ProseMirror {
+  min-height: inherit;
+  padding: 14px 16px;
+  color: #1c2430;
+  font-size: 0.92rem;
+  line-height: 1.7;
+  outline: none;
+}
+
+.rich-text-editor .tiptap p,
+.rich-text-editor .ProseMirror p {
+  margin: 0;
+}
+
+.rich-text-editor .tiptap p + p,
+.rich-text-editor .ProseMirror p + p,
+.rich-text-editor .tiptap ul + p,
+.rich-text-editor .ProseMirror ul + p,
+.rich-text-editor .tiptap ol + p,
+.rich-text-editor .ProseMirror ol + p {
+  margin-top: 0.8em;
+}
+
+.rich-text-editor .tiptap ul,
+.rich-text-editor .tiptap ol,
+.rich-text-editor .ProseMirror ul,
+.rich-text-editor .ProseMirror ol {
+  margin: 0.8em 0 0;
+  padding-left: 1.2rem;
+}
+
+@media (max-width: 1279px) {
+  .editor-toolbar-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-toolbar-center {
+    justify-self: start;
+  }
+
+  .resume-editor-layout-split {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) minmax(34rem, 42vh);
+  }
+}
+
+@media (max-width: 1023px) {
+  .resume-editor-layout {
+    padding: 12px 14px 14px;
+  }
+
+  .resume-editor-left {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-sidebar {
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 10px;
+  }
+
+  .editor-sidebar.editor-sidebar-rail {
+    width: auto;
+    min-width: 0;
+  }
+
+  .editor-sidebar-rail .editor-sidebar-block {
+    flex-direction: row;
+    align-items: flex-start;
+  }
+
+  .editor-sidebar-rail .editor-sidebar-group {
+    width: auto;
+  }
+
+  .editor-sidebar-rail .editor-sidebar-group + .editor-sidebar-group {
+    margin-top: 0;
+    padding-top: 0;
+    border-top: 0;
+  }
+
+  .editor-sidebar-rail .editor-sidebar-list {
+    flex-direction: row;
+  }
+
+  .editor-sidebar-rail .editor-sidebar-tooltip {
+    display: none;
+  }
+
+  .editor-workbench-header {
+    gap: 8px;
+  }
+
+  .editor-workbench-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-workbench-controls {
+    justify-items: start;
+  }
+
+  .editor-toolbar-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

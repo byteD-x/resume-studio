@@ -1,20 +1,7 @@
 import type { Metadata } from "next";
-import { Fraunces, Manrope } from "next/font/google";
 import { SiteFooter } from "@/components/site/SiteFooter";
 import { SiteHeader } from "@/components/site/SiteHeader";
 import "./globals.css";
-
-const bodyFont = Manrope({
-  variable: "--font-body",
-  subsets: ["latin"],
-  display: "swap",
-});
-
-const headingFont = Fraunces({
-  variable: "--font-display",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -31,7 +18,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" data-scroll-behavior="smooth">
-      <body className={`${bodyFont.variable} ${headingFont.variable}`}>
+      <body>
         <div className="app-backdrop" />
         <div className="app-grid" />
         <div className="relative z-10 min-h-screen">

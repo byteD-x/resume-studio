@@ -41,9 +41,9 @@ export interface EditorPanelGroup {
 function panelStatusLabel(status: EditorPanelItem["status"]) {
   switch (status) {
     case "ready":
-      return "已完善";
+      return "已完成";
     case "in_progress":
-      return "进行中";
+      return "编辑中";
     default:
       return "未开始";
   }
@@ -69,55 +69,43 @@ export function ResumeEditorSidebar({
     ai: Bot,
     markdown: Code2,
   } satisfies Record<EditorPanel, typeof UserRound>;
-  const allItems = groups.flatMap((group) => group.items);
-  const readyCount = allItems.filter((item) => item.status === "ready").length;
 
   return (
-    <aside className="editor-sidebar">
-      <div className="editor-sidebar-summary">
-        <div>
-          <p className="editor-sidebar-label">模块导航</p>
-          <strong>{readyCount}/{allItems.length} 已完善</strong>
-        </div>
-      </div>
-
+    <aside aria-label="简历编辑模块" className="editor-sidebar editor-sidebar-rail">
       <div className="editor-sidebar-block">
         {groups.map((group) => (
           <section className="editor-sidebar-group" key={group.key}>
-            <div className="editor-sidebar-group-head">
-              <p className="editor-sidebar-group-label">{group.label}</p>
-            </div>
+            <span className="sr-only">{group.label}</span>
 
-            <div className="editor-sidebar-list">
+            <div className="editor-sidebar-list" role="list">
               {group.items.map((item) => {
                 const active = activePanel === item.key;
                 const Icon = iconMap[item.key];
+                const statusLabel = panelStatusLabel(item.status);
 
                 return (
                   <button
+                    aria-label={[item.label, statusLabel, item.countLabel].filter(Boolean).join("，")}
                     aria-pressed={active}
                     className={`editor-sidebar-item ${active ? "editor-sidebar-item-active" : ""}`}
                     key={item.key}
                     onClick={() => onSelect(item.key)}
                     type="button"
                   >
-                    <span className="editor-sidebar-item-index">
-                      <Icon className="size-4" />
+                    <span className="editor-sidebar-item-index" aria-hidden="true">
+                      <Icon className="editor-sidebar-icon" />
                     </span>
-                    <div className="editor-sidebar-item-copy">
-                      <div className="editor-sidebar-item-head">
-                        <div className="editor-sidebar-item-titleline">
-                          <strong>{item.label}</strong>
-                          {item.countLabel ? <span className="editor-sidebar-item-note">{item.countLabel}</span> : null}
-                        </div>
-                        <span
-                          aria-label={panelStatusLabel(item.status)}
-                          className={`editor-sidebar-item-dot editor-sidebar-item-dot-${item.status}`}
-                          title={panelStatusLabel(item.status)}
-                        />
-                      </div>
-                      {active ? <span className="editor-sidebar-item-hint">{item.hint}</span> : null}
-                    </div>
+
+                    <span
+                      aria-hidden="true"
+                      className={`editor-sidebar-item-dot editor-sidebar-item-dot-${item.status}`}
+                    />
+
+                    <span className="editor-sidebar-tooltip" role="presentation">
+                      <strong>{item.label}</strong>
+                      <span>{item.hint || statusLabel}</span>
+                      <em>{item.countLabel ?? statusLabel}</em>
+                    </span>
                   </button>
                 );
               })}
