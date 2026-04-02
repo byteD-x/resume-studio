@@ -14,7 +14,7 @@ export function ResumeLibraryHeader({
       <div className="section-heading-row items-center">
         <div>
           <h1 className="text-3xl font-bold tracking-tight text-[color:var(--ink-strong)]">简历库</h1>
-          <p className="mt-2 text-[0.94rem] text-[color:var(--ink-soft)]">
+          <p className="mt-2 text-base text-[color:var(--ink-soft)]">
             统一管理主简历、定制版和下一步动作。
           </p>
         </div>

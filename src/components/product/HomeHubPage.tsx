@@ -46,26 +46,26 @@ export function HomeHubPage() {
 
   return (
     <main className="page-wrap py-8 sm:py-10">
-      <section className="relative overflow-hidden rounded-[20px] border border-[#d9e4f2] bg-white shadow-[0_8px_24px_rgba(15,35,95,0.08)]">
-        <div className="absolute inset-x-0 top-0 h-[120px] bg-[linear-gradient(90deg,rgba(22,93,255,0.08),rgba(22,93,255,0.02),transparent)]" />
+      <section className="relative overflow-hidden rounded-[20px] border border-[color:var(--line)] bg-white shadow-[0_8px_24px_rgba(15,35,95,0.08)]">
+        <div className="absolute inset-x-0 top-0 h-[200px] bg-[linear-gradient(90deg,color-mix(in srgb, var(--accent-strong) 8%, transparent),color-mix(in srgb, var(--accent-strong) 2%, transparent),transparent)]" />
         <div className="relative flex flex-col gap-6 p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[#d9e4f2] bg-[#f7faff] px-3 py-1 text-[12px] font-semibold text-[#165dff]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-[color:var(--accent-surface)] px-3 py-1 text-[12px] font-semibold text-[color:var(--accent-strong)]">
               <Sparkles className="size-3.5" />
               Workspace
             </div>
             <div className="space-y-2">
-              <p className="text-[28px] font-semibold tracking-[-0.03em] text-[#1d2129] sm:text-[34px]">
+              <p className="text-[28px] font-semibold tracking-[-0.03em] text-[color:var(--ink-strong)] sm:text-[34px]">
                 Resume Studio
               </p>
               <div className="flex flex-wrap gap-2">
-                <span className="rounded-[6px] bg-[#f2f3f5] px-2.5 py-1 text-[12px] font-medium text-[#4e5969]">
+                <span className="rounded-[6px] bg-[color:var(--paper-soft)] px-2.5 py-1 text-[12px] font-medium text-[color:var(--ink-soft)]">
                   模板中心
                 </span>
-                <span className="rounded-[6px] bg-[#f2f3f5] px-2.5 py-1 text-[12px] font-medium text-[#4e5969]">
+                <span className="rounded-[6px] bg-[color:var(--paper-soft)] px-2.5 py-1 text-[12px] font-medium text-[color:var(--ink-soft)]">
                   草稿库
                 </span>
-                <span className="rounded-[6px] bg-[#f2f3f5] px-2.5 py-1 text-[12px] font-medium text-[#4e5969]">
+                <span className="rounded-[6px] bg-[color:var(--paper-soft)] px-2.5 py-1 text-[12px] font-medium text-[color:var(--ink-soft)]">
                   导入起稿
                 </span>
               </div>
@@ -91,22 +91,23 @@ export function HomeHubPage() {
 
             return (
               <Link
-                className={`group relative overflow-hidden rounded-[20px] border border-[#d9e4f2] bg-gradient-to-br ${entry.tone} p-6 shadow-[0_8px_20px_rgba(15,35,95,0.06)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[0_14px_28px_rgba(15,35,95,0.1)]`}
+                aria-label={`进入${entry.title}`}
+                className={`group relative overflow-hidden rounded-[var(--radius-xl)] border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-gradient-to-br ${entry.tone} p-6 shadow-[var(--shadow-soft)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]`}
                 href={entry.href}
                 key={entry.href}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <span className="rounded-[8px] border border-[#d9e4f2] bg-white/90 px-3 py-1 text-[12px] font-semibold text-[#4e5969]">
+                  <span className="rounded-[var(--radius-sm)] border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-white/90 px-3 py-1 text-[var(--text-xs)] font-semibold text-[color:var(--ink-soft)]">
                     {entry.tag}
                   </span>
-                  <span className="inline-flex size-12 items-center justify-center rounded-[14px] border border-[#d9e4f2] bg-white text-[#165dff] shadow-[0_6px_14px_rgba(22,93,255,0.12)]">
+                  <span className="inline-flex size-12 items-center justify-center rounded-[var(--radius-md)] border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-white text-[color:var(--accent-strong)] shadow-[0_6px_14px_rgba(22,93,255,0.12)]">
                     <Icon className="size-5" />
                   </span>
                 </div>
 
                 <div className="mt-16 flex items-end justify-between gap-4">
-                  <h2 className="text-[24px] font-semibold tracking-[-0.03em] text-[#1d2129]">{entry.title}</h2>
-                  <span className="inline-flex items-center gap-2 rounded-[10px] bg-[#165dff] px-3 py-2 text-[13px] font-semibold text-white">
+                  <h2 className="text-[var(--text-3xl)] font-semibold tracking-[-0.03em] text-[color:var(--ink-strong)]">{entry.title}</h2>
+                  <span className="inline-flex items-center gap-2 rounded-[var(--radius-md)] bg-[color:var(--accent-strong)] px-3 py-2 text-[var(--text-sm)] font-semibold text-white">
                     进入
                     <ArrowRight className="size-4 transition group-hover:translate-x-0.5" />
                   </span>
@@ -116,9 +117,9 @@ export function HomeHubPage() {
           })}
         </div>
 
-        <aside className="rounded-[20px] border border-[#d9e4f2] bg-white p-5 shadow-[0_8px_20px_rgba(15,35,95,0.06)]">
+        <aside className="rounded-[var(--radius-xl)] border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-white p-5 shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between">
-            <p className="text-[14px] font-semibold text-[#1d2129]">Quick Entry</p>
+            <p className="text-[var(--text-lg)] font-semibold text-[color:var(--ink-strong)]">Quick Entry</p>
           </div>
 
           <div className="mt-4 space-y-3">
@@ -127,18 +128,19 @@ export function HomeHubPage() {
 
               return (
                 <Link
-                  className="group flex items-center justify-between rounded-[16px] border border-[#e5e6eb] bg-[#f7f8fa] px-4 py-4 transition hover:border-[#bed0ff] hover:bg-[#f7faff]"
+                  aria-label={entry.title}
+                  className="group flex items-center justify-between rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[color:var(--paper-soft)] px-4 py-4 transition hover:border-[color:color-mix(in_srgb,var(--accent-strong)_16%,white)] hover:bg-[color:var(--accent-soft)]"
                   href={entry.href}
                   key={entry.href}
                 >
                   <div className="flex items-center gap-3">
-                    <span className="inline-flex size-10 items-center justify-center rounded-[12px] bg-white text-[#165dff] shadow-[0_4px_12px_rgba(15,35,95,0.08)]">
+                    <span className="inline-flex size-10 items-center justify-center rounded-[var(--radius-md)] bg-white text-[color:var(--accent-strong)] shadow-[0_4px_12px_rgba(15,35,95,0.08)]">
                       <Icon className="size-4.5" />
                     </span>
-                    <span className="text-[15px] font-medium text-[#1d2129]">{entry.title}</span>
+                    <span className="text-[var(--text-md)] font-medium text-[color:var(--ink-strong)]">{entry.title}</span>
                   </div>
 
-                  <ArrowRight className="size-4 text-[#86909c] transition group-hover:text-[#165dff]" />
+                  <ArrowRight className="size-4 text-[color:var(--ink-muted)] transition group-hover:text-[color:var(--accent-strong)]" />
                 </Link>
               );
             })}

@@ -77,7 +77,7 @@ export function ResumeEditorSidebar({
           <section className="editor-sidebar-group" key={group.key}>
             <span className="sr-only">{group.label}</span>
 
-            <div className="editor-sidebar-list" role="list">
+            <div className="editor-sidebar-list" >
               {group.items.map((item) => {
                 const active = activePanel === item.key;
                 const Icon = iconMap[item.key];

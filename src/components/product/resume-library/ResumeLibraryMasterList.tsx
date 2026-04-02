@@ -26,7 +26,7 @@ export function ResumeLibraryMasterList({
         return (
           <button
             aria-busy={deletingMaster}
-            aria-pressed={active}
+            aria-current={active ? "page" : undefined}
             className={`library-master-card ${active ? "library-master-card-active" : ""} ${deletingMaster ? "library-card-deleting" : ""}`}
             disabled={deletingMaster}
             key={group.id}

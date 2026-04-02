@@ -38,7 +38,7 @@ const writerProfiles: Array<{
   },
 ];
 
-const cardClassName = "rounded-[0.75rem] border border-[color:var(--line)] bg-white/92 shadow-sm";
+const cardClassName = "border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-white/90 rounded-[var(--radius-md)] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-medium)]";
 
 function TemplatePreview({ template }: { template: TemplateCatalogItem }) {
   return (
@@ -211,7 +211,7 @@ export function TemplateGalleryPage() {
             const recommended = template.recommendedProfiles.includes(writerProfile);
 
             return (
-              <article className={cardClassName} key={template.id}>
+              <article aria-label={`${template.name}模板`} className={cardClassName} key={template.id}>
                 <TemplatePreview template={template} />
 
                 <div className="p-5">
