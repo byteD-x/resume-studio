@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronDown, LoaderCircle, PlugZap } from "lucide-react";
+import { CheckCircle2, ChevronDown, ExternalLink, LoaderCircle, PlugZap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -10,6 +10,7 @@ import {
   isLikelyLocalOllamaBaseUrl,
   type ResumeAiHealthCheck,
   type ResumeAiPresetKind,
+  type ResumeAiPresetOption,
 } from "@/lib/resume-ai";
 import type { ResumeAiProvider } from "@/types/resume";
 
@@ -42,6 +43,18 @@ function getKindTone(kind: ResumeAiPresetKind) {
   }
 
   return kind === "local-free" ? "neutral" : "accent";
+}
+
+function getSelectionDescription(selectedPreset: ResumeAiPresetOption | null, usesLocalOllama: boolean) {
+  if (selectedPreset?.description) {
+    return selectedPreset.description;
+  }
+
+  if (usesLocalOllama) {
+    return "当前为本地兼容接口，不需要云端 Key，可先检查模型是否已安装。";
+  }
+
+  return "当前使用自定义兼容 OpenAI 的接口配置，可在高级设置里继续覆盖模型和接口地址。";
 }
 
 export function AiConfigForm({
@@ -80,6 +93,7 @@ export function AiConfigForm({
   const selectedPresetId = resolveSelectedPresetId(provider, model, baseUrl);
   const selectedPreset =
     selectedPresetId === "custom" ? null : enhancedResumeAiPresets.find((preset) => preset.id === selectedPresetId) ?? null;
+  const selectionDescription = getSelectionDescription(selectedPreset, usesLocalOllama);
 
   useEffect(() => {
     setHealthState(null);
@@ -194,6 +208,7 @@ export function AiConfigForm({
                       <div className="ai-config-preset-copy">
                         <strong>{preset.label}</strong>
                         <span>{preset.providerName}</span>
+                        {preset.description ? <p className="ai-config-preset-description">{preset.description}</p> : null}
                       </div>
                       <div className="ai-config-preset-meta">
                         <Badge tone={getKindTone(preset.kind)}>{preset.freeLabel}</Badge>
@@ -206,21 +221,64 @@ export function AiConfigForm({
             </div>
           </div>
 
-          <div className="ai-config-surface">
+          <div
+            aria-live="polite"
+            className="ai-config-surface ai-config-surface-emphasis"
+          >
             <div className="ai-config-head ai-config-head-wrap">
-              <p className="ai-config-heading">API Key</p>
+              <div>
+                <p className="ai-config-heading">当前方案</p>
+                <div className="ai-config-current-title-row">
+                  <strong className="ai-config-current-title">{selectedPreset?.label ?? "自定义方案"}</strong>
+                  {selectedPreset ? (
+                    <Badge tone="accent" className="ai-config-current-badge">
+                      <CheckCircle2 className="size-3.5" />
+                      已同步
+                    </Badge>
+                  ) : (
+                    <Badge tone="neutral">手动覆盖</Badge>
+                  )}
+                </div>
+                <p className="ai-config-current-copy">{selectionDescription}</p>
+              </div>
+
               <div className="ai-config-inline-actions">
                 {selectedPreset?.apiKeyUrl ? (
                   <a className="btn btn-secondary" href={selectedPreset.apiKeyUrl} rel="noreferrer" target="_blank">
                     获取 Key
+                    <ExternalLink className="size-3.5" />
                   </a>
+                ) : usesLocalOllama ? (
+                  <Badge tone="neutral">本地方案无需云端 Key</Badge>
                 ) : null}
                 {selectedPreset?.docsUrl ? (
                   <a className="btn btn-ghost" href={selectedPreset.docsUrl} rel="noreferrer" target="_blank">
                     文档
+                    <ExternalLink className="size-3.5" />
                   </a>
                 ) : null}
               </div>
+            </div>
+
+            <div className="ai-config-current-grid">
+              <div className="ai-config-current-item">
+                <span>服务商</span>
+                <strong>{selectedPreset?.providerName ?? "自定义接口"}</strong>
+              </div>
+              <div className="ai-config-current-item">
+                <span>模型</span>
+                <strong>{model.trim() || "未设置"}</strong>
+              </div>
+              <div className="ai-config-current-item ai-config-current-item-wide">
+                <span>接口地址</span>
+                <strong className="ai-config-current-code">{baseUrl.trim() || "未设置"}</strong>
+              </div>
+            </div>
+          </div>
+
+          <div className="ai-config-surface">
+            <div className="ai-config-head">
+              <p className="ai-config-heading">API Key</p>
             </div>
 
             <div className="ai-config-connection-row">
@@ -277,6 +335,8 @@ export function AiConfigForm({
               <span>高级设置</span>
               <ChevronDown className="size-4" />
             </summary>
+
+            <p className="ai-config-advanced-copy">切换方案后，下面的模型名称和接口地址会自动同步；你也可以再手动覆盖。</p>
 
             <div className="ai-config-advanced-fields">
               <label className="field-shell">

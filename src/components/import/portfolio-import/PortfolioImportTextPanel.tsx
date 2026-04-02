@@ -1,6 +1,6 @@
 "use client";
 
-import { Loader2, Sparkles } from "lucide-react";
+import { Bot, Loader2, ScanSearch, Sparkles } from "lucide-react";
 import { AiConfigForm } from "@/components/ai/AiConfigForm";
 import { Button } from "@/components/ui/Button";
 import type { ImportAiMode, ImportSource } from "@/components/import/portfolio-import/types";
@@ -38,18 +38,73 @@ function PortfolioImportUrlOptions({
 }) {
   return (
     <div className="mt-3 rounded-[0.8rem] bg-[color:var(--paper-soft)] px-3 py-3 ring-1 ring-[color:var(--line)]">
-      <label className="mb-3 flex flex-col gap-2 text-left">
+      <div className="mb-3 flex flex-col gap-2 text-left">
         <span className="text-[0.82rem] font-semibold text-[color:var(--ink-strong)]">网站导入模式</span>
-        <select
-          className="rounded-md border border-[color:var(--line)] bg-white px-3 py-2 text-[0.85rem] text-[color:var(--ink-strong)]"
-          disabled={isExtracting}
-          onChange={(event) => onAiModeChange(event.target.value as ImportAiMode)}
-          value={importAiMode}
+        <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="网站导入模式">
+          <button
+            aria-checked={importAiMode === "ai"}
+            className={`rounded-[1rem] border px-3 py-3 text-left transition-all ${
+              importAiMode === "ai"
+                ? "border-[color:var(--accent)] bg-white shadow-[0_10px_24px_rgba(22,93,255,0.12)]"
+                : "border-[color:var(--line)] bg-white/72 hover:bg-white"
+            }`}
+            disabled={isExtracting}
+            onClick={() => onAiModeChange("ai")}
+            role="radio"
+            type="button"
+          >
+            <span className="flex items-start gap-3">
+              <span className="flex size-9 items-center justify-center rounded-2xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+                <Bot className="size-4.5" />
+              </span>
+              <span className="min-w-0">
+                <strong className="block text-[0.88rem] text-[color:var(--ink-strong)]">AI 结构化抽取</strong>
+                <span className="mt-1 block text-[0.78rem] leading-relaxed text-[color:var(--ink-soft)]">
+                  直接调用下方方案做经历抽取，模型、Key 和文档会跟随方案一起切换。
+                </span>
+              </span>
+            </span>
+          </button>
+
+          <button
+            aria-checked={importAiMode === "rules"}
+            className={`rounded-[1rem] border px-3 py-3 text-left transition-all ${
+              importAiMode === "rules"
+                ? "border-[color:var(--ink-strong)] bg-white shadow-[0_10px_24px_rgba(15,23,42,0.08)]"
+                : "border-[color:var(--line)] bg-white/72 hover:bg-white"
+            }`}
+            disabled={isExtracting}
+            onClick={() => onAiModeChange("rules")}
+            role="radio"
+            type="button"
+          >
+            <span className="flex items-start gap-3">
+              <span className="flex size-9 items-center justify-center rounded-2xl bg-slate-100 text-slate-700">
+                <ScanSearch className="size-4.5" />
+              </span>
+              <span className="min-w-0">
+                <strong className="block text-[0.88rem] text-[color:var(--ink-strong)]">规则导入</strong>
+                <span className="mt-1 block text-[0.78rem] leading-relaxed text-[color:var(--ink-soft)]">
+                  不请求外部模型，直接按页面结构和站内关键页规则整理内容。
+                </span>
+              </span>
+            </span>
+          </button>
+        </div>
+
+        <div
+          aria-live="polite"
+          className={`rounded-[0.9rem] border px-3 py-2.5 text-[0.8rem] leading-relaxed ${
+            importAiMode === "ai"
+              ? "border-[color:var(--accent)] bg-[color:var(--accent-soft)]/60 text-[color:var(--accent-strong)]"
+              : "border-[color:var(--line)] bg-white/78 text-[color:var(--ink-soft)]"
+          }`}
         >
-          <option value="ai">AI 结构化抽取</option>
-          <option value="rules">不用 AI，只走规则导入</option>
-        </select>
-      </label>
+          {importAiMode === "ai"
+            ? "当前按 AI 方案导入。切换下方预设后，模型名称、接口地址、获取 Key 和文档入口会立即同步。"
+            : "当前按规则导入。不会调用外部模型，也不需要配置 API Key。"}
+        </div>
+      </div>
 
       {importAiMode === "ai" ? (
         <div className="mb-3">

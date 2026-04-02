@@ -78,6 +78,7 @@ export const preferredResumeAiPresets = [
 export const enhancedResumeAiPresets: readonly ResumeAiPresetOption[] = [
   {
     apiKeyUrl: "https://console.groq.com/keys",
+    description: "永久免费额度，速度快，适合先把网站内容抽成结构化草稿。",
     docsUrl: "https://console.groq.com/docs/openai",
     freeLabel: "永久免费",
     id: "groq-qwen3-32b",
@@ -92,6 +93,7 @@ export const enhancedResumeAiPresets: readonly ResumeAiPresetOption[] = [
   },
   {
     apiKeyUrl: "https://openrouter.ai/settings/keys",
+    description: "免费路由器，会自动在当前可用的免费模型之间切换。",
     docsUrl: "https://openrouter.ai/docs/guides/routing/routers/free-models-router",
     freeLabel: "免费路由",
     id: "openrouter-free",
@@ -106,6 +108,7 @@ export const enhancedResumeAiPresets: readonly ResumeAiPresetOption[] = [
   },
   {
     apiKeyUrl: "https://cloud.siliconflow.cn/account/ak",
+    description: "免费模型可直接用，适合想固定到 Qwen 8B 的云端方案。",
     docsUrl: "https://docs.siliconflow.cn/en/api-reference/chat-completions/chat-completions",
     freeLabel: "免费模型",
     id: "siliconflow-qwen3-8b",
@@ -120,6 +123,7 @@ export const enhancedResumeAiPresets: readonly ResumeAiPresetOption[] = [
   },
   {
     apiKeyUrl: "https://cloud.cerebras.ai",
+    description: "永久免费，模型更大，适合对抽取稳定性要求更高的场景。",
     docsUrl: "https://inference-docs.cerebras.ai/resources/openai",
     freeLabel: "永久免费",
     id: "cerebras-gpt-oss-120b",
@@ -134,6 +138,7 @@ export const enhancedResumeAiPresets: readonly ResumeAiPresetOption[] = [
   },
   {
     apiKeyUrl: "https://cloud.sambanova.ai",
+    description: "新账号常见有赠送额度，适合短期试用更大的推理模型。",
     docsUrl: "https://docs.sambanova.ai/docs/en/get-started/quickstart",
     freeLabel: "赠送额度",
     id: "sambanova-llama-3-3-70b",
@@ -148,6 +153,7 @@ export const enhancedResumeAiPresets: readonly ResumeAiPresetOption[] = [
   },
   {
     apiKeyUrl: "https://www.alibabacloud.com/help/en/model-studio/get-api-key",
+    description: "适合希望直接使用阿里云兼容接口的方案，通常依赖新手额度。",
     docsUrl: "https://www.alibabacloud.com/help/en/model-studio/first-api-call-to-qwen",
     freeLabel: "新人额度",
     id: "alibaba-qwq-plus",
@@ -161,6 +167,7 @@ export const enhancedResumeAiPresets: readonly ResumeAiPresetOption[] = [
     },
   },
   {
+    description: "本地运行，不需要云端 Key，适合已经装好 Ollama 的环境。",
     docsUrl: "https://ollama.com/download",
     freeLabel: "本地免费",
     id: "ollama-qwen3-4b",

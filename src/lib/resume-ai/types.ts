@@ -13,6 +13,7 @@ export type ResumeAiPresetKind = "cloud-free" | "cloud-credit" | "local-free";
 
 export interface ResumeAiPresetOption {
   apiKeyUrl?: string;
+  description?: string;
   docsUrl?: string;
   freeLabel: string;
   id: string;
