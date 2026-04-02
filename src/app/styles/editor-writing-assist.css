@@ -124,6 +124,20 @@
   border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
   border-radius: 0.65rem;
   background: color-mix(in srgb, var(--paper) 55%, white);
+  transition: padding 200ms ease, border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
+}
+
+.resume-assist-panel-collapsed {
+  padding: 0.45rem 0.65rem;
+  background: color-mix(in srgb, var(--paper) 38%, white);
+  border-color: color-mix(in srgb, var(--line) 50%, transparent);
+}
+
+.resume-assist-panel-expanded {
+  padding: 0.65rem;
+  background: color-mix(in srgb, var(--paper) 65%, white);
+  border-color: color-mix(in srgb, var(--accent-soft) 40%, transparent);
+  box-shadow: 0 4px 16px rgba(64, 95, 173, 0.06);
 }
 
 .resume-assist-toolbar {

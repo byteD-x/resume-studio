@@ -191,8 +191,8 @@ export function ResumeEditorToolbar({
                 <div className="editor-toolbar-menu-history">
                   <span className="editor-toolbar-menu-label">最近修改</span>
                   <div className="editor-toolbar-menu-chips">
-                    {recentHistoryLabels.slice(0, 3).map((label) => (
-                      <span className="editor-toolbar-menu-chip" key={label}>
+                    {recentHistoryLabels.slice(0, 3).map((label, index) => (
+                      <span className="editor-toolbar-menu-chip" key={`${label}-${index}`}>
                         {label}
                       </span>
                     ))}

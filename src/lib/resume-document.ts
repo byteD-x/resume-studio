@@ -6,14 +6,10 @@ import {
   type ResumeTemplate,
   type ResumeWriterProfile,
 } from "@/types/resume";
-import {
-  getTemplateCatalogItem,
-  getTemplateStarterSeed,
-  templateCatalog,
-} from "@/data/template-catalog";
+import { getTemplateCatalogItem, templateCatalog } from "@/data/template-catalog";
 import { createId, nowIso } from "@/lib/utils";
 
-export type ResumeStarterPreset = "blank" | "guided" | "template-sample";
+export type ResumeStarterPreset = "blank" | "guided" | "template";
 
 export const resumeWriterProfileMeta: Record<
   ResumeWriterProfile,
@@ -29,35 +25,32 @@ export const resumeWriterProfileMeta: Record<
     label: "校招 / 应届",
     shortLabel: "校招",
     description: "适合应届、实习和校园转正申请，优先突出项目、实习和学习成果。",
-    summaryPrompt:
-      "先写清楚你的求职方向、教育阶段或实习阶段，再补一句最能证明潜力或成果的经历。",
+    summaryPrompt: "先写清求职方向与阶段，再补一句最能证明潜力或成果的经历。",
     workflowSteps: [
-      "先补齐教育信息、求职方向和联系方式。",
-      "优先把实习、校园经历和项目经历写成结果型要点。",
-      "最后再补目标岗位和关键词，生成岗位定制版。",
+      "先补齐教育、求职方向和联系方式。",
+      "优先把实习、校园经历和项目写成结果导向要点。",
+      "最后补目标岗位和关键词，再生成岗位定制版。",
     ],
   },
   experienced: {
     label: "有经验求职",
     shortLabel: "社招",
     description: "适合已有工作经验的求职者，优先突出业务影响、职责范围和结果证明。",
-    summaryPrompt:
-      "先用 2 到 3 句话写清楚你的方向、年限、核心能力，再补一句最能证明价值的结果。",
+    summaryPrompt: "先用 2 到 3 句话写清方向、年限和核心能力，再补一句代表性结果。",
     workflowSteps: [
       "先填写姓名、职位标题、联系方式和职业摘要。",
       "按影响力排序重写工作经历和项目经历，优先保留结果型内容。",
-      "最后补齐目标岗位、JD 和关键词，用于生成岗位定制版。",
+      "最后补目标岗位、JD 和关键词，用于生成岗位定制版。",
     ],
   },
   "career-switch": {
     label: "转岗 / 跨行业",
     shortLabel: "转岗",
-    description: "适合跨岗位或跨行业求职，重点强调可迁移能力、相关项目和新方向证明。",
-    summaryPrompt:
-      "先交代你要转向的岗位，再补充过往经验里可迁移的能力，以及最能证明转型准备度的结果。",
+    description: "适合跨岗位或跨行业求职，重点强调可迁移能力、相关项目和转向证明。",
+    summaryPrompt: "先说明目标岗位，再补充过去经历里可迁移的能力与转型准备度。",
     workflowSteps: [
-      "先写清楚新方向、可迁移能力和联系方式。",
-      "把旧岗位经历改写成与新方向相关的成果和能力证明。",
+      "先写清新方向、可迁移能力和联系方式。",
+      "把旧岗位经历改写成与新方向相关的结果与能力证明。",
       "补充目标岗位、JD 和关键词，检查转岗叙事是否足够聚焦。",
     ],
   },
@@ -228,45 +221,25 @@ export function createGuidedResumeDocument(
     ...document,
     meta: {
       ...document.meta,
-      sourceRefs: Array.from(
-        new Set([
-          ...document.meta.sourceRefs,
-          "starter:guided",
-        ]),
-      ),
+      sourceRefs: Array.from(new Set([...document.meta.sourceRefs, "starter:guided"])),
     },
     sections: createGuidedSections(writerProfile),
   });
 }
 
-export function createTemplateStarterDocument(
+export function createTemplateResumeDocument(
   id = "default",
   title = "未命名简历",
   writerProfile: ResumeWriterProfile = "experienced",
   template: ResumeTemplate = "aurora-grid",
 ) {
-  const base = createBaseResumeDocument(id, title, writerProfile, template);
-  const seed = getTemplateStarterSeed(template, writerProfile);
+  const document = createEmptyResumeDocument(id, title, { writerProfile, template });
 
   return resumeDocumentSchema.parse({
-    ...base,
-    basics: {
-      ...seed.basics,
-      links: seed.basics.links.map((link) => ({ ...link })),
-    },
-    sections: seed.sections.map((section) => ({
-      ...section,
-      items: section.items.map((item) => ({
-        ...item,
-        bulletPoints: [...item.bulletPoints],
-        tags: [...item.tags],
-      })),
-    })),
+    ...document,
     meta: {
-      ...base.meta,
-      sourceRefs: Array.from(
-        new Set([...base.meta.sourceRefs, "starter:template-sample"]),
-      ),
+      ...document.meta,
+      sourceRefs: Array.from(new Set([...document.meta.sourceRefs, "starter:template"])),
     },
   });
 }

@@ -2,7 +2,7 @@ import { mkdir } from "node:fs/promises";
 import path from "node:path";
 import { chromium } from "playwright";
 import { templateCatalog } from "@/data/template-catalog";
-import { createTemplateStarterDocument } from "@/lib/resume-document";
+import { createTemplateResumeDocument } from "@/lib/resume-document";
 import { buildResumePreviewHtml } from "@/lib/resume-preview";
 
 const OUTPUT_DIR = path.join(process.cwd(), "public", "template-previews");
@@ -22,7 +22,7 @@ async function main() {
 
     for (const template of templateCatalog) {
       const writerProfile = template.recommendedProfiles[0] ?? "experienced";
-      const document = createTemplateStarterDocument(
+      const document = createTemplateResumeDocument(
         `preview-${template.id}`,
         template.name,
         writerProfile,

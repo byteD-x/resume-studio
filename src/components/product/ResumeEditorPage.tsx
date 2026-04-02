@@ -133,6 +133,7 @@ export function ResumeEditorPage({
     () => (isSectionPanel(activePanel) ? getEditorSection(document, activePanel) : null),
     [activePanel, document],
   );
+
   const optimizationGoalLabel = getResumeOptimizationGoalLabel(optimizationGoal);
   const activePreviewTargetLabel = useMemo(() => {
     if (isOptimizationPreviewActive && activePanel === "design") {
@@ -392,6 +393,9 @@ export function ResumeEditorPage({
                 onActiveItemChange={(panel, itemId) => {
                   setActivePanel(panel);
                   setActiveSectionItemId(itemId);
+                }}
+                onFocusItemHandled={() => {
+                  setFocusItemId(null);
                 }}
                 onAiApiKeyChange={updateAiApiKey}
                 onAiChange={updateAiField}

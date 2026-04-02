@@ -28,13 +28,17 @@ export async function POST(request: NextRequest) {
 
   const body = (await request.json().catch(() => ({}))) as {
     title?: string;
-    starter?: ResumeStarterPreset;
+    starter?: string;
     writerProfile?: ResumeWriterProfile;
     template?: ResumeTemplate;
   };
   const title = body.title?.trim() || "未命名简历";
   const starter: ResumeStarterPreset =
-    body.starter === "guided" ? "guided" : body.starter === "template-sample" ? "template-sample" : "blank";
+    body.starter === "guided"
+      ? "guided"
+      : body.starter === "template" || body.starter === "template-sample"
+        ? "template"
+        : "blank";
   const writerProfile: ResumeWriterProfile =
     body.writerProfile === "campus" || body.writerProfile === "career-switch"
       ? body.writerProfile

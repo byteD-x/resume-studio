@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   createEmptyResumeDocument,
   createGuidedResumeDocument,
-  createTemplateStarterDocument,
+  createTemplateResumeDocument,
   getResumeTemplateLayoutPreset,
   resumeWriterProfileMeta,
   validateResumeDocument,
@@ -205,8 +205,8 @@ describe("resume document", () => {
     expect(document.sections.every((section) => section.items.length === 0)).toBe(true);
   });
 
-  it("creates template starter documents with complete sample content", () => {
-    const document = createTemplateStarterDocument(
+  it("creates template starter documents without sample content", () => {
+    const document = createTemplateResumeDocument(
       "starter-template",
       "模板示例",
       "experienced",
@@ -215,10 +215,10 @@ describe("resume document", () => {
     const report = buildResumeQualityReport(document);
 
     expect(document.meta.template).toBe("engineer-pro");
-    expect(document.meta.sourceRefs).toContain("starter:template-sample");
-    expect(document.basics.name).not.toBe("");
-    expect(document.sections.some((section) => section.items.length > 0)).toBe(true);
-    expect(report.blockingIssues).toHaveLength(0);
+    expect(document.meta.sourceRefs).toContain("starter:template");
+    expect(document.basics.name).toBe("");
+    expect(document.sections.every((section) => section.items.length === 0)).toBe(true);
+    expect(report.blockingIssues.length).toBeGreaterThan(0);
   });
 
   it("builds different guided starters for each writer profile", () => {

@@ -13,17 +13,17 @@ type DesignPreset = "balanced" | "compact" | "editorial";
 type PreviewSaveState = "saved" | "dirty" | "saving" | "error";
 
 const zoomOptions: Array<{ value: PreviewZoomPreset; label: string }> = [
-  { value: "fit-width", label: "\u9002\u5e94\u5bbd\u5ea6" },
-  { value: "fit-page", label: "\u9002\u5e94\u5355\u9875" },
+  { value: "fit-width", label: "适应宽度" },
+  { value: "fit-page", label: "适应单页" },
   { value: 80, label: "80%" },
   { value: 100, label: "100%" },
   { value: 120, label: "120%" },
 ];
 
 const presetOptions: Array<{ value: DesignPreset; label: string }> = [
-  { value: "balanced", label: "\u5e73\u8861" },
-  { value: "compact", label: "\u7d27\u51d1" },
-  { value: "editorial", label: "\u7f16\u8f91\u611f" },
+  { value: "balanced", label: "平衡" },
+  { value: "compact", label: "紧凑" },
+  { value: "editorial", label: "编辑感" },
 ];
 
 export function ResumePreviewPanel({
@@ -62,8 +62,8 @@ export function ResumePreviewPanel({
   });
 
   const resolvedZoom = workspaceView === "preview" && zoom === "fit-width" ? 100 : zoom;
-  const previewMeta = `\u8fde\u7eed\u6eda\u52a8 \u00b7 \u7ea6 ${metrics.pageCount} \u9875`;
-  const pageHint = `A4 \u00b7 \u8fde\u7eed\u6eda\u52a8 \u00b7 \u7ea6 ${metrics.pageCount} \u9875`;
+  const previewMeta = `连续滚动 · 约 ${metrics.pageCount} 页`;
+  const pageHint = `A4 · 连续滚动 · 约 ${metrics.pageCount} 页`;
   return (
     <aside className="editor-preview-panel">
       <div className="editor-preview-header">
@@ -71,7 +71,7 @@ export function ResumePreviewPanel({
           <div className="editor-preview-heading">
             <span className="editor-preview-eyebrow">Preview</span>
             <div>
-              <strong className="editor-preview-title">A4 \u9884\u89c8</strong>
+              <strong className="editor-preview-title">A4 预览</strong>
               <p className="editor-preview-copy">{previewMeta}</p>
             </div>
           </div>
@@ -87,7 +87,7 @@ export function ResumePreviewPanel({
         <div className="editor-preview-controls">
           {template && onTemplateChange ? (
             <label className="editor-preview-control" htmlFor="editor-preview-template">
-              <span className="editor-preview-control-label">\u6a21\u677f</span>
+              <span className="editor-preview-control-label">模板</span>
               <span className="editor-preview-select-shell">
                 <LayoutTemplate className="editor-preview-select-icon size-4" />
                 <select
@@ -108,7 +108,7 @@ export function ResumePreviewPanel({
           ) : null}
 
           <label className="editor-preview-control" htmlFor="editor-preview-zoom">
-            <span className="editor-preview-control-label">\u7f29\u653e</span>
+            <span className="editor-preview-control-label">缩放</span>
             <span className="editor-preview-select-shell">
               <ZoomIn className="editor-preview-select-icon size-4" />
               <select
@@ -134,7 +134,7 @@ export function ResumePreviewPanel({
 
           {onApplyPreset ? (
             <label className="editor-preview-control" htmlFor="editor-preview-preset">
-              <span className="editor-preview-control-label">\u7248\u5f0f</span>
+              <span className="editor-preview-control-label">版式</span>
               <span className="editor-preview-select-shell">
                 <SlidersHorizontal className="editor-preview-select-icon size-4" />
                 <select
@@ -144,7 +144,7 @@ export function ResumePreviewPanel({
                   onChange={(event) => onApplyPreset(event.target.value as DesignPreset)}
                 >
                   <option disabled value="">
-                    {"\u9009\u62e9\u9884\u8bbe"}
+                    {"选择预设"}
                   </option>
                   {presetOptions.map((item) => (
                     <option key={item.value} value={item.value}>

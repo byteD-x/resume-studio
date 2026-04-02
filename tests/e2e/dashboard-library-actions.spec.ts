@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/auth";
 
 test("library and editor surface tailored variant lineage", async ({ page, request }) => {
   const sourceResponse = await request.post("/api/resumes", {
@@ -51,17 +51,17 @@ test("library and editor surface tailored variant lineage", async ({ page, reque
 
     await page.goto("/resumes");
     await expect(page.locator(".library-master-detail")).toBeVisible();
-    await expect(page.getByRole("button", { name: /Lineage Source/ }).first()).toBeVisible();
+    await expect(page.getByRole("button", { name: new RegExp(source.meta.title) }).first()).toBeVisible();
     await expect(page.getByText("Acme Tailored Variant")).toBeVisible();
-    await expect(page.getByText(/Lineage Source/)).toBeVisible();
+    await expect(page.getByRole("heading", { name: new RegExp(source.meta.title) })).toBeVisible();
 
     await page.goto(`/studio/${variantId}`);
-    await expect(page.getByRole("button", { name: "查看来源主稿" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "查看来源" })).toBeVisible();
   } finally {
     if (variantId) {
-      await request.delete(`/api/resumes/${variantId}`);
+      await request.delete(`/api/resumes/${variantId}`).catch(() => null);
     }
-    await request.delete(`/api/resumes/${source.meta.id}`);
+    await request.delete(`/api/resumes/${source.meta.id}`).catch(() => null);
   }
 });
 
@@ -111,16 +111,16 @@ test("library can generate the first tailored variant from a ready source draft"
     await page.goto("/resumes");
     await Promise.all([
       page.waitForURL(/\/studio\/[^/?]+\?focus=ai$/),
-      page.locator(".library-detail-actions").getByRole("button", { name: "直接生成定制版", exact: true }).click(),
+      page.locator(".library-detail-actions").getByRole("button", { name: "生成定制版" }).click(),
     ]);
     variantId = page.url().match(/\/studio\/([^/?]+)/)?.[1] ?? null;
 
-    await expect(page.getByRole("button", { name: "查看来源主稿" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "查看来源" })).toBeVisible();
   } finally {
     if (variantId) {
-      await request.delete(`/api/resumes/${variantId}`);
+      await request.delete(`/api/resumes/${variantId}`).catch(() => null);
     }
-    await request.delete(`/api/resumes/${source.meta.id}`);
+    await request.delete(`/api/resumes/${source.meta.id}`).catch(() => null);
   }
 });
 
@@ -174,17 +174,20 @@ test("library can create a two-page optimized version without changing the sourc
       page.locator(".library-detail-actions").getByRole("button", { name: "新增两页优化版" }).click(),
     ]);
     optimizedId = page.url().match(/\/studio\/([^/?]+)/)?.[1] ?? null;
+    expect(optimizedId).not.toBeNull();
+    await expect(
+      request.get(`/api/resumes/${optimizedId}`).then((response) => response.ok()),
+    ).resolves.toBe(true);
 
+    await page.reload();
+    await expect(page.locator(".editor-toolbar-titleinput")).toBeVisible({ timeout: 10000 });
     await expect(page.locator(".editor-toolbar-titleinput")).toHaveValue(/两页优化版/);
-    await expect(page.getByRole("link", { name: /查看来源/i })).toBeVisible();
+    await expect(page.getByRole("button", { name: "查看来源" })).toBeVisible();
   } finally {
     if (optimizedId) {
       await request.delete(`/api/resumes/${optimizedId}`).catch(() => null);
     }
-    const sourceId = source?.meta?.id;
-    if (sourceId) {
-      await request.delete(`/api/resumes/${sourceId}`).catch(() => null);
-    }
+    await request.delete(`/api/resumes/${source.meta.id}`).catch(() => null);
   }
 });
 
@@ -201,8 +204,8 @@ test("library can delete a standalone draft from the detail actions", async ({ p
   try {
     await page.goto("/resumes");
     await page.getByRole("button", { name: new RegExp(first.meta.title) }).first().click();
-    await page.locator(".library-detail-actions").getByRole("button", { name: "删除简历" }).click();
-    await page.locator(".app-dialog").getByRole("button", { name: "删除简历" }).click();
+    await page.locator(".library-detail-actions").getByRole("button", { name: "删除" }).click();
+    await page.locator(".app-dialog").getByRole("button", { name: "确认删除" }).click();
 
     await expect(page.getByRole("button", { name: new RegExp(first.meta.title) })).toHaveCount(0);
     await expect(page.getByRole("button", { name: new RegExp(second.meta.title) }).first()).toBeVisible();
@@ -230,13 +233,13 @@ test("library supports consecutive deletions without manual refresh", async ({ p
     await page.goto("/resumes");
 
     await page.getByRole("button", { name: new RegExp(first.meta.title) }).first().click();
-    await page.locator(".library-detail-actions").getByRole("button", { name: "删除简历" }).click();
-    await page.locator(".app-dialog").getByRole("button", { name: "删除简历" }).click();
+    await page.locator(".library-detail-actions").getByRole("button", { name: "删除" }).click();
+    await page.locator(".app-dialog").getByRole("button", { name: "确认删除" }).click();
     await expect(page.getByRole("button", { name: new RegExp(first.meta.title) })).toHaveCount(0);
 
     await page.getByRole("button", { name: new RegExp(second.meta.title) }).first().click();
-    await page.locator(".library-detail-actions").getByRole("button", { name: "删除简历" }).click();
-    await page.locator(".app-dialog").getByRole("button", { name: "删除简历" }).click();
+    await page.locator(".library-detail-actions").getByRole("button", { name: "删除" }).click();
+    await page.locator(".app-dialog").getByRole("button", { name: "确认删除" }).click();
     await expect(page.getByRole("button", { name: new RegExp(second.meta.title) })).toHaveCount(0);
 
     await expect(page.getByRole("button", { name: new RegExp(third.meta.title) }).first()).toBeVisible();

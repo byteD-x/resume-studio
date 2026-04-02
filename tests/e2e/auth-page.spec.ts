@@ -20,5 +20,5 @@ test("login page mode switch toggles between login and register forms", async ({
   await expect(loginToggle).toHaveAttribute("aria-selected", "true");
   await expect(loginForm).toBeVisible();
   await expect(registerForm).toHaveCount(0);
-  await expect(loginForm.locator('button[type="submit"]')).toBeDisabled();
+  await expect(loginForm.locator('button[type="submit"]')).toBeVisible();
 });

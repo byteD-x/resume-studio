@@ -18,6 +18,10 @@ function resolveOptimizationGoal(value: unknown): ResumeOptimizationGoal {
   return value === "one-page" ? "one-page" : "two-page";
 }
 
+function buildOptimizedResumeIdSeed(sourceId: string, goal: ResumeOptimizationGoal) {
+  return `${sourceId}-${goal === "one-page" ? "one-page" : "two-page"}`;
+}
+
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
@@ -47,7 +51,10 @@ export async function POST(
   };
 
   const nextTitle = body.title?.trim() || buildOptimizedResumeTitle(sourceDocument, goal);
-  const created = await createUserResumeDocument(auth.user.id, nextTitle);
+  const created = await createUserResumeDocument(
+    auth.user.id,
+    buildOptimizedResumeIdSeed(sourceDocument.meta.id, goal),
+  );
   const optimizedDocument = createOptimizedResumeDocument(sourceDocument, {
     nextId: created.meta.id,
     nextTitle,

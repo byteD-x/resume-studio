@@ -1,4 +1,4 @@
-import type { ResumeTemplate, ResumeWriterProfile } from "@/types/resume";
+import type { ResumeTemplate } from "@/types/resume";
 import { auroraGridTemplate } from "./template-catalog/aurora-grid";
 import { campusLineTemplate } from "./template-catalog/campus-line";
 import { engineerProTemplate } from "./template-catalog/engineer-pro";
@@ -7,7 +7,6 @@ export type {
   ResumeTemplateFamily,
   TemplateCatalogItem,
   TemplateCategory,
-  TemplateStarterSeed,
 } from "./template-catalog/shared";
 
 export const templateCatalog = [
@@ -35,11 +34,4 @@ export function getTemplateCatalogItem(template: ResumeTemplate) {
 
 export function getTemplateFamily(template: ResumeTemplate) {
   return templateCatalogById[template].family;
-}
-
-export function getTemplateStarterSeed(
-  template: ResumeTemplate,
-  writerProfile: ResumeWriterProfile,
-) {
-  return templateCatalogById[template].starterSeeds[writerProfile];
 }

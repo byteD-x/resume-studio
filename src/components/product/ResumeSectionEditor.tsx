@@ -1,7 +1,7 @@
 "use client";
 
 import { Eye, EyeOff, Plus } from "lucide-react";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ResumeSectionEditorSettings } from "@/components/product/editor/ResumeSectionEditorSettings";
 import { ResumeSectionItemCard } from "@/components/product/editor/ResumeSectionItemCard";
 import type { EditorSectionDefinition } from "@/lib/resume-editor";
@@ -20,6 +20,7 @@ export function ResumeSectionEditor({
   onCopyItem,
   onMoveItem,
   onActiveItemChange,
+  onFocusItemHandled,
   writerProfile,
 }: {
   document: ResumeDocument;
@@ -34,16 +35,41 @@ export function ResumeSectionEditor({
   onCopyItem: (itemId: string) => void;
   onMoveItem: (itemId: string, direction: "up" | "down") => void;
   onActiveItemChange: (itemId: string | null) => void;
+  onFocusItemHandled: () => void;
   writerProfile: ResumeWriterProfile;
 }) {
-  const [expandedItemId, setExpandedItemId] = useState<string | null>(section.items[0]?.id ?? null);
+  const [expandedItemId, setExpandedItemId] = useState<string | null>(null);
   const titleInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  useEffect(() => {
+    if (!focusItemId) {
+      return;
+    }
+
+    const element = titleInputRefs.current[focusItemId];
+    if (!element || globalThis.document.activeElement === element) {
+      onFocusItemHandled();
+      return;
+    }
+
+    requestAnimationFrame(() => {
+      const currentElement = titleInputRefs.current[focusItemId];
+      if (!currentElement || globalThis.document.activeElement === currentElement) {
+        onFocusItemHandled();
+        return;
+      }
+
+      currentElement.focus();
+      currentElement.select();
+      onFocusItemHandled();
+    });
+  }, [focusItemId, onFocusItemHandled]);
+
+  const requestedExpandedItemId =
+    focusItemId && section.items.some((item) => item.id === focusItemId) ? focusItemId : null;
   const activeExpandedItemId =
-    focusItemId && section.items.some((item) => item.id === focusItemId)
-      ? focusItemId
-      : expandedItemId && section.items.some((item) => item.id === expandedItemId)
-        ? expandedItemId
-        : section.items[0]?.id ?? null;
+    requestedExpandedItemId
+    ?? (expandedItemId && section.items.some((item) => item.id === expandedItemId) ? expandedItemId : null);
 
   return (
     <section className="resume-editor-panel">
@@ -99,16 +125,10 @@ export function ResumeSectionEditor({
                 onToggle={() => {
                   const next = activeExpandedItemId === item.id ? null : item.id;
                   setExpandedItemId(next);
-                  onActiveItemChange(next ?? item.id);
+                  onActiveItemChange(item.id);
                 }}
                 registerTitleInput={(element) => {
                   titleInputRefs.current[item.id] = element;
-                  if (element && focusItemId === item.id) {
-                    requestAnimationFrame(() => {
-                      element.focus();
-                      element.select();
-                    });
-                  }
                 }}
                 sectionType={definition.type}
                 total={section.items.length}

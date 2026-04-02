@@ -78,6 +78,7 @@ export function ResumeEditorPanelContent({
   markdownDraft,
   markdownError,
   onActiveItemChange,
+  onFocusItemHandled,
   onAiApiKeyChange,
   onAiChange,
   onAiPresetApply,
@@ -127,6 +128,7 @@ export function ResumeEditorPanelContent({
   markdownDraft: string;
   markdownError: string | null;
   onActiveItemChange: (panel: ResumeEditorSectionPanel, itemId: string | null) => void;
+  onFocusItemHandled: (panel: ResumeEditorSectionPanel) => void;
   onAiApiKeyChange: (value: string) => void;
   onAiChange: (field: keyof ResumeDocument["ai"], value: string) => void;
   onAiPresetApply: (presetId: string) => void;
@@ -257,6 +259,7 @@ export function ResumeEditorPanelContent({
         setActivePanel(activePanel);
         onActiveItemChange(activePanel, itemId);
       }}
+      onFocusItemHandled={() => onFocusItemHandled(activePanel)}
       onAddItem={(options) => onInsertSectionItem(activePanel, options?.afterItemId)}
       onChange={(nextSection) => onSectionChange(nextSection, definition.title)}
       onCopyItem={(itemId) => onCopySectionItem(activePanel, itemId)}

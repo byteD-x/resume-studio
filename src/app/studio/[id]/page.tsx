@@ -20,19 +20,12 @@ export default async function ResumeStudioPage({
 }) {
   const { id } = await params;
   const auth = await requireAuthContext(`/studio/${id}`);
-  let document;
-  let lineage = null;
-
-  try {
-    const [loadedDocument, summaries] = await Promise.all([
-      readUserResumeDocument(auth.user.id, id),
-      listUserResumeSummaries(auth.user.id),
-    ]);
-    document = loadedDocument;
-    lineage = buildResumeLineageMap(summaries).get(id) ?? null;
-  } catch {
+  const document = await readUserResumeDocument(auth.user.id, id).catch(() => null);
+  if (!document) {
     notFound();
   }
+  const summaries = await listUserResumeSummaries(auth.user.id).catch(() => []);
+  const lineage = buildResumeLineageMap(summaries).get(id) ?? null;
 
   return <ResumeEditorPage initialDocument={document} lineage={lineage} />;
 }

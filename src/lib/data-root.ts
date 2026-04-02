@@ -17,7 +17,7 @@ function resolveConfiguredResumeStorageRoot() {
   }
 
   if (process.env.NODE_ENV !== "production") {
-    return path.join(PROJECT_ROOT, configuredRoot);
+    return path.join(/* turbopackIgnore: true */ PROJECT_ROOT, configuredRoot);
   }
 
   return DEFAULT_LEGACY_RESUME_STORAGE_ROOT;
@@ -32,7 +32,7 @@ export function resolveDataRoot() {
 
   const absoluteRoot = path.isAbsolute(configuredRoot)
     ? configuredRoot
-    : path.join(PROJECT_ROOT, configuredRoot);
+    : path.join(/* turbopackIgnore: true */ PROJECT_ROOT, configuredRoot);
 
   return path.dirname(absoluteRoot);
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { startTransition, useEffect, useEffectEvent } from "react";
+import { useEffect, useEffectEvent } from "react";
 import type { MutableRefObject } from "react";
 import { useResumeEditorFieldActions } from "@/components/product/editor/useResumeEditorFieldActions";
 import {
@@ -108,11 +108,9 @@ export function useResumeEditorPersistence({
     latestMarkdownRef.current = next.markdownDraft;
     latestMarkdownErrorRef.current = nextError;
 
-    startTransition(() => {
-      setDocument(normalized);
-      setMarkdownDraft(next.markdownDraft);
-      setMarkdownError(nextError);
-    });
+    setDocument(normalized);
+    setMarkdownDraft(next.markdownDraft);
+    setMarkdownError(nextError);
 
     setSaveState(nextError ? "error" : (options?.saveState ?? "dirty"));
     if (options?.message) setStatusMessage(options.message);
@@ -125,11 +123,9 @@ export function useResumeEditorPersistence({
     latestMarkdownRef.current = snapshot.markdownDraft;
     latestMarkdownErrorRef.current = nextError;
 
-    startTransition(() => {
-      setDocument(snapshot.document);
-      setMarkdownDraft(snapshot.markdownDraft);
-      setMarkdownError(nextError);
-    });
+    setDocument(snapshot.document);
+    setMarkdownDraft(snapshot.markdownDraft);
+    setMarkdownError(nextError);
 
     setSaveState(nextError ? "error" : "dirty");
     setRecentDeletion(null);
@@ -165,11 +161,9 @@ export function useResumeEditorPersistence({
       latestMarkdownRef.current = value;
       latestMarkdownErrorRef.current = null;
 
-      startTransition(() => {
-        setDocument(blank);
-        setMarkdownDraft(value);
-        setMarkdownError(null);
-      });
+      setDocument(blank);
+      setMarkdownDraft(value);
+      setMarkdownError(null);
 
       setSaveState("dirty");
       setRecentDeletion(null);
@@ -190,11 +184,9 @@ export function useResumeEditorPersistence({
       latestMarkdownRef.current = value;
       latestMarkdownErrorRef.current = null;
 
-      startTransition(() => {
-        setDocument(parsed);
-        setMarkdownDraft(value);
-        setMarkdownError(null);
-      });
+      setDocument(parsed);
+      setMarkdownDraft(value);
+      setMarkdownError(null);
 
       setSaveState("dirty");
       setRecentDeletion(null);

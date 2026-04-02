@@ -7,11 +7,13 @@
   },
   "scripts": {
     "dev": "node scripts/dev.mjs",
-    "build": "next build --webpack",
+    "prebuild": "node scripts/clean-generated.mjs .next",
+    "build": "next build",
     "start": "next start",
     "lint": "eslint src scripts tests *.ts *.mts --ext .ts,.tsx --no-warn-ignored",
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run",
+    "pretest:e2e": "node scripts/clean-generated.mjs .tmp/playwright-resumes test-results playwright-report",
     "test:e2e": "playwright test",
     "import:portfolio": "tsx scripts/import-portfolio.ts",
     "import:pdf": "tsx scripts/import-pdf.ts",
@@ -43,6 +45,7 @@
     "playwright": "^1.58.2",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "server-only": "^0.0.1",
     "turndown": "^7.2.2",
     "zod": "^4.3.6"
   },

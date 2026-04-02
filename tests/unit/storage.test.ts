@@ -114,22 +114,22 @@ describe("storage management", () => {
     }
   });
 
-  it("creates template starter resumes with seeded content", async () => {
+  it("creates template starter resumes without seeded content", async () => {
     const tempDir = await mkdtemp(path.join(os.tmpdir(), "resume-studio-storage-"));
     process.chdir(tempDir);
 
     try {
       const storage = await loadStorageModule();
       const created = await storage.createResumeDocument("Template Resume", {
-        starter: "template-sample",
+        starter: "template",
         writerProfile: "experienced",
         template: "engineer-pro",
       });
 
       expect(created.meta.template).toBe("engineer-pro");
-      expect(created.meta.sourceRefs).toContain("starter:template-sample");
-      expect(created.basics.name).not.toBe("");
-      expect(created.sections.some((section) => section.items.length > 0)).toBe(true);
+      expect(created.meta.sourceRefs).toContain("starter:template");
+      expect(created.basics.name).toBe("");
+      expect(created.sections.every((section) => section.items.length === 0)).toBe(true);
     } finally {
       process.chdir(originalCwd);
       await rm(tempDir, { recursive: true, force: true });

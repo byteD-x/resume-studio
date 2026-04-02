@@ -3,7 +3,7 @@ import path from "node:path";
 import {
   createEmptyResumeDocument,
   createGuidedResumeDocument,
-  createTemplateStarterDocument,
+  createTemplateResumeDocument,
   type ResumeStarterPreset,
   validateResumeDocument,
   withUpdatedTimestamp,
@@ -154,8 +154,8 @@ export async function createResumeDocument(
 ) {
   const id = await createUniqueResumeId(title);
   const document =
-    options.starter === "template-sample"
-      ? createTemplateStarterDocument(id, title, options.writerProfile, options.template)
+    options.starter === "template"
+      ? createTemplateResumeDocument(id, title, options.writerProfile, options.template)
       : options.starter === "guided"
         ? createGuidedResumeDocument(id, title, options.writerProfile, options.template)
         : createEmptyResumeDocument(id, title, {

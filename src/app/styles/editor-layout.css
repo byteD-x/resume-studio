@@ -2,22 +2,22 @@
 .editor-shortcut-dialog {
   width: min(820px, calc(100vw - 2rem));
   border: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
-  border-radius: 1.4rem;
+  border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.96);
   box-shadow: var(--shadow-medium);
-  padding: 1.2rem;
+  padding: var(--space-4);
 }
 
 .editor-shortcut-head {
   display: flex;
   align-items: start;
   justify-content: space-between;
-  gap: 1rem;
+  gap: var(--space-4);
 }
 
 .editor-shortcut-kicker {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: var(--text-xs);
   font-weight: 700;
   letter-spacing: 0.14em;
   color: var(--ink-muted);
@@ -25,25 +25,25 @@
 }
 
 .editor-shortcut-title {
-  margin: 0.4rem 0 0;
-  font-size: 1.35rem;
+  margin: var(--space-2) 0 0;
+  font-size: var(--text-2xl);
   font-weight: 700;
   color: var(--ink-strong);
   letter-spacing: -0.03em;
 }
 
 .editor-shortcut-copy {
-  margin: 0.34rem 0 0;
+  margin: var(--space-1) 0 0;
   color: var(--ink-soft);
-  font-size: 0.84rem;
+  font-size: var(--text-sm);
   line-height: 1.55;
 }
 
 .editor-shortcut-grid {
   display: grid;
-  gap: 0.9rem;
+  gap: var(--space-4);
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  margin-top: 1rem;
+  margin-top: var(--space-4);
 }
 
 .editor-shortcut-group {
@@ -277,6 +277,7 @@
   gap: 14px;
   padding: 10px 14px 14px;
   overflow: hidden;
+  align-items: start;
 }
 
 .resume-editor-layout-edit .resume-editor-right {

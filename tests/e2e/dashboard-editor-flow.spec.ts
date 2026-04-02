@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures/auth";
 
 test("studio auto-saves edits and keeps them after reload", async ({ page, request }) => {
   test.slow();
@@ -13,8 +13,17 @@ test("studio auto-saves edits and keeps them after reload", async ({ page, reque
     await page.goto(`/studio/${created.meta.id}`);
 
     const titleField = page.locator(".editor-toolbar-titleinput");
-    await titleField.fill(nextTitle);
-    await page.waitForTimeout(1500);
+    const saveRequest = page.waitForResponse(
+      (response) =>
+        response.url().endsWith(`/api/resumes/${created.meta.id}`) &&
+        response.request().method() === "PUT" &&
+        response.ok(),
+      { timeout: 10000 },
+    );
+    await titleField.click();
+    await titleField.selectText();
+    await titleField.pressSequentially(nextTitle);
+    await saveRequest;
 
     await page.reload();
     await expect(titleField).toHaveValue(nextTitle);

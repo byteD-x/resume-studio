@@ -40,7 +40,13 @@ const writerProfiles: Array<{
 
 const cardClassName = "border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-white/90 rounded-[var(--radius-md)] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-medium)]";
 
-function TemplatePreview({ template }: { template: TemplateCatalogItem }) {
+function TemplatePreview({
+  priority = false,
+  template,
+}: {
+  priority?: boolean;
+  template: TemplateCatalogItem;
+}) {
   return (
     <div
       className="flex min-h-[15rem] items-center justify-center border-b border-[color:var(--line)] px-4 py-5"
@@ -50,8 +56,9 @@ function TemplatePreview({ template }: { template: TemplateCatalogItem }) {
         <Image
           alt={template.previewAlt}
           className="block h-auto w-full"
+          fetchPriority={priority ? "high" : undefined}
           height={1470}
-          loading="lazy"
+          loading={priority ? "eager" : "lazy"}
           src={template.previewImage}
           width={1040}
         />
@@ -78,6 +85,10 @@ export function TemplateGalleryPage() {
     searchParams.get("profile") === "campus" || searchParams.get("profile") === "career-switch"
       ? (searchParams.get("profile") as ResumeWriterProfile)
       : "experienced";
+  const templateOrder = useMemo(
+    () => new Map(templateCatalog.map((template, index) => [template.id, index] as const)),
+    [],
+  );
 
   const updateTemplateRoute = (updates: Partial<Record<"category" | "profile", string | null>>) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -104,9 +115,13 @@ export function TemplateGalleryPage() {
     return [...filtered].sort((left, right) => {
       const leftRecommended = left.recommendedProfiles.includes(writerProfile) ? 1 : 0;
       const rightRecommended = right.recommendedProfiles.includes(writerProfile) ? 1 : 0;
-      return rightRecommended - leftRecommended || left.name.localeCompare(right.name);
+      return (
+        rightRecommended - leftRecommended ||
+        (templateOrder.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+          (templateOrder.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+      );
     });
-  }, [activeCategory, writerProfile]);
+  }, [activeCategory, templateOrder, writerProfile]);
 
   const createResume = async (template: TemplateCatalogItem) => {
     setSelectedId(template.id);
@@ -119,7 +134,7 @@ export function TemplateGalleryPage() {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             title: "未命名简历",
-            starter: "template-sample",
+            starter: "template",
             writerProfile,
             template: template.id,
           }),
@@ -207,12 +222,12 @@ export function TemplateGalleryPage() {
 
       {templates.length > 0 ? (
         <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
-          {templates.map((template) => {
+          {templates.map((template, index) => {
             const recommended = template.recommendedProfiles.includes(writerProfile);
 
             return (
               <article aria-label={`${template.name}模板`} className={cardClassName} key={template.id}>
-                <TemplatePreview template={template} />
+                <TemplatePreview priority={index < 4} template={template} />
 
                 <div className="p-5">
                   <div className="flex flex-wrap items-center gap-2">

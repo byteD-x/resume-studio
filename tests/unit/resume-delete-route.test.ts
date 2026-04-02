@@ -6,10 +6,17 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 const originalCwd = process.cwd();
 const originalDataDir = process.env.RESUME_STUDIO_DATA_DIR;
+const TEST_USER_ID = "test-user";
+
+vi.mock("@/lib/auth/dal", () => ({
+  requireApiAuthContext: vi.fn(async () => ({
+    user: { id: TEST_USER_ID },
+  })),
+}));
 
 async function loadModules() {
   vi.resetModules();
-  const storage = await import("@/lib/storage");
+  const storage = await import("@/lib/user-storage");
   const route = await import("@/app/api/resumes/[id]/route");
   return { storage, route };
 }
@@ -35,15 +42,15 @@ describe("resume delete route", () => {
 
     try {
       const { storage, route } = await loadModules();
-      const first = await storage.createResumeDocument("Standalone One");
-      const second = await storage.createResumeDocument("Standalone Two");
+      const first = await storage.createUserResumeDocument(TEST_USER_ID, "Standalone One");
+      const second = await storage.createUserResumeDocument(TEST_USER_ID, "Standalone Two");
 
       const response = await route.DELETE(
         createDeleteRequest(`http://localhost/api/resumes/${first.meta.id}`),
         { params: Promise.resolve({ id: first.meta.id }) },
       );
 
-      const summaries = await storage.listResumeSummaries();
+      const summaries = await storage.listUserResumeSummaries(TEST_USER_ID);
       expect(response.status).toBe(204);
       expect(summaries).toHaveLength(1);
       expect(summaries[0]?.meta.id).toBe(second.meta.id);
@@ -59,8 +66,8 @@ describe("resume delete route", () => {
 
     try {
       const { storage, route } = await loadModules();
-      const source = await storage.createResumeDocument("Lineage Source");
-      const variant = await storage.writeResumeDocument({
+      const source = await storage.createUserResumeDocument(TEST_USER_ID, "Lineage Source");
+      const variant = await storage.writeUserResumeDocument(TEST_USER_ID, {
         ...source,
         meta: {
           ...source.meta,
@@ -75,7 +82,7 @@ describe("resume delete route", () => {
         { params: Promise.resolve({ id: source.meta.id }) },
       );
 
-      const summaries = await storage.listResumeSummaries();
+      const summaries = await storage.listUserResumeSummaries(TEST_USER_ID);
       expect(response.status).toBe(204);
       expect(variant.meta.id).toBe("lineage-source-variant");
       expect(summaries).toHaveLength(0);
@@ -91,8 +98,8 @@ describe("resume delete route", () => {
 
     try {
       const { storage, route } = await loadModules();
-      const source = await storage.createResumeDocument("Source Draft");
-      const variant = await storage.writeResumeDocument({
+      const source = await storage.createUserResumeDocument(TEST_USER_ID, "Source Draft");
+      const variant = await storage.writeUserResumeDocument(TEST_USER_ID, {
         ...source,
         meta: {
           ...source.meta,
@@ -107,7 +114,7 @@ describe("resume delete route", () => {
         { params: Promise.resolve({ id: variant.meta.id }) },
       );
 
-      const summaries = await storage.listResumeSummaries();
+      const summaries = await storage.listUserResumeSummaries(TEST_USER_ID);
       expect(response.status).toBe(204);
       expect(summaries).toHaveLength(1);
       expect(summaries[0]?.meta.id).toBe(source.meta.id);
