@@ -49,7 +49,21 @@
   font-size: 0.79rem;
   font-weight: 700;
   cursor: pointer;
-  transition: background-color 160ms ease, color 160ms ease;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.editor-toolbar-viewtab:hover,
+.editor-toolbar-viewtab:focus-visible {
+  color: #16202d;
+}
+
+.editor-toolbar-viewtab:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.12);
+}
+
+.editor-toolbar-viewtab:active {
+  transform: translateY(1px);
 }
 
 .editor-toolbar-viewtab-active {
@@ -88,6 +102,21 @@
   background: rgba(255, 255, 255, 0.9);
   color: var(--ink-soft);
   cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.editor-toolbar-menu-trigger:hover {
+  border-color: rgba(190, 208, 255, 0.92);
+  color: var(--ink-strong);
+}
+
+.editor-toolbar-menu-trigger:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.12);
+}
+
+.editor-toolbar-menu-trigger:active {
+  transform: translateY(1px);
 }
 
 .editor-toolbar-menu[open] .editor-toolbar-menu-trigger {
@@ -125,10 +154,21 @@
   font-weight: 600;
   cursor: pointer;
   text-align: left;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
 }
 
 .editor-toolbar-menu-item:hover:not(:disabled) {
   background: #f7faff;
+}
+
+.editor-toolbar-menu-item:focus-visible {
+  outline: 0;
+  background: #f7faff;
+  box-shadow: inset 0 0 0 1px rgba(22, 93, 255, 0.18);
+}
+
+.editor-toolbar-menu-item:active:not(:disabled) {
+  transform: translateY(1px);
 }
 
 .editor-toolbar-menu-item:disabled {
@@ -265,6 +305,21 @@
   font-size: 0.77rem;
   font-weight: 700;
   cursor: pointer;
+  transition: background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.editor-input-mode-tab:hover,
+.editor-input-mode-tab:focus-visible {
+  color: #16202d;
+}
+
+.editor-input-mode-tab:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.12);
+}
+
+.editor-input-mode-tab:active {
+  transform: translateY(1px);
 }
 
 .editor-input-mode-tab-active {
@@ -312,8 +367,7 @@
 }
 
 .resume-editor-workspace .input-control,
-.resume-editor-workspace .textarea-control,
-.resume-editor-workspace .workspace-toolbar-select {
+.resume-editor-workspace .textarea-control {
   min-height: 40px;
   padding: 10px 14px;
   border-radius: 12px;

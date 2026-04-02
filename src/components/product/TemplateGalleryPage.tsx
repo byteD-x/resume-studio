@@ -8,6 +8,7 @@ import { useMemo, useState, useTransition } from "react";
 import { useRouteWarmup } from "@/components/product/useRouteWarmup";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
+import { getJsonOrThrow } from "@/lib/client-auth";
 import {
   templateCatalog,
   templateCategories,
@@ -38,13 +39,6 @@ const writerProfiles: Array<{
 ];
 
 const cardClassName = "rounded-[0.75rem] border border-[color:var(--line)] bg-white/92 shadow-sm";
-
-async function getJson<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    throw new Error((await response.text()) || `Request failed: ${response.status}`);
-  }
-  return (await response.json()) as T;
-}
 
 function TemplatePreview({ template }: { template: TemplateCatalogItem }) {
   return (
@@ -119,7 +113,7 @@ export function TemplateGalleryPage() {
     setStatus(`正在创建 ${template.name}...`);
 
     try {
-      const document = await getJson<ResumeDocument>(
+      const document = await getJsonOrThrow<ResumeDocument>(
         await fetch("/api/resumes", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

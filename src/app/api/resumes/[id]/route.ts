@@ -1,11 +1,12 @@
 import { NextRequest } from "next/server";
+import { requireApiAuthContext } from "@/lib/auth/dal";
 import {
-  deleteResumeDocuments,
-  deleteResumeDocument,
-  listResumeSummaries,
-  readResumeDocument,
-  writeResumeDocument,
-} from "@/lib/storage";
+  deleteUserResumeDocuments,
+  deleteUserResumeDocument,
+  listUserResumeSummaries,
+  readUserResumeDocument,
+  writeUserResumeDocument,
+} from "@/lib/user-storage";
 import { buildResumeLineageMap } from "@/lib/resume-lineage";
 import { validateResumeDocument } from "@/lib/resume-document";
 
@@ -15,8 +16,13 @@ export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
-  const document = await readResumeDocument(id).catch(() => null);
+  const document = await readUserResumeDocument(auth.user.id, id).catch(() => null);
 
   if (!document) {
     return Response.json({ error: "Resume not found." }, { status: 404 });
@@ -29,12 +35,17 @@ export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
 
   try {
     const input = validateResumeDocument(await request.json());
-    const current = await readResumeDocument(id).catch(() => null);
-    const nextDocument = await writeResumeDocument({
+    const current = await readUserResumeDocument(auth.user.id, id).catch(() => null);
+    const nextDocument = await writeUserResumeDocument(auth.user.id, {
       ...input,
       meta: {
         ...input.meta,
@@ -58,19 +69,24 @@ export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const scope = request.nextUrl.searchParams.get("scope");
 
   if (scope === "lineage") {
-    const summaries = await listResumeSummaries();
+    const summaries = await listUserResumeSummaries(auth.user.id);
     const lineage = buildResumeLineageMap(summaries).get(id);
 
     if (lineage && lineage.parentId === null) {
-      await deleteResumeDocuments([id, ...lineage.childIds]);
+      await deleteUserResumeDocuments(auth.user.id, [id, ...lineage.childIds]);
       return new Response(null, { status: 204 });
     }
   }
 
-  await deleteResumeDocument(id);
+  await deleteUserResumeDocument(auth.user.id, id);
   return new Response(null, { status: 204 });
 }

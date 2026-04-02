@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { duplicateResumeDocument } from "@/lib/storage";
+import { requireApiAuthContext } from "@/lib/auth/dal";
+import { duplicateUserResumeDocument } from "@/lib/user-storage";
 
 export const runtime = "nodejs";
 
@@ -7,11 +8,16 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as { title?: string };
 
   try {
-    const duplicated = await duplicateResumeDocument(id, body.title);
+    const duplicated = await duplicateUserResumeDocument(auth.user.id, id, body.title);
     return Response.json(duplicated, { status: 201 });
   } catch (error) {
     return Response.json(

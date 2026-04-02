@@ -4,6 +4,8 @@ import type { Route } from "next";
 import Link from "next/link";
 import { FileText, Plus } from "lucide-react";
 import { usePathname } from "next/navigation";
+import { logoutAction } from "@/lib/auth/actions";
+import type { AuthUserPublic } from "@/lib/auth/types";
 import { cn } from "@/lib/utils";
 
 const baseNavItems = [
@@ -12,10 +14,14 @@ const baseNavItems = [
   { href: "/resumes" as Route, label: "草稿库", match: (pathname: string) => pathname.startsWith("/resumes") },
 ] as const;
 
-export function SiteHeader() {
+export function SiteHeader({
+  currentUser,
+}: {
+  currentUser: AuthUserPublic | null;
+}) {
   const pathname = usePathname();
 
-  if (pathname.startsWith("/studio/")) {
+  if (pathname.startsWith("/studio/") || pathname.startsWith("/login")) {
     return null;
   }
 
@@ -49,10 +55,32 @@ export function SiteHeader() {
         </div>
 
         <div className="flex items-center gap-2">
-          <Link className="btn btn-primary" href={"/templates" as Route}>
-            <Plus className="size-4" />
-            新建
-          </Link>
+          {currentUser ? (
+            <>
+              <div className="site-user-chip" title={currentUser.email}>
+                <span aria-hidden="true" className="site-user-avatar">
+                  {currentUser.name.slice(0, 1).toUpperCase()}
+                </span>
+                <div className="site-user-copy">
+                  <strong>{currentUser.name}</strong>
+                  <span>{currentUser.email}</span>
+                </div>
+              </div>
+              <Link className="btn btn-primary" href={"/templates" as Route}>
+                <Plus className="size-4" />
+                新建
+              </Link>
+              <form action={logoutAction}>
+                <button className="btn btn-secondary" type="submit">
+                  退出
+                </button>
+              </form>
+            </>
+          ) : (
+            <Link className="btn btn-primary" href={"/login" as Route}>
+              登录
+            </Link>
+          )}
         </div>
       </div>
     </header>

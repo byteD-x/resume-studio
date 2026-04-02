@@ -1,10 +1,16 @@
 import { NextRequest } from "next/server";
+import { requireApiAuthContext } from "@/lib/auth/dal";
 import { validateResumeDocument } from "@/lib/resume-document";
 import { generateRemoteResumeSummary } from "@/lib/resume-ai";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = (await request.json().catch(() => ({}))) as {
     document?: unknown;
     apiKey?: string;

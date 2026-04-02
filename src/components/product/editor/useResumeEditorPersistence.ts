@@ -12,6 +12,7 @@ import {
   createBlankMarkdownDocument,
   validateMarkdownDraft,
 } from "@/components/product/editor/resume-editor-workspace";
+import { getJsonOrThrow } from "@/lib/client-auth";
 import { useEditorHistory } from "@/lib/editor-history";
 import { ensureEditorDocument } from "@/lib/resume-editor";
 import { parseResumeFromMarkdown, serializeResumeToMarkdown } from "@/lib/resume-markdown";
@@ -22,14 +23,6 @@ type SaveState = "saved" | "dirty" | "saving" | "error";
 interface ResumeEditorSnapshot {
   document: ResumeDocument;
   markdownDraft: string;
-}
-
-async function getJson<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    throw new Error((await response.text()) || `Request failed: ${response.status}`);
-  }
-
-  return (await response.json()) as T;
 }
 
 export function useResumeEditorPersistence({
@@ -253,7 +246,7 @@ export function useResumeEditorPersistence({
     setSaveState("saving");
 
     try {
-      const saved = await getJson<ResumeDocument>(
+      const saved = await getJsonOrThrow<ResumeDocument>(
         await fetch(`/api/resumes/${latestDocumentRef.current.meta.id}`, {
           method: "PUT",
           headers: { "Content-Type": "application/json" },

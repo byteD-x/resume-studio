@@ -63,6 +63,22 @@
   padding: 0;
   color: #617082;
   cursor: pointer;
+  transition: border-color 160ms ease, background-color 160ms ease, color 160ms ease, box-shadow 160ms ease, transform 160ms ease;
+}
+
+.rich-text-button:hover,
+.rich-text-button:focus-visible {
+  border-color: rgba(43, 91, 215, 0.16);
+  color: #16202d;
+}
+
+.rich-text-button:focus-visible {
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(22, 93, 255, 0.12);
+}
+
+.rich-text-button:active {
+  transform: translateY(1px);
 }
 
 .rich-text-button-active {

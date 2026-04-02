@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { readClientAiConfig } from "@/lib/client-ai-config";
+import { getJsonOrThrow, getResponseError } from "@/lib/client-auth";
 import type {
   DeleteScope,
   LibraryRow,
@@ -10,7 +11,6 @@ import type {
   TailoredVariantResponse,
   VersionGroup,
 } from "@/components/product/resume-library/types";
-import { getJson } from "@/components/product/resume-library/utils";
 
 export function useResumeLibraryActions(resumeCount: number) {
   const router = useRouter();
@@ -45,7 +45,7 @@ export function useResumeLibraryActions(resumeCount: number) {
       const response = await fetch(requestUrl, { method: "DELETE" });
 
       if (!response.ok) {
-        throw new Error((await response.text()) || "删除失败");
+        throw new Error(await getResponseError(response, "删除失败"));
       }
 
       setStatus(
@@ -98,7 +98,7 @@ export function useResumeLibraryActions(resumeCount: number) {
 
     try {
       const clientAiApiKey = readClientAiConfig().apiKey;
-      const result = await getJson<TailoredVariantResponse>(
+      const result = await getJsonOrThrow<TailoredVariantResponse>(
         await fetch(`/api/resumes/${row.resume.meta.id}/generate-tailored-variant`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },

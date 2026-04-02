@@ -4,6 +4,7 @@ import { useEffect, useEffectEvent } from "react";
 import type { MutableRefObject } from "react";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import type { EditorPanel, EditorPanelItem } from "@/components/product/editor/ResumeEditorSidebar";
+import { getJsonOrThrow } from "@/lib/client-auth";
 import { readClientAiConfig } from "@/lib/client-ai-config";
 import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
 import { buildTailoredVariantPlan, type TailoredVariantPlan } from "@/lib/resume-tailoring";
@@ -17,14 +18,6 @@ interface UpdateDocumentOptions {
   message?: string;
   historyLabel?: string;
   clearDeletion?: boolean;
-}
-
-async function getJson<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    throw new Error((await response.text()) || `Request failed: ${response.status}`);
-  }
-
-  return (await response.json()) as T;
 }
 
 export function useResumeEditorPageActions({
@@ -151,7 +144,7 @@ export function useResumeEditorPageActions({
     setIsGeneratingVariant(true);
 
     try {
-      const result = await getJson<{
+      const result = await getJsonOrThrow<{
         document: ResumeDocument;
         plan: TailoredVariantPlan;
         remoteSummaryApplied?: boolean;
@@ -250,7 +243,7 @@ export function useResumeEditorPageActions({
     setIsGeneratingAiSummary(true);
 
     try {
-      const result = await getJson<{ suggestions?: ResumeAssistSuggestion[] }>(
+      const result = await getJsonOrThrow<{ suggestions?: ResumeAssistSuggestion[] }>(
         await fetch("/api/ai/assist", {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -14,6 +14,7 @@ import { PreviewFrame } from "@/components/studio/PreviewFrame";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { useRouteWarmup } from "@/components/product/useRouteWarmup";
+import { getResponseError } from "@/lib/client-auth";
 import type { ResumeLineageMeta } from "@/lib/resume-lineage";
 import type { ResumeDocument } from "@/types/resume";
 
@@ -80,7 +81,7 @@ export function ResumePreviewPage({
       });
 
       if (!response.ok) {
-        throw new Error((await response.text()) || "导出失败");
+        throw new Error(await getResponseError(response, "导出失败"));
       }
 
       await downloadBlob(response, `${initialDocument.meta.id}.pdf`);

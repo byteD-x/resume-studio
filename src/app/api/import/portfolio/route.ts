@@ -1,11 +1,17 @@
 import { NextRequest } from "next/server";
+import { requireApiAuthContext } from "@/lib/auth/dal";
 import { importPortfolioToResume } from "@/lib/portfolio-import";
-import { ensureResumeDocument, writeImportArtifact, writeResumeDocument } from "@/lib/storage";
+import { ensureUserResumeDocument, writeUserImportArtifact, writeUserResumeDocument } from "@/lib/user-storage";
 import { resumeAiSettingsSchema } from "@/types/resume";
 
 export const runtime = "nodejs";
 
 export async function POST(request: NextRequest) {
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = (await request.json().catch(() => ({}))) as {
     resumeId?: string;
     source?: "url" | "markdown" | "text";
@@ -28,7 +34,7 @@ export async function POST(request: NextRequest) {
 
   const { createId } = await import("@/lib/utils");
   const resumeId = body.resumeId?.trim() || createId("doc");
-  const existingDocument = await ensureResumeDocument(resumeId, "简历草稿");
+  const existingDocument = await ensureUserResumeDocument(auth.user.id, resumeId, "简历草稿");
 
   try {
     const aiSettings = body.aiSettings ? resumeAiSettingsSchema.parse(body.aiSettings) : undefined;
@@ -42,8 +48,8 @@ export async function POST(request: NextRequest) {
       urlOptions: body.urlOptions,
     });
 
-    await writeImportArtifact(resumeId, "portfolio.raw.json", result.rawPortfolio);
-    const document = await writeResumeDocument(result.document);
+    await writeUserImportArtifact(auth.user.id, resumeId, "portfolio.raw.json", result.rawPortfolio);
+    const document = await writeUserResumeDocument(auth.user.id, result.document);
 
     return Response.json({ document, sourcePath: result.sourcePath, urlSummary: result.urlSummary });
   } catch (error) {

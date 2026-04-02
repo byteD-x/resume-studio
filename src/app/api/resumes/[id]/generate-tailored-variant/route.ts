@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import { requireApiAuthContext } from "@/lib/auth/dal";
 import { validateResumeDocument } from "@/lib/resume-document";
 import {
   applySummaryText,
@@ -11,10 +12,10 @@ import {
   createTailoredVariantDocument,
 } from "@/lib/resume-tailoring";
 import {
-  createResumeDocument,
-  readResumeDocument,
-  writeResumeDocument,
-} from "@/lib/storage";
+  createUserResumeDocument,
+  readUserResumeDocument,
+  writeUserResumeDocument,
+} from "@/lib/user-storage";
 
 export const runtime = "nodejs";
 
@@ -33,6 +34,11 @@ export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const { id } = await params;
   const body = (await request.json().catch(() => ({}))) as {
     title?: string;
@@ -42,7 +48,7 @@ export async function POST(
 
   const sourceInput = body.document
     ? validateResumeDocument(body.document)
-    : await readResumeDocument(id);
+    : await readUserResumeDocument(auth.user.id, id);
   const sourceDocument = {
     ...sourceInput,
     meta: {
@@ -60,7 +66,7 @@ export async function POST(
   }
 
   const nextTitle = body.title?.trim() || plan.titleSuggestion;
-  const created = await createResumeDocument(nextTitle);
+  const created = await createUserResumeDocument(auth.user.id, nextTitle);
   let tailoredDocument = createTailoredVariantDocument(sourceDocument, {
     nextId: created.meta.id,
     nextTitle,
@@ -79,7 +85,7 @@ export async function POST(
     }
   }
 
-  const savedDocument = await writeResumeDocument(tailoredDocument);
+  const savedDocument = await writeUserResumeDocument(auth.user.id, tailoredDocument);
 
   return Response.json(
     {

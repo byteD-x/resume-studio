@@ -1,5 +1,7 @@
-export function cn(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
+import { clsx, type ClassValue } from "clsx";
+
+export function cn(...values: ClassValue[]) {
+  return clsx(values);
 }
 
 export function slugify(value: string) {

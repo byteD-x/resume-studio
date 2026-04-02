@@ -17,6 +17,7 @@ import type {
   PortfolioImportResult as PortfolioImportResultValue,
 } from "@/components/import/portfolio-import/types";
 import { countImportedItems, getImportPlaceholder, isImportSource } from "@/components/import/portfolio-import/utils";
+import { getJsonOrThrow } from "@/lib/client-auth";
 import {
   getDefaultClientAiConfig,
   readClientAiConfig,
@@ -169,7 +170,7 @@ function WorkspaceInner() {
         throw new Error("无法创建简历草稿");
       }
 
-      const draft = await draftResponse.json();
+      const draft = await getJsonOrThrow<{ meta: { id: string } }>(draftResponse);
       const formData = new FormData();
       formData.append("resumeId", draft.meta.id);
       formData.append("file", file);

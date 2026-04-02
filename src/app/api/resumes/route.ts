@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
-import { createResumeDocument, listResumeSummaries } from "@/lib/storage";
+import { requireApiAuthContext } from "@/lib/auth/dal";
+import { createUserResumeDocument, listUserResumeSummaries } from "@/lib/user-storage";
 import type { ResumeStarterPreset } from "@/lib/resume-document";
 import {
   normalizeResumeTemplateValue,
@@ -10,11 +11,21 @@ import {
 export const runtime = "nodejs";
 
 export async function GET() {
-  const documents = await listResumeSummaries();
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const documents = await listUserResumeSummaries(auth.user.id);
   return Response.json(documents);
 }
 
 export async function POST(request: NextRequest) {
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   const body = (await request.json().catch(() => ({}))) as {
     title?: string;
     starter?: ResumeStarterPreset;
@@ -29,6 +40,6 @@ export async function POST(request: NextRequest) {
       ? body.writerProfile
       : "experienced";
   const template: ResumeTemplate = normalizeResumeTemplateValue(body.template) ?? "aurora-grid";
-  const document = await createResumeDocument(title, { starter, writerProfile, template });
+  const document = await createUserResumeDocument(auth.user.id, title, { starter, writerProfile, template });
   return Response.json(document, { status: 201 });
 }

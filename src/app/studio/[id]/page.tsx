@@ -1,8 +1,9 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ResumeEditorPage } from "@/components/product/ResumeEditorPage";
+import { requireAuthContext } from "@/lib/auth/dal";
 import { buildResumeLineageMap } from "@/lib/resume-lineage";
-import { listResumeSummaries, readResumeDocument } from "@/lib/storage";
+import { listUserResumeSummaries, readUserResumeDocument } from "@/lib/user-storage";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -18,13 +19,14 @@ export default async function ResumeStudioPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const auth = await requireAuthContext(`/studio/${id}`);
   let document;
   let lineage = null;
 
   try {
     const [loadedDocument, summaries] = await Promise.all([
-      readResumeDocument(id),
-      listResumeSummaries(),
+      readUserResumeDocument(auth.user.id, id),
+      listUserResumeSummaries(auth.user.id),
     ]);
     document = loadedDocument;
     lineage = buildResumeLineageMap(summaries).get(id) ?? null;

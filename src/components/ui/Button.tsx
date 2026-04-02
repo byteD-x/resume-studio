@@ -1,6 +1,6 @@
 "use client";
 
-import type { ButtonHTMLAttributes, AnchorHTMLAttributes, ReactNode } from "react";
+import type { AnchorHTMLAttributes, ButtonHTMLAttributes, ReactNode } from "react";
 import type { Route } from "next";
 import Link from "next/link";
 import { cn } from "@/lib/utils";

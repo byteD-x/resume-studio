@@ -54,3 +54,8 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local runtime data
+/data/auth/
+/data/users/
+/artifacts/

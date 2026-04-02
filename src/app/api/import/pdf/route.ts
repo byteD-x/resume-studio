@@ -1,12 +1,18 @@
 import { NextRequest } from "next/server";
+import { requireApiAuthContext } from "@/lib/auth/dal";
 import { importPdfToResume } from "@/lib/pdf-import";
-import { ensureResumeDocument, writeImportArtifact, writeResumeDocument } from "@/lib/storage";
+import { ensureUserResumeDocument, writeUserImportArtifact, writeUserResumeDocument } from "@/lib/user-storage";
 
 export const runtime = "nodejs";
 
 const MAX_IMPORT_PDF_BYTES = 10 * 1024 * 1024;
 
 export async function POST(request: NextRequest) {
+  const auth = await requireApiAuthContext();
+  if (!auth) {
+    return Response.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const formData = await request.formData();
     const resumeId = String(formData.get("resumeId") || "default");
@@ -24,14 +30,14 @@ export async function POST(request: NextRequest) {
       return new Response("Only PDF files can be imported.", { status: 400 });
     }
 
-    const existingDocument = await ensureResumeDocument(resumeId, "未命名简历");
+    const existingDocument = await ensureUserResumeDocument(auth.user.id, resumeId, "未命名简历");
     const result = await importPdfToResume(Buffer.from(await file.arrayBuffer()), {
       existingDocument,
       resumeId,
     });
 
-    await writeImportArtifact(resumeId, "pdf.raw.json", result.rawPdf);
-    const document = await writeResumeDocument(result.document);
+    await writeUserImportArtifact(auth.user.id, resumeId, "pdf.raw.json", result.rawPdf);
+    const document = await writeUserResumeDocument(auth.user.id, result.document);
     return Response.json({ document });
   } catch (error) {
     return Response.json(

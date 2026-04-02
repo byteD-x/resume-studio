@@ -7,7 +7,7 @@ import { createRequire } from "node:module";
 const require = createRequire(import.meta.url);
 
 const DEFAULT_MAX_CACHE_MB = 512;
-const DEFAULT_WARMUP_ROUTES = ["/", "/templates", "/resumes", "/import"];
+const DEFAULT_WARMUP_ROUTES = ["/login", "/", "/templates", "/resumes", "/import"];
 const DEFAULT_WARMUP_CONCURRENCY = 3;
 const HOLD_OUTPUT_UNTIL_WARMUP = process.env.NEXT_DEV_HOLD_OUTPUT_UNTIL_WARMUP !== "0";
 const CACHE_PRUNE_THRESHOLD_MB = Number.parseInt(
@@ -96,33 +96,62 @@ function resolveStorageRoot() {
 }
 
 async function readLatestResumeId() {
-  const storageRoot = resolveStorageRoot();
-  let entries;
+  const legacyRoot = resolveStorageRoot();
+  const userRoot = path.join(path.dirname(legacyRoot), "users");
+  /** @type {Array<string>} */
+  const documentPaths = [];
 
   try {
-    entries = await readdir(storageRoot, { withFileTypes: true });
+    const entries = await readdir(legacyRoot, { withFileTypes: true });
+    for (const entry of entries) {
+      if (entry.isDirectory()) {
+        documentPaths.push(path.join(legacyRoot, entry.name, "document.json"));
+      }
+    }
   } catch {
-    return null;
+    // ignore legacy root misses
+  }
+
+  try {
+    const users = await readdir(userRoot, { withFileTypes: true });
+    for (const user of users) {
+      if (!user.isDirectory()) {
+        continue;
+      }
+
+      const resumesRoot = path.join(userRoot, user.name, "resumes");
+      let resumes;
+
+      try {
+        resumes = await readdir(resumesRoot, { withFileTypes: true });
+      } catch {
+        continue;
+      }
+
+      for (const resume of resumes) {
+        if (resume.isDirectory()) {
+          documentPaths.push(path.join(resumesRoot, resume.name, "document.json"));
+        }
+      }
+    }
+  } catch {
+    // ignore missing user root
   }
 
   const documents = await Promise.all(
-    entries
-      .filter((entry) => entry.isDirectory())
-      .map(async (entry) => {
-        const documentPath = path.join(storageRoot, entry.name, "document.json");
+    documentPaths.map(async (documentPath) => {
+      try {
+        const raw = await readFile(documentPath, "utf8");
+        const parsed = JSON.parse(raw);
+        const id = typeof parsed?.meta?.id === "string" ? parsed.meta.id : path.basename(path.dirname(documentPath));
+        const updatedAt =
+          typeof parsed?.meta?.updatedAt === "string" ? parsed.meta.updatedAt : "";
 
-        try {
-          const raw = await readFile(documentPath, "utf8");
-          const parsed = JSON.parse(raw);
-          const id = typeof parsed?.meta?.id === "string" ? parsed.meta.id : entry.name;
-          const updatedAt =
-            typeof parsed?.meta?.updatedAt === "string" ? parsed.meta.updatedAt : "";
-
-          return { id, updatedAt };
-        } catch {
-          return null;
-        }
-      }),
+        return { id, updatedAt };
+      } catch {
+        return null;
+      }
+    }),
   );
 
   const latest = documents

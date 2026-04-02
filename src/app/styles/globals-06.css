@@ -124,64 +124,6 @@
   font-weight: 700;
 }
 
-.auth-page-wrap {
-  width: min(460px, calc(100vw - 2rem));
-  margin: 0 auto;
-  display: grid;
-  gap: 1rem;
-  align-items: start;
-  padding: 3rem 0 3.8rem;
-}
-
-.auth-brand-panel,
-.auth-form-panel {
-  padding: clamp(1.3rem, 2vw, 1.8rem);
-}
-
-.auth-brand-panel {
-  padding: 0;
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.auth-brand-note {
-  margin: 0.7rem 0 0;
-  color: var(--ink-soft);
-  font-size: 0.9rem;
-}
-
-.auth-brand-grid {
-  display: grid;
-  gap: 0.9rem;
-  grid-template-columns: minmax(0, 1fr);
-  margin-top: 1.7rem;
-}
-
-.auth-brand-card {
-  padding: 0.95rem 0;
-  border-top: 1px solid var(--line);
-}
-
-.auth-brand-steps {
-  display: grid;
-  gap: 0.8rem;
-  margin-top: 1.7rem;
-}
-
-.auth-step {
-  display: grid;
-  grid-template-columns: auto minmax(0, 1fr);
-  gap: 0.8rem;
-}
-
-.auth-status-inline {
-  margin: 0.8rem 0 0;
-  color: var(--ink-soft);
-  font-size: 0.88rem;
-  line-height: 1.55;
-}
-
 .resume-editor-workspace .btn {
   min-height: 2.3rem;
   padding: 0.34rem 0.7rem;
@@ -207,8 +149,7 @@
 }
 
 .resume-editor-workspace .input-control,
-.resume-editor-workspace .textarea-control,
-.resume-editor-workspace .workspace-toolbar-select {
+.resume-editor-workspace .textarea-control {
   border-radius: 0.42rem;
   padding: 0.45rem 0.62rem;
   background: rgba(255, 255, 255, 0.97);
@@ -220,8 +161,7 @@
 }
 
 .resume-editor-workspace .input-control:focus-visible,
-.resume-editor-workspace .textarea-control:focus-visible,
-.resume-editor-workspace .workspace-toolbar-select:focus-visible {
+.resume-editor-workspace .textarea-control:focus-visible {
   box-shadow: 0 0 0 3px rgba(64, 95, 173, 0.06);
 }
 
