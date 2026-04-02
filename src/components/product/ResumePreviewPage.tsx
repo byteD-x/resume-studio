@@ -10,17 +10,13 @@ import type {
   PreviewTargetingAnalysis,
   PreviewWorkbenchReport,
 } from "@/components/product/preview/shared";
+import { useRouteWarmup } from "@/components/product/useRouteWarmup";
 import { PreviewFrame } from "@/components/studio/PreviewFrame";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { useRouteWarmup } from "@/components/product/useRouteWarmup";
 import { getResponseError } from "@/lib/client-auth";
 import type { ResumeLineageMeta } from "@/lib/resume-lineage";
 import type { ResumeDocument } from "@/types/resume";
-
-const ResumePreviewDecisionStrip = dynamic(
-  () => import("@/components/product/preview/ResumePreviewDecisionStrip").then((module) => module.ResumePreviewDecisionStrip),
-);
 
 const ResumePreviewLineageBanner = dynamic(
   () => import("@/components/product/preview/ResumePreviewLineageBanner").then((module) => module.ResumePreviewLineageBanner),
@@ -61,17 +57,17 @@ export function ResumePreviewPage({
     resumeId: initialDocument.meta.id,
     routes: ["/resumes", "/templates"],
   });
+
   const hasBlockingIssues = qualityReport.blockingIssues.length > 0;
   const completedChecklistCount = checklist.filter((item) => item.done).length;
   const optionalPendingItems = checklist.filter((item) => !item.done && !item.required);
-  const exportReadinessLabel = hasBlockingIssues ? "需要补充内容" : "可以直接导出";
-  const [status, setStatus] = useState(hasBlockingIssues ? "先补齐必填项。" : "检查通过，可导出。");
+  const exportReadinessLabel = hasBlockingIssues ? "需处理" : "可导出";
+  const [status, setStatus] = useState(hasBlockingIssues ? "需先处理阻塞项" : "可直接导出");
   const [busyAction, setBusyAction] = useState<"export" | null>(null);
-  const [lastExportedAt, setLastExportedAt] = useState<string | null>(null);
 
   const exportPdf = async () => {
     setBusyAction("export");
-    setStatus("正在导出…");
+    setStatus("正在导出");
 
     try {
       const response = await fetch(`/api/resumes/${initialDocument.meta.id}/export-pdf`, {
@@ -85,10 +81,8 @@ export function ResumePreviewPage({
       }
 
       await downloadBlob(response, `${initialDocument.meta.id}.pdf`);
-      setLastExportedAt(new Date().toISOString());
-      setStatus("导出完成。");
+      setStatus("导出完成");
     } catch (error) {
-      setLastExportedAt(null);
       setStatus(error instanceof Error ? error.message : "导出失败");
     } finally {
       setBusyAction(null);
@@ -109,6 +103,7 @@ export function ResumePreviewPage({
             <Badge tone="neutral">
               检查项 {completedChecklistCount}/{checklist.length}
             </Badge>
+            {optionalPendingItems.length > 0 ? <Badge tone="neutral">待优化 {optionalPendingItems.length}</Badge> : null}
             <Badge tone="accent">{workbenchReport.workflow.currentLabel}</Badge>
           </div>
         </div>
@@ -126,19 +121,6 @@ export function ResumePreviewPage({
       </section>
 
       {lineage ? <ResumePreviewLineageBanner lineage={lineage} /> : null}
-
-      <ResumePreviewDecisionStrip
-        busyAction={busyAction}
-        documentId={initialDocument.meta.id}
-        exportPdf={exportPdf}
-        hasBlockingIssues={hasBlockingIssues}
-        initialKeywordCount={initialDocument.targeting.focusKeywords.length}
-        lastExportedAt={lastExportedAt}
-        optionalPendingCount={optionalPendingItems.length}
-        qualityReport={qualityReport}
-        targetingAnalysis={targetingAnalysis}
-        workbenchReport={workbenchReport}
-      />
 
       <section className="preview-layout">
         <div className="preview-stage">

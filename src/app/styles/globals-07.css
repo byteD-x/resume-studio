@@ -348,8 +348,7 @@
   background: color-mix(in srgb, var(--paper-soft) 44%, white);
 }
 
-.resume-editor-import-banner > :first-child,
-.resume-editor-import-banner > .editor-workflow-actions {
+.resume-editor-import-banner > :first-child {
   grid-column: 1 / -1;
 }
 

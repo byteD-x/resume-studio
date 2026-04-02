@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { readClientAiConfig } from "@/lib/client-ai-config";
 import { getJsonOrThrow, getResponseError } from "@/lib/client-auth";
+import { getResumeDerivativeLabel } from "@/lib/resume-lineage";
 import type {
   DeleteScope,
   LibraryRow,
+  OptimizedVariantResponse,
   PendingLibraryConfirmation,
   TailoredVariantResponse,
   VersionGroup,
@@ -15,12 +17,15 @@ import type {
 export function useResumeLibraryActions(resumeCount: number) {
   const router = useRouter();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [status, setStatus] = useState(resumeCount > 0 ? `已加载 ${resumeCount} 份简历` : "简历库还是空的");
+  const [status, setStatus] = useState(
+    resumeCount > 0 ? `已加载 ${resumeCount} 份简历` : "简历库还是空的",
+  );
   const [confirmation, setConfirmation] = useState<PendingLibraryConfirmation | null>(null);
   const [, startTransition] = useTransition();
 
   const activeDeleteId = pendingKey?.startsWith("delete:") ? pendingKey.slice("delete:".length) : null;
   const generatingInProgress = pendingKey?.startsWith("generate:") ?? false;
+  const optimizingInProgress = pendingKey?.startsWith("optimize:") ?? false;
 
   const deleteResume = async ({
     id,
@@ -36,7 +41,7 @@ export function useResumeLibraryActions(resumeCount: number) {
     setPendingKey(`delete:${id}`);
     setStatus(
       scope === "lineage" && deletedCount > 1
-        ? `正在删除 ${title} 及其 ${deletedCount - 1} 个定制版本`
+        ? `正在删除 ${title} 及其 ${deletedCount - 1} 个派生版本`
         : `正在删除 ${title}`,
     );
 
@@ -50,7 +55,7 @@ export function useResumeLibraryActions(resumeCount: number) {
 
       setStatus(
         scope === "lineage" && deletedCount > 1
-          ? `已删除 ${title} 及其 ${deletedCount - 1} 个定制版本`
+          ? `已删除 ${title} 及其 ${deletedCount - 1} 个派生版本`
           : `已删除 ${title}`,
       );
       startTransition(() => {
@@ -71,13 +76,20 @@ export function useResumeLibraryActions(resumeCount: number) {
     const scope: DeleteScope = variantCount > 0 ? "lineage" : "single";
     const deletedCount = scope === "lineage" ? variantCount + 1 : 1;
     const noun =
-      row.lineage?.kind === "source" ? "主稿" : row.lineage?.kind === "variant" ? "定制版" : "简历";
+      row.lineage?.kind === "source"
+        ? "主稿"
+        : row.lineage?.kind === "variant"
+          ? getResumeDerivativeLabel(row.lineage.derivativeKind)
+          : "简历";
 
     setConfirmation({
-      title: scope === "lineage" ? `删除“${row.resume.meta.title}”整组版本？` : `删除这份${noun}？`,
+      title:
+        scope === "lineage"
+          ? `删除“${row.resume.meta.title}”整组版本？`
+          : `删除这份${noun}？`,
       description:
         scope === "lineage"
-          ? `这会删除当前主稿以及其下 ${variantCount} 个定制版本，且无法自动恢复。`
+          ? `这会删除当前主稿以及其下 ${variantCount} 个派生版本，且无法自动恢复。`
           : "删除后将无法自动恢复，请确认这份简历已经不再需要。",
       confirmLabel: scope === "lineage" ? "删除整组" : "确认删除",
       onConfirm: async () => {
@@ -113,7 +125,7 @@ export function useResumeLibraryActions(resumeCount: number) {
         result.remoteSummaryApplied
           ? "已生成定制版，并通过 AI 补全摘要"
           : result.plan.missingKeywords.length > 0
-            ? `已生成定制版，仍有 ${result.plan.missingKeywords.length} 个关键词未覆盖`
+            ? `已生成定制版，但仍有 ${result.plan.missingKeywords.length} 个关键词未覆盖`
             : result.remoteSummaryError
               ? `已生成定制版，但 AI 摘要补全失败：${result.remoteSummaryError}`
               : "已生成定制版",
@@ -125,11 +137,36 @@ export function useResumeLibraryActions(resumeCount: number) {
     }
   };
 
+  const generateOptimizedVersion = async (row: LibraryRow) => {
+    setPendingKey(`optimize:${row.resume.meta.id}`);
+    setStatus(`正在基于 ${row.resume.meta.title} 新增两页优化版`);
+
+    try {
+      const result = await getJsonOrThrow<OptimizedVariantResponse>(
+        await fetch(`/api/resumes/${row.resume.meta.id}/generate-optimized-version`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            goal: "two-page",
+          }),
+        }),
+      );
+
+      setStatus("已新增两页优化版");
+      router.push(`/studio/${result.document.meta.id}?focus=content`);
+    } catch (error) {
+      setStatus(error instanceof Error ? error.message : "新增两页优化版失败");
+      setPendingKey(null);
+    }
+  };
+
   return {
     activeDeleteId,
     confirmation,
     generatingInProgress,
+    optimizingInProgress,
     pendingKey,
+    generateOptimizedVersion,
     requestDeleteResume,
     generateTailoredVariant,
     setConfirmation,

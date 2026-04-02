@@ -17,6 +17,7 @@ export function ResumeEditorPreviewPane({
   onApplyPreset,
   onNavigateTarget,
   onTemplateChange,
+  previewModeLabel,
   saveState,
   template,
   workspaceView,
@@ -28,6 +29,7 @@ export function ResumeEditorPreviewPane({
   onApplyPreset: (preset: DesignPreset) => void;
   onNavigateTarget: (target: PreviewNavigateTarget) => void;
   onTemplateChange: (template: ResumeTemplate) => void;
+  previewModeLabel?: string;
   saveState: SaveState;
   template: ResumeTemplate;
   workspaceView: WorkspaceView;
@@ -42,6 +44,7 @@ export function ResumeEditorPreviewPane({
         onApplyPreset={onApplyPreset}
         onNavigateTarget={onNavigateTarget}
         onTemplateChange={onTemplateChange}
+        previewModeLabel={previewModeLabel}
         saveLabel={resolveSaveLabel(saveState)}
         saveState={saveState}
         template={template}

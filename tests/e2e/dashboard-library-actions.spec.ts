@@ -124,6 +124,70 @@ test("library can generate the first tailored variant from a ready source draft"
   }
 });
 
+test("library can create a two-page optimized version without changing the source draft", async ({ page, request }) => {
+  const sourceResponse = await request.post("/api/resumes", {
+    data: { title: `Optimize Source ${Date.now()}` },
+  });
+  expect(sourceResponse.ok()).toBeTruthy();
+  const source = await sourceResponse.json();
+  let optimizedId: string | null = null;
+
+  try {
+    await request.put(`/api/resumes/${source.meta.id}`, {
+      data: {
+        ...source,
+        basics: {
+          ...source.basics,
+          name: "Jane Doe",
+          headline: "Senior Frontend Engineer",
+          summaryHtml: "<p>Owns complex resume and export workflows across product surfaces.</p>",
+        },
+        sections: [
+          {
+            id: "experience",
+            type: "experience",
+            title: "Experience",
+            visible: true,
+            layout: "stacked-list",
+            contentHtml: "",
+            items: [
+              {
+                id: "exp-1",
+                title: "Senior Frontend Engineer",
+                subtitle: "Acme",
+                location: "",
+                dateRange: "2023-2026",
+                meta: "",
+                summaryHtml: "<p>Built multi-step resume editing and preview flows.</p>",
+                bulletPoints: ["Delivered a reusable editor workflow and PDF export preview."],
+                tags: ["React", "Next.js"],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    await page.goto("/resumes");
+    await Promise.all([
+      page.waitForURL(/\/studio\/[^/?]+\?focus=content$/),
+      page.locator(".library-detail-actions").getByRole("button", { name: "新增两页优化版" }).click(),
+    ]);
+    optimizedId = page.url().match(/\/studio\/([^/?]+)/)?.[1] ?? null;
+
+    await expect(page.locator(".editor-toolbar-titleinput")).toHaveValue(/两页优化版/);
+    await expect(page.getByRole("link", { name: /查看来源/i })).toBeVisible();
+  } finally {
+    if (optimizedId) {
+      await request.delete(`/api/resumes/${optimizedId}`).catch(() => null);
+    }
+    const sourceId = source?.meta?.id;
+    if (sourceId) {
+      await request.delete(`/api/resumes/${sourceId}`).catch(() => null);
+    }
+  }
+});
+
 test("library can delete a standalone draft from the detail actions", async ({ page, request }) => {
   const firstResponse = await request.post("/api/resumes", {
     data: { title: `Standalone Delete ${Date.now()}` },

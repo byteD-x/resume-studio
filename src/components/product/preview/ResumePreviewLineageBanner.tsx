@@ -2,8 +2,19 @@
 
 import { Badge } from "@/components/ui/Badge";
 import { ButtonLink } from "@/components/ui/Button";
-import { buildLineageCopy } from "@/components/product/preview/shared";
-import type { ResumeLineageMeta } from "@/lib/resume-lineage";
+import { getResumeDerivativeLabel, type ResumeLineageMeta } from "@/lib/resume-lineage";
+
+function resolveLineageTitle(lineage: ResumeLineageMeta) {
+  if (lineage.kind === "variant") {
+    return getResumeDerivativeLabel(lineage.derivativeKind);
+  }
+
+  if (lineage.kind === "source") {
+    return "主稿";
+  }
+
+  return "独立稿";
+}
 
 export function ResumePreviewLineageBanner({
   lineage,
@@ -12,30 +23,20 @@ export function ResumePreviewLineageBanner({
 }) {
   return (
     <section className="resume-lineage-banner">
-      <div>
-        <p className="editor-workflow-kicker">版本关系</p>
-        <div className="resume-lineage-banner-head">
-          <strong>
-            {lineage.kind === "variant"
-              ? "当前预览的是一份岗位定制版。"
-              : lineage.kind === "source"
-                ? "当前预览的是一份主稿版本。"
-                : "当前预览的是一份独立草稿。"}
-          </strong>
-          <div className="resume-lineage-banner-badges">
-            <Badge tone={lineage.kind === "variant" ? "accent" : "neutral"}>
-              {lineage.kind === "variant" ? "定制版" : lineage.kind === "source" ? "主稿" : "独立稿"}
-            </Badge>
-            {lineage.childCount > 0 ? <Badge tone="success">已派生 {lineage.childCount} 份</Badge> : null}
-          </div>
+      <div className="resume-lineage-banner-head">
+        <strong>{resolveLineageTitle(lineage)}</strong>
+        <div className="resume-lineage-banner-badges">
+          <Badge tone={lineage.kind === "variant" ? "accent" : "neutral"}>
+            {resolveLineageTitle(lineage)}
+          </Badge>
+          {lineage.childCount > 0 ? <Badge tone="success">{lineage.childCount} 个派生</Badge> : null}
         </div>
-        <p className="editor-workflow-copy">{buildLineageCopy(lineage)}</p>
       </div>
 
-      <div className="editor-workflow-actions">
+      <div className="workspace-header-actions">
         {lineage.parentId ? (
           <ButtonLink href={`/studio/${lineage.parentId}/preview`} variant="secondary">
-            查看来源主稿
+            查看来源
           </ButtonLink>
         ) : null}
         <ButtonLink href="/resumes" variant="ghost">

@@ -3,8 +3,11 @@ import type { ResumeDashboardSummary } from "@/types/resume-manager";
 
 type ResumeLineageSource = Pick<ResumeDocument, "meta"> | Pick<ResumeDashboardSummary, "meta">;
 
+export type ResumeDerivativeKind = "tailored" | "optimized";
+
 export interface ResumeLineageMeta {
   kind: "standalone" | "source" | "variant";
+  derivativeKind: ResumeDerivativeKind | null;
   parentId: string | null;
   parentTitle: string | null;
   childIds: string[];
@@ -14,8 +17,25 @@ export interface ResumeLineageMeta {
 }
 
 function extractParentId(sourceRefs: string[]) {
-  const ref = sourceRefs.find((entry) => entry.startsWith("resume:"));
+  const ref = [...sourceRefs].reverse().find((entry) => entry.startsWith("resume:"));
   return ref ? ref.slice("resume:".length) : null;
+}
+
+function extractDerivativeKind(sourceRefs: string[]): ResumeDerivativeKind | null {
+  const ref = [...sourceRefs].reverse().find((entry) => entry.startsWith("variant:"));
+  if (ref === "variant:optimized") {
+    return "optimized";
+  }
+
+  if (ref === "variant:tailored") {
+    return "tailored";
+  }
+
+  return extractParentId(sourceRefs) ? "tailored" : null;
+}
+
+export function getResumeDerivativeLabel(kind: ResumeDerivativeKind | null) {
+  return kind === "optimized" ? "优化版" : "定制版";
 }
 
 export function buildResumeLineageMap<T extends ResumeLineageSource>(items: T[]) {
@@ -42,6 +62,7 @@ export function buildResumeLineageMap<T extends ResumeLineageSource>(items: T[])
 
       const meta: ResumeLineageMeta = {
         kind: parentId ? "variant" : childIds.length > 0 ? "source" : "standalone",
+        derivativeKind: parentId ? extractDerivativeKind(item.meta.sourceRefs) : null,
         parentId,
         parentTitle,
         childIds,

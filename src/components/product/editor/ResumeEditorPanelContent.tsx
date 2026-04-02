@@ -8,7 +8,9 @@ import {
   type ResumeEditorSectionPanel,
   type ResumeEditorStylePreset,
 } from "@/components/product/editor/resume-editor-workspace";
+import type { OptimizationTarget } from "@/components/product/editor/resume-design-panel-shared";
 import { editorSectionDefinitions, getEditorSection } from "@/lib/resume-editor";
+import type { ResumeOptimizationGoal } from "@/lib/resume-layout";
 import type { TailoredVariantPlan } from "@/lib/resume-tailoring";
 import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
 import type { ResumeDocument } from "@/types/resume";
@@ -69,14 +71,17 @@ export function ResumeEditorPanelContent({
   editorMode,
   focusItemId,
   generatedSummarySuggestions,
+  isCreatingOptimizedVersion,
   isGeneratingAiSummary,
   isGeneratingVariant,
+  isOptimizationPreviewActive,
   markdownDraft,
   markdownError,
   onActiveItemChange,
   onAiApiKeyChange,
   onAiChange,
   onAiPresetApply,
+  onApplyCurrentOptimization,
   onApplyGeneratedSummary,
   onApplyStylePreset,
   onApplySuggestedKeywords,
@@ -84,6 +89,7 @@ export function ResumeEditorPanelContent({
   onClearMarkdown,
   onCopySectionItem,
   onDeleteSectionItem,
+  onDeriveOptimizedDocument,
   onDuplicateSectionItem,
   onGenerateAiSummary,
   onGenerateTailoredVariant,
@@ -92,11 +98,17 @@ export function ResumeEditorPanelContent({
   onLayoutChange,
   onMarkdownChange,
   onMoveSectionItem,
+  onOptimizationGoalChange,
+  onOptimizationTargetChange,
   onPhotoChange,
+  onPreviewOptimization,
+  onRestoreOptimizationPreview,
   onSectionChange,
   onSummaryHtmlChange,
   onTargetingChange,
   onTemplateChange,
+  optimizationGoal,
+  optimizationTarget,
   setActivePanel,
   tailoredPlan,
   targetingAnalysis,
@@ -108,21 +120,28 @@ export function ResumeEditorPanelContent({
   editorMode: "form" | "markdown";
   focusItemId: string | null;
   generatedSummarySuggestions: ResumeAssistSuggestion[];
+  isCreatingOptimizedVersion: boolean;
   isGeneratingAiSummary: boolean;
   isGeneratingVariant: boolean;
+  isOptimizationPreviewActive: boolean;
   markdownDraft: string;
   markdownError: string | null;
   onActiveItemChange: (panel: ResumeEditorSectionPanel, itemId: string | null) => void;
   onAiApiKeyChange: (value: string) => void;
   onAiChange: (field: keyof ResumeDocument["ai"], value: string) => void;
   onAiPresetApply: (presetId: string) => void;
+  onApplyCurrentOptimization: () => void;
   onApplyGeneratedSummary: (suggestion: ResumeAssistSuggestion) => void;
   onApplyStylePreset: (presetId: ResumeEditorStylePreset) => void;
   onApplySuggestedKeywords: () => void;
-  onBasicsChange: (field: "name" | "headline" | "location" | "website" | "email" | "phone" | "summaryHtml" | "links", value: string) => void;
+  onBasicsChange: (
+    field: "name" | "headline" | "location" | "website" | "email" | "phone" | "summaryHtml" | "links",
+    value: string,
+  ) => void;
   onClearMarkdown: () => void;
   onCopySectionItem: (sectionType: ResumeEditorSectionPanel, itemId: string) => void;
   onDeleteSectionItem: (sectionType: ResumeEditorSectionPanel, itemId: string) => void;
+  onDeriveOptimizedDocument: () => void | Promise<void>;
   onDuplicateSectionItem: (sectionType: ResumeEditorSectionPanel, itemId: string) => void;
   onGenerateAiSummary: () => void;
   onGenerateTailoredVariant: () => void;
@@ -131,16 +150,22 @@ export function ResumeEditorPanelContent({
   onLayoutChange: <K extends keyof ResumeDocument["layout"]>(field: K, value: ResumeDocument["layout"][K]) => void;
   onMarkdownChange: (value: string) => void;
   onMoveSectionItem: (sectionType: ResumeEditorSectionPanel, itemId: string, direction: "up" | "down") => void;
+  onOptimizationGoalChange: (goal: ResumeOptimizationGoal) => void;
+  onOptimizationTargetChange: (target: OptimizationTarget) => void;
   onPhotoChange: <
     K extends "photoUrl" | "photoAlt" | "photoVisible" | "photoShape" | "photoPosition" | "photoSizeMm",
   >(
     field: K,
     value: ResumeDocument["basics"][K],
   ) => void;
+  onPreviewOptimization: () => void;
+  onRestoreOptimizationPreview: () => void;
   onSectionChange: (nextSection: ResumeDocument["sections"][number], title: string) => void;
   onSummaryHtmlChange: (value: string) => void;
   onTargetingChange: (field: keyof ResumeDocument["targeting"], value: string) => void;
   onTemplateChange: (template: ResumeDocument["meta"]["template"]) => void;
+  optimizationGoal: ResumeOptimizationGoal;
+  optimizationTarget: OptimizationTarget;
   setActivePanel: (panel: EditorPanel) => void;
   tailoredPlan: TailoredVariantPlan;
   targetingAnalysis: ResumeTargetingAnalysis;
@@ -171,10 +196,20 @@ export function ResumeEditorPanelContent({
     return (
       <ResumeDesignPanel
         document={document}
+        isCreatingOptimizedVersion={isCreatingOptimizedVersion}
+        isOptimizationPreviewActive={isOptimizationPreviewActive}
+        onApplyCurrentOptimization={onApplyCurrentOptimization}
         onApplyPreset={onApplyStylePreset}
+        onDeriveOptimizedDocument={onDeriveOptimizedDocument}
         onLayoutChange={onLayoutChange}
+        onOptimizationGoalChange={onOptimizationGoalChange}
+        onOptimizationTargetChange={onOptimizationTargetChange}
         onPhotoChange={onPhotoChange}
+        onPreviewOptimization={onPreviewOptimization}
+        onRestoreOptimizationPreview={onRestoreOptimizationPreview}
         onTemplateChange={onTemplateChange}
+        optimizationGoal={optimizationGoal}
+        optimizationTarget={optimizationTarget}
       />
     );
   }

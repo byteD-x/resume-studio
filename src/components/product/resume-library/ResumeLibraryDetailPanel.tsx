@@ -1,16 +1,18 @@
 "use client";
 
 import Link from "next/link";
-import { Eye, LoaderCircle, PencilLine, Sparkles, Target, Trash2 } from "lucide-react";
+import { Copy, Eye, LoaderCircle, PencilLine, Sparkles, Target, Trash2 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import type { LibraryRow, VersionGroup } from "@/components/product/resume-library/types";
 import { formatDateTime, getGroupKindLabel } from "@/components/product/resume-library/utils";
+import { getResumeDerivativeLabel } from "@/lib/resume-lineage";
 
 function ResumeLibraryVariantList({
   activeDeleteId,
   deletingSourceInSelectedGroup,
   generatingInProgress,
+  optimizingInProgress,
   sourceRow,
   variantRows,
   onRequestDeleteResume,
@@ -18,6 +20,7 @@ function ResumeLibraryVariantList({
   activeDeleteId: string | null;
   deletingSourceInSelectedGroup: boolean;
   generatingInProgress: boolean;
+  optimizingInProgress: boolean;
   sourceRow: LibraryRow;
   variantRows: LibraryRow[];
   onRequestDeleteResume: (row: LibraryRow, group?: VersionGroup) => void;
@@ -26,6 +29,7 @@ function ResumeLibraryVariantList({
     <div className="library-version-list">
       {variantRows.map((variant) => {
         const deletingVariant = deletingSourceInSelectedGroup || activeDeleteId === variant.resume.meta.id;
+        const derivativeLabel = getResumeDerivativeLabel(variant.lineage?.derivativeKind ?? "tailored");
 
         return (
           <article
@@ -36,10 +40,10 @@ function ResumeLibraryVariantList({
             <div className="library-version-card-head">
               <div>
                 <strong>{variant.resume.meta.title}</strong>
-                <p>{variant.resume.basics.headline.trim() || "暂未填写职位标题"}</p>
+                <p>{variant.resume.basics.headline.trim() || "未填写职位标题"}</p>
               </div>
               <div className="library-row-pills">
-                <Badge tone="accent">定制版</Badge>
+                <Badge tone="accent">{derivativeLabel}</Badge>
                 <Badge tone={variant.report.readiness === "ready" ? "success" : "neutral"}>
                   {variant.report.readinessLabel}
                 </Badge>
@@ -48,13 +52,8 @@ function ResumeLibraryVariantList({
             </div>
 
             <div className="library-version-card-meta">
-              <span>
-                定向岗位：
-                {[variant.resume.targeting.role, variant.resume.targeting.company].filter(Boolean).join(" / ") ||
-                  "尚未补充岗位信息"}
-              </span>
-              <span>最近更新：{formatDateTime(variant.resume.meta.updatedAt)}</span>
-              <span>来源主稿：{variant.lineage?.parentTitle ?? sourceRow.resume.meta.title}</span>
+              <span>更新于 {formatDateTime(variant.resume.meta.updatedAt)}</span>
+              <span>{variant.lineage?.parentTitle ?? sourceRow.resume.meta.title}</span>
             </div>
 
             {variant.resume.targeting.focusKeywords.length > 0 ? (
@@ -67,16 +66,16 @@ function ResumeLibraryVariantList({
             <div className="library-version-card-actions">
               <Link className="btn btn-primary" href={variant.studioHref}>
                 <PencilLine className="size-4" />
-                继续编辑
+                编辑
               </Link>
               <Link className="btn btn-secondary" href={variant.previewHref}>
                 <Eye className="size-4" />
-                打开预览
+                预览
               </Link>
               <button
                 aria-label={`删除 ${variant.resume.meta.title}`}
                 className="icon-button"
-                disabled={generatingInProgress || deletingVariant}
+                disabled={generatingInProgress || optimizingInProgress || deletingVariant}
                 onClick={() => onRequestDeleteResume(variant)}
                 type="button"
               >
@@ -93,29 +92,29 @@ function ResumeLibraryVariantList({
 function ResumeLibraryVariantsSection({
   pendingKey,
   selectedGroup,
+  onGenerateOptimizedVersion,
   onGenerateTailoredVariant,
   onRequestDeleteResume,
   activeDeleteId,
   generatingInProgress,
+  optimizingInProgress,
   deletingSourceInSelectedGroup,
 }: {
   pendingKey: string | null;
   selectedGroup: VersionGroup;
+  onGenerateOptimizedVersion: (row: LibraryRow) => Promise<void>;
   onGenerateTailoredVariant: (row: LibraryRow) => Promise<void>;
   onRequestDeleteResume: (row: LibraryRow, group?: VersionGroup) => void;
   activeDeleteId: string | null;
   generatingInProgress: boolean;
+  optimizingInProgress: boolean;
   deletingSourceInSelectedGroup: boolean;
 }) {
   return (
     <section className="library-detail-section">
       <div className="library-detail-section-head">
-        <strong>定制版本</strong>
-        <span>
-          {selectedGroup.variantRows.length > 0
-            ? `共 ${selectedGroup.variantRows.length} 个岗位版本`
-            : "当前还没有基于这份主稿生成的定制版本"}
-        </span>
+        <strong>派生版本</strong>
+        <span>{selectedGroup.variantRows.length}</span>
       </div>
 
       {selectedGroup.variantRows.length > 0 ? (
@@ -123,19 +122,28 @@ function ResumeLibraryVariantsSection({
           activeDeleteId={activeDeleteId}
           deletingSourceInSelectedGroup={deletingSourceInSelectedGroup}
           generatingInProgress={generatingInProgress}
+          optimizingInProgress={optimizingInProgress}
           sourceRow={selectedGroup.sourceRow}
           variantRows={selectedGroup.variantRows}
           onRequestDeleteResume={onRequestDeleteResume}
         />
       ) : (
-        <section className="empty-surface empty-surface-left">
-          <p className="empty-surface-title">还没有定制版本</p>
-          <p className="empty-surface-text">
-            {selectedGroup.sourceRow.tailoredPlan.canGenerate
-              ? "补充岗位、公司或 JD 关键词后，可以直接从主稿生成新的定制版。"
-              : "先完善岗位定向信息，再生成更贴近目标职位的定制版本。"}
-          </p>
+        <div className="empty-surface empty-surface-left">
           <div className="empty-surface-actions">
+            {selectedGroup.sourceRow.hasContent ? (
+              <Button
+                disabled={pendingKey !== null}
+                onClick={() => void onGenerateOptimizedVersion(selectedGroup.sourceRow)}
+                variant="secondary"
+              >
+                {pendingKey === `optimize:${selectedGroup.sourceRow.resume.meta.id}` ? (
+                  <LoaderCircle className="size-4 animate-spin" />
+                ) : (
+                  <Copy className="size-4" />
+                )}
+                新增两页优化版
+              </Button>
+            ) : null}
             {selectedGroup.sourceRow.tailoredPlan.canGenerate ? (
               <Button
                 disabled={pendingKey !== null}
@@ -150,10 +158,10 @@ function ResumeLibraryVariantsSection({
               </Button>
             ) : null}
             <ButtonLink href={selectedGroup.sourceRow.targetingHref} variant="secondary">
-              {selectedGroup.sourceRow.tailoredPlan.canGenerate ? "完善定向" : "填写定向信息"}
+              定向
             </ButtonLink>
           </div>
-        </section>
+        </div>
       )}
     </section>
   );
@@ -163,16 +171,20 @@ export function ResumeLibraryDetailPanel({
   activeDeleteId,
   deletingSourceInSelectedGroup,
   generatingInProgress,
+  optimizingInProgress,
   pendingKey,
   selectedGroup,
+  onGenerateOptimizedVersion,
   onGenerateTailoredVariant,
   onRequestDeleteResume,
 }: {
   activeDeleteId: string | null;
   deletingSourceInSelectedGroup: boolean;
   generatingInProgress: boolean;
+  optimizingInProgress: boolean;
   pendingKey: string | null;
   selectedGroup: VersionGroup;
+  onGenerateOptimizedVersion: (row: LibraryRow) => Promise<void>;
   onGenerateTailoredVariant: (row: LibraryRow) => Promise<void>;
   onRequestDeleteResume: (row: LibraryRow, group?: VersionGroup) => void;
 }) {
@@ -184,22 +196,36 @@ export function ResumeLibraryDetailPanel({
       >
         <div className="library-detail-hero-head">
           <div>
-            <p className="section-kicker">当前分组</p>
             <h2 className="library-card-title">{selectedGroup.sourceRow.resume.meta.title}</h2>
           </div>
-          <div>
-            <p className="library-meta-label">下一步建议</p>
-            <p className="library-meta-value">
-              {selectedGroup.sourceRow.report.openTasks[0]?.title ?? "进入预览检查交付质量"}
-            </p>
+          <div className="library-row-pills">
+            <Badge tone="neutral">{getGroupKindLabel(selectedGroup.sourceRow)}</Badge>
+            <Badge tone={selectedGroup.sourceRow.report.readiness === "ready" ? "success" : "neutral"}>
+              {selectedGroup.sourceRow.report.readinessLabel}
+            </Badge>
+            <Badge tone="neutral">完成度 {selectedGroup.sourceRow.report.score}%</Badge>
           </div>
         </div>
 
         <div className="library-detail-actions">
           <ButtonLink href={selectedGroup.sourceRow.studioHref}>
             <PencilLine className="size-4" />
-            编辑主稿
+            编辑
           </ButtonLink>
+          {selectedGroup.sourceRow.hasContent ? (
+            <Button
+              disabled={pendingKey !== null}
+              onClick={() => void onGenerateOptimizedVersion(selectedGroup.sourceRow)}
+              variant="secondary"
+            >
+              {pendingKey === `optimize:${selectedGroup.sourceRow.resume.meta.id}` ? (
+                <LoaderCircle className="size-4 animate-spin" />
+              ) : (
+                <Copy className="size-4" />
+              )}
+              新增两页优化版
+            </Button>
+          ) : null}
           {selectedGroup.sourceRow.tailoredPlan.canGenerate ? (
             <Button
               disabled={pendingKey !== null}
@@ -216,15 +242,19 @@ export function ResumeLibraryDetailPanel({
           ) : null}
           <ButtonLink href={selectedGroup.sourceRow.previewHref} variant="secondary">
             <Eye className="size-4" />
-            打开预览
+            预览
           </ButtonLink>
           <ButtonLink href={selectedGroup.sourceRow.targetingHref} variant="ghost">
             <Target className="size-4" />
-            完善定向
+            定向
           </ButtonLink>
           <Button
             aria-label={selectedGroup.variantRows.length > 0 ? "删除整组" : `删除 ${selectedGroup.sourceRow.resume.meta.title}`}
-            disabled={generatingInProgress || activeDeleteId === selectedGroup.sourceRow.resume.meta.id}
+            disabled={
+              generatingInProgress ||
+              optimizingInProgress ||
+              activeDeleteId === selectedGroup.sourceRow.resume.meta.id
+            }
             onClick={() => onRequestDeleteResume(selectedGroup.sourceRow, selectedGroup)}
             variant="ghost"
           >
@@ -233,19 +263,15 @@ export function ResumeLibraryDetailPanel({
             ) : (
               <Trash2 className="size-4" />
             )}
-            {selectedGroup.variantRows.length > 0 ? "删除整组" : "删除主稿"}
+            {selectedGroup.variantRows.length > 0 ? "删除整组" : "删除"}
           </Button>
         </div>
       </article>
 
       <section className="library-detail-section">
         <div className="library-detail-section-head">
-          <strong>{selectedGroup.sourceRow.lineage?.kind === "source" ? "主稿" : "当前版本"}</strong>
-          <span>
-            {selectedGroup.variantRows.length > 0
-              ? `${selectedGroup.variantRows.length} 个版本基于这份主稿延展`
-              : "这份简历暂时还没有衍生版本"}
-          </span>
+          <strong>当前版本</strong>
+          <span>更新于 {formatDateTime(selectedGroup.sourceRow.resume.meta.updatedAt)}</span>
         </div>
 
         <article
@@ -255,7 +281,7 @@ export function ResumeLibraryDetailPanel({
           <div className="library-version-card-head">
             <div>
               <strong>{selectedGroup.sourceRow.resume.meta.title}</strong>
-              <p>{selectedGroup.sourceRow.resume.basics.headline.trim() || "暂未填写职位标题"}</p>
+              <p>{selectedGroup.sourceRow.resume.basics.headline.trim() || "未填写职位标题"}</p>
             </div>
             <div className="library-row-pills">
               <Badge tone="neutral">{getGroupKindLabel(selectedGroup.sourceRow)}</Badge>
@@ -264,11 +290,6 @@ export function ResumeLibraryDetailPanel({
               </Badge>
               {deletingSourceInSelectedGroup ? <Badge tone="warning">删除中</Badge> : null}
             </div>
-          </div>
-
-          <div className="library-version-card-meta">
-            <span>最近更新：{formatDateTime(selectedGroup.sourceRow.resume.meta.updatedAt)}</span>
-            <span>完成度：{selectedGroup.sourceRow.report.score}%</span>
           </div>
 
           {selectedGroup.sourceRow.resume.targeting.focusKeywords.length > 0 ? (
@@ -286,8 +307,10 @@ export function ResumeLibraryDetailPanel({
         activeDeleteId={activeDeleteId}
         deletingSourceInSelectedGroup={deletingSourceInSelectedGroup}
         generatingInProgress={generatingInProgress}
+        optimizingInProgress={optimizingInProgress}
         pendingKey={pendingKey}
         selectedGroup={selectedGroup}
+        onGenerateOptimizedVersion={onGenerateOptimizedVersion}
         onGenerateTailoredVariant={onGenerateTailoredVariant}
         onRequestDeleteResume={onRequestDeleteResume}
       />

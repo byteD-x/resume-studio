@@ -1,5 +1,5 @@
-import { getTemplateFamily } from "@/data/template-catalog";
 import { createEmptyResumeDocument, getResumeTemplateLayoutPreset } from "@/lib/resume-document";
+import { buildCompactResumeLayout } from "@/lib/resume-layout";
 import { ensureEditorDocument } from "@/lib/resume-editor";
 import { serializeResumeToMarkdown } from "@/lib/resume-markdown";
 import type { ResumeDocument } from "@/types/resume";
@@ -60,30 +60,11 @@ export function buildStylePresetLayout(
     return getResumeTemplateLayoutPreset(document.meta.template);
   }
 
-  const templateFamily = getTemplateFamily(document.meta.template);
-
   if (presetId === "compact") {
-    return {
-      ...document.layout,
-      marginsMm: 11,
-      lineHeight: 1.33,
-      paragraphGapMm: 2.2,
-      bodyFontSizePt: 9.2,
-      sectionTitleSizePt: 10.4,
-      itemTitleSizePt: 10.2,
-      metaFontSizePt: 8.6,
-      nameSizePt: 22,
-      headlineSizePt: 10.2,
-      sectionGapMm: 4.3,
-      itemGapMm: 3.2,
-      columnGapMm: templateFamily === "two-column" ? 7 : 0,
-      listGapMm: 0.45,
-      sectionTitleStyle: "minimal",
-      sectionTitleAlign: "left",
-      pageShadowVisible: true,
-      showSectionDividers: false,
-    };
+    return buildCompactResumeLayout(document);
   }
+
+  const currentPreset = getResumeTemplateLayoutPreset(document.meta.template);
 
   return {
     ...document.layout,
@@ -98,7 +79,7 @@ export function buildStylePresetLayout(
     headlineSizePt: 11.6,
     sectionGapMm: 6.8,
     itemGapMm: 4.8,
-    columnGapMm: templateFamily === "two-column" ? 10 : 0,
+    columnGapMm: currentPreset.columnGapMm,
     listGapMm: 0.9,
     sectionTitleStyle: "filled",
     sectionTitleAlign: "left",

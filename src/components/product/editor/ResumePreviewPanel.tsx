@@ -31,6 +31,7 @@ export function ResumePreviewPanel({
   focusedTarget,
   html,
   navigationItems,
+  previewModeLabel,
   saveLabel,
   saveState = "saved",
   template,
@@ -43,6 +44,7 @@ export function ResumePreviewPanel({
   focusedTarget?: PreviewNavigateTarget;
   html: string;
   navigationItems?: PreviewNavigationItem[];
+  previewModeLabel?: string;
   saveLabel: string;
   saveState?: PreviewSaveState;
   template?: ResumeTemplate;
@@ -62,10 +64,6 @@ export function ResumePreviewPanel({
   const resolvedZoom = workspaceView === "preview" && zoom === "fit-width" ? 100 : zoom;
   const previewMeta = `\u8fde\u7eed\u6eda\u52a8 \u00b7 \u7ea6 ${metrics.pageCount} \u9875`;
   const pageHint = `A4 \u00b7 \u8fde\u7eed\u6eda\u52a8 \u00b7 \u7ea6 ${metrics.pageCount} \u9875`;
-  const outlineCopy = activeTargetLabel
-    ? `\u5f53\u524d\u8054\u52a8\uff1a${activeTargetLabel}`
-    : "\u70b9\u51fb\u9884\u89c8\u5185\u5bb9\u6216\u6807\u7b7e\uff0c\u4f1a\u540c\u6b65\u5230\u5bf9\u5e94\u7f16\u8f91\u4f4d\u7f6e\u3002";
-
   return (
     <aside className="editor-preview-panel">
       <div className="editor-preview-header">
@@ -78,7 +76,12 @@ export function ResumePreviewPanel({
             </div>
           </div>
 
-          <span className={`editor-preview-save editor-preview-save-${saveState}`}>{saveLabel}</span>
+          <div className="editor-preview-savegroup">
+            {previewModeLabel ? (
+              <span className="editor-preview-save editor-preview-save-preview">{previewModeLabel}</span>
+            ) : null}
+            <span className={`editor-preview-save editor-preview-save-${saveState}`}>{saveLabel}</span>
+          </div>
         </div>
 
         <div className="editor-preview-controls">
@@ -159,14 +162,10 @@ export function ResumePreviewPanel({
 
         {navigationItems && navigationItems.length > 0 ? (
           <div className="editor-preview-outline">
-            <div className="editor-preview-outline-meta">
-              <span className="editor-preview-outline-label">{"\u53cc\u5411\u5b9a\u4f4d"}</span>
-              <span className="editor-preview-outline-copy">{outlineCopy}</span>
-            </div>
-
             <div className="editor-preview-outline-chips">
               {navigationItems.map((item) => (
                 <button
+                  aria-label={activeTargetLabel && item.isActive ? `${item.label}，当前定位` : item.label}
                   className={`editor-preview-chip ${item.isActive ? "editor-preview-chip-active" : ""}`}
                   key={item.id}
                   onClick={() => onNavigateTarget?.(item.target)}

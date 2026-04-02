@@ -87,10 +87,11 @@ export function ResumeMarkdownPanel({
     <section className="resume-editor-panel resume-editor-source-panel">
       <div className="resume-editor-panel-head">
         <div>
-          <h2 className="resume-editor-panel-title">Markdown 源码</h2>
-          </div>
+          <h2 className="resume-editor-panel-title">Markdown</h2>
+        </div>
 
         <div className="resume-editor-panel-actions">
+          <Badge tone={parseError ? "warning" : "success"}>{parseError ? "需修正" : "可解析"}</Badge>
           <Button onClick={onInsertStarter} variant="secondary">
             <RotateCcw className="size-4" />
             插入结构
@@ -102,20 +103,10 @@ export function ResumeMarkdownPanel({
         </div>
       </div>
 
-      <div className="resume-editor-source-banner">
-        <div>
-          <strong>编写提示</strong>
-          <p>支持常用 Markdown 语法。</p>
-        </div>
-        <Badge tone={parseError ? "warning" : "success"}>
-          {parseError ? "需修正" : "可解析"}
-        </Badge>
-      </div>
-
       <div className="resume-editor-source-toolbar">
         <button
           className="editor-source-chip"
-          onClick={() => applyAction({ type: "insert", snippet: "## 新小节 [custom]\n" })}
+          onClick={() => applyAction({ type: "insert", snippet: "## 新小节[custom]\n" })}
           type="button"
         >
           <Heading2 className="size-4" />
@@ -252,9 +243,7 @@ export function ResumeMarkdownPanel({
           <Badge tone="accent">实时预览</Badge>
         </div>
         <p className={`resume-editor-source-note ${parseError ? "resume-editor-source-note-error" : ""}`} id={noteId}>
-          {parseError
-            ? parseError
-            : "切回表单后会保留当前内容。"}
+          {parseError || ""}
         </p>
       </div>
     </section>

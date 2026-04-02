@@ -9,6 +9,7 @@ const nextConfig: NextConfig = {
     "/api/resumes/[id]": ["./data/**/*"],
     "/api/resumes/[id]/duplicate": ["./data/**/*"],
     "/api/resumes/[id]/export-pdf": ["./data/**/*"],
+    "/api/resumes/[id]/generate-optimized-version": ["./data/**/*"],
     "/api/resumes/[id]/generate-tailored-variant": ["./data/**/*"],
     "/resumes": ["./data/**/*"],
     "/studio/[id]": ["./data/**/*"],

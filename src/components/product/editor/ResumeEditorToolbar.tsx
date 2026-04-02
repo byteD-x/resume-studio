@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import type { ResumeLineageMeta } from "@/lib/resume-lineage";
+import { getResumeDerivativeLabel, type ResumeLineageMeta } from "@/lib/resume-lineage";
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
 export type WorkspaceView = "edit" | "split" | "preview";
@@ -38,7 +38,7 @@ function lineageBadgeTone(kind: ResumeLineageMeta["kind"]): "accent" | "neutral"
 }
 
 function lineageShortLabel(meta: ResumeLineageMeta) {
-  if (meta.kind === "variant") return "定制版";
+  if (meta.kind === "variant") return getResumeDerivativeLabel(meta.derivativeKind);
   if (meta.kind === "source") return meta.childCount > 0 ? `主简历 · ${meta.childCount}` : "主简历";
   return "草稿";
 }
@@ -108,7 +108,7 @@ export function ResumeEditorToolbar({
                   <Badge tone={lineageBadgeTone(lineage.kind)}>{lineageShortLabel(lineage)}</Badge>
                   {lineage.kind === "variant" && parentStudioHref ? (
                     <Link className="editor-toolbar-lineage-link" href={parentStudioHref}>
-                      查看来源
+                      来源
                     </Link>
                   ) : null}
                 </div>

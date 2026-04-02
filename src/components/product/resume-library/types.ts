@@ -41,3 +41,8 @@ export interface TailoredVariantResponse {
   remoteSummaryApplied?: boolean;
   remoteSummaryError?: string | null;
 }
+
+export interface OptimizedVariantResponse {
+  document: ResumeDocument;
+  checklist: string[];
+}

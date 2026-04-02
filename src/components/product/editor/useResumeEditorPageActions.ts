@@ -4,12 +4,17 @@ import { useEffect, useEffectEvent } from "react";
 import type { MutableRefObject } from "react";
 import type { ReadonlyURLSearchParams } from "next/navigation";
 import type { EditorPanel, EditorPanelItem } from "@/components/product/editor/ResumeEditorSidebar";
-import { getJsonOrThrow } from "@/lib/client-auth";
-import { readClientAiConfig } from "@/lib/client-ai-config";
-import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
-import { buildTailoredVariantPlan, type TailoredVariantPlan } from "@/lib/resume-tailoring";
 import { resolveImportStatusMessage, resolveLatestImportKind } from "@/components/product/editor/resume-editor-workspace";
 import type { PendingEditorConfirmation } from "@/components/product/editor/useResumeEditorSectionActions";
+import { readClientAiConfig } from "@/lib/client-ai-config";
+import { getJsonOrThrow } from "@/lib/client-auth";
+import {
+  buildOptimizedResumeTitle,
+  getResumeOptimizationGoalLabel,
+} from "@/lib/resume-derivatives";
+import type { ResumeOptimizationGoal } from "@/lib/resume-layout";
+import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
+import { buildTailoredVariantPlan, type TailoredVariantPlan } from "@/lib/resume-tailoring";
 import type { ResumeDocument } from "@/types/resume";
 
 type FormPanel = Exclude<EditorPanel, "markdown">;
@@ -34,6 +39,7 @@ export function useResumeEditorPageActions({
   setActivePanel,
   setClientAiApiKey,
   setConfirmation,
+  setIsCreatingOptimizedVersion,
   setGeneratedAiSummarySuggestions,
   setIsGeneratingAiSummary,
   setIsGeneratingVariant,
@@ -53,6 +59,7 @@ export function useResumeEditorPageActions({
   setActivePanel: (value: EditorPanel) => void;
   setClientAiApiKey: (value: string) => void;
   setConfirmation: (value: PendingEditorConfirmation | null) => void;
+  setIsCreatingOptimizedVersion: (value: boolean) => void;
   setGeneratedAiSummarySuggestions: (value: ResumeAssistSuggestion[]) => void;
   setIsGeneratingAiSummary: (value: boolean) => void;
   setIsGeneratingVariant: (value: boolean) => void;
@@ -165,7 +172,7 @@ export function useResumeEditorPageActions({
         result.remoteSummaryApplied
           ? "已生成岗位定制版，并补上 AI 摘要建议"
           : result.plan.missingKeywords.length > 0
-            ? `已生成定制版，仍缺 ${result.plan.missingKeywords.length} 个关键词`
+            ? `已生成定制版，但仍缺 ${result.plan.missingKeywords.length} 个关键词`
             : result.remoteSummaryError
               ? `已生成岗位定制版，但 AI 摘要未应用：${result.remoteSummaryError}`
               : "已生成岗位定制版",
@@ -178,10 +185,56 @@ export function useResumeEditorPageActions({
     }
   };
 
+  const handleCreateOptimizedVersion = async (
+    goal: ResumeOptimizationGoal = "two-page",
+    options?: {
+      focus?: "content" | "design";
+      successMessage?: string;
+    },
+  ) => {
+    if (latestMarkdownErrorRef.current) {
+      setActivePanel("markdown");
+      setStatusMessage("请先修正 Markdown");
+      return false;
+    }
+
+    const saved = await saveDocument("manual");
+    if (!saved) {
+      return false;
+    }
+
+    setIsCreatingOptimizedVersion(true);
+    const goalLabel = getResumeOptimizationGoalLabel(goal);
+
+    try {
+      const result = await getJsonOrThrow<{ document: ResumeDocument }>(
+        await fetch(`/api/resumes/${latestDocumentRef.current.meta.id}/generate-optimized-version`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            goal,
+            title: buildOptimizedResumeTitle(latestDocumentRef.current, goal),
+          }),
+        }),
+      );
+
+      setStatusMessage(
+        options?.successMessage ?? `已另存为${goalLabel}，接下来可以在新稿里压缩篇幅`,
+      );
+      pushRoute(`/studio/${result.document.meta.id}?focus=${options?.focus ?? "content"}`);
+      return true;
+    } catch (error) {
+      setStatusMessage(error instanceof Error ? error.message : `新增${goalLabel}失败`);
+      return false;
+    } finally {
+      setIsCreatingOptimizedVersion(false);
+    }
+  };
+
   const handleBack = async () => {
     if (latestMarkdownErrorRef.current) {
       setConfirmation({
-        title: "Markdown 还存在解析错误",
+        title: "Markdown 还有解析错误",
         description: "现在返回会放弃未保存的 Markdown 修改。确认后我会直接离开当前编辑页。",
         confirmLabel: "仍然返回",
         confirmVariant: "danger",
@@ -223,7 +276,7 @@ export function useResumeEditorPageActions({
   };
 
   const handleFocusImportedBasics = () => {
-    focusFormPanel("basics", "先核对基本信息。");
+    focusFormPanel("basics", "先核对基础信息。");
   };
 
   const handleGenerateAiSummary = async () => {
@@ -266,12 +319,12 @@ export function useResumeEditorPageActions({
 
   const handleFocusDiagnostic = (target: "basics" | "summary" | "content" | "targeting" | "export") => {
     if (target === "basics" || target === "summary") {
-      focusFormPanel("basics", target === "summary" ? "先补摘要。" : "先完善基本信息。");
+      focusFormPanel("basics", target === "summary" ? "先补摘要。" : "先完善基础信息。");
       return;
     }
 
     if (target === "targeting") {
-      focusFormPanel("targeting", "先补充岗位和关键词。");
+      focusFormPanel("targeting", "先补岗位和关键词。");
       return;
     }
 
@@ -330,6 +383,7 @@ export function useResumeEditorPageActions({
     handleBack,
     handleFocusDiagnostic,
     handleFocusImportedBasics,
+    handleCreateOptimizedVersion,
     handleGenerateAiSummary,
     handleGenerateTailoredVariant,
     handleModeChange,

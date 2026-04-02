@@ -244,6 +244,14 @@
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
 }
 
+.editor-preset-card-active {
+  border-color: color-mix(in srgb, var(--accent-strong) 30%, white);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 24%, white), rgba(248, 246, 241, 0.96)),
+    #fff;
+  box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
+}
+
 .editor-preset-card strong {
   color: var(--ink-strong);
   font-size: 0.96rem;
@@ -323,6 +331,12 @@
   border-color: color-mix(in srgb, var(--line-strong) 68%, white);
   color: var(--ink-strong);
   background: rgba(255, 255, 255, 0.98);
+}
+
+.editor-source-chip-active {
+  border-color: color-mix(in srgb, var(--accent-strong) 26%, white);
+  background: color-mix(in srgb, var(--accent-soft) 34%, white);
+  color: var(--accent-strong);
 }
 
 .resume-editor-source-shell {

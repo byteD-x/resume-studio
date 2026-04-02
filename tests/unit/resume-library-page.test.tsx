@@ -49,6 +49,6 @@ describe("resume library page", () => {
     fireEvent.click(screen.getByRole("button", { name: "删除整组" }));
 
     expect(screen.getByText("删除“Lineage Source”整组版本？")).toBeTruthy();
-    expect(screen.getByText("这会删除当前主稿以及其下 1 个定制版本，且无法自动恢复。")).toBeTruthy();
+    expect(screen.getByText("这会删除当前主稿以及其下 1 个派生版本，且无法自动恢复。")).toBeTruthy();
   });
 });

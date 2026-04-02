@@ -7,10 +7,7 @@ export function ResumeLibraryEmptyState() {
   return (
     <section className="mt-8 rounded-[20px] border border-dashed border-[color:var(--line)] bg-[rgba(255,255,255,0.76)] px-6 py-12 text-center shadow-sm">
       <FilePlus2 className="mx-auto mb-4 size-8 text-[color:var(--ink-muted)]" />
-      <h2 className="text-xl font-semibold text-[color:var(--ink-strong)]">还没有任何简历</h2>
-      <p className="mx-auto mt-3 max-w-[28rem] text-[0.92rem] text-[color:var(--ink-soft)]">
-        先从模板创建一份主稿，或导入现有内容，再继续补全和定向。
-      </p>
+      <h2 className="text-xl font-semibold text-[color:var(--ink-strong)]">还没有简历</h2>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <ButtonLink href="/templates">从模板开始</ButtonLink>
         <ButtonLink

@@ -1,7 +1,7 @@
 import type { Route } from "next";
 import type { LibraryRow, VersionGroup } from "@/components/product/resume-library/types";
 import { hasResumeRenderableContent } from "@/lib/resume-content";
-import { buildResumeLineageMap } from "@/lib/resume-lineage";
+import { buildResumeLineageMap, getResumeDerivativeLabel } from "@/lib/resume-lineage";
 import { buildTailoredVariantPlan } from "@/lib/resume-tailoring";
 import { buildResumeWorkbenchReport, getResumeWorkbenchTaskFocusTarget } from "@/lib/resume-workbench";
 import type { ResumeDocument } from "@/types/resume";
@@ -17,14 +17,6 @@ const dateTimeFormatter = new Intl.DateTimeFormat("zh-CN", {
 
 export function formatDateTime(value: string) {
   return dateTimeFormatter.format(new Date(value));
-}
-
-export async function getJson<T>(response: Response): Promise<T> {
-  if (!response.ok) {
-    throw new Error((await response.text()) || `Request failed: ${response.status}`);
-  }
-
-  return (await response.json()) as T;
 }
 
 export function buildRowData(resumes: ResumeDashboardSummary[]) {
@@ -95,6 +87,6 @@ export function buildVersionGroups(rows: LibraryRow[]) {
 
 export function getGroupKindLabel(row: LibraryRow) {
   if (row.lineage?.kind === "source") return "主稿";
-  if (row.lineage?.kind === "variant") return "定制版";
+  if (row.lineage?.kind === "variant") return getResumeDerivativeLabel(row.lineage.derivativeKind);
   return "独立简历";
 }

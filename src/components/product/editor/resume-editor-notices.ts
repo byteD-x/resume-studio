@@ -1,6 +1,6 @@
 import type { ResumeEditorNotice } from "@/components/product/editor/ResumeEditorNoticeList";
 import type { RecentDeletion } from "@/components/product/editor/useResumeEditorSectionActions";
-import type { ResumeLineageMeta } from "@/lib/resume-lineage";
+import { getResumeDerivativeLabel, type ResumeLineageMeta } from "@/lib/resume-lineage";
 
 export function buildResumeEditorNotices({
   highlightedDiagnostics,
@@ -38,7 +38,7 @@ export function buildResumeEditorNotices({
       tone: "accent",
       message:
         lineage.kind === "variant"
-          ? "当前正在编辑一份岗位定制版"
+          ? `当前正在编辑一份${getResumeDerivativeLabel(lineage.derivativeKind)}`
           : lineage.kind === "source"
             ? "当前正在编辑一份主稿"
             : "当前是一份独立草稿",
@@ -52,7 +52,7 @@ export function buildResumeEditorNotices({
       key: "import-review",
       badge: "导入校对",
       tone: "accent",
-      message: importReview.remainingCount > 0 ? `还有 ${importReview.remainingCount} 个待核对项` : "首轮导入已完成",
+      message: importReview.remainingCount > 0 ? `还有 ${importReview.remainingCount} 个待校对项` : "首轮导入已完成",
       actionLabel: "去核对",
       onAction: onFocusImportedBasics,
     });

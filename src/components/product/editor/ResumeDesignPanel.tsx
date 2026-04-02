@@ -3,6 +3,7 @@
 import { ResumeDesignColorSection } from "@/components/product/editor/ResumeDesignColorSection";
 import { ResumeDesignCustomCssSection } from "@/components/product/editor/ResumeDesignCustomCssSection";
 import { ResumeDesignLayoutSection } from "@/components/product/editor/ResumeDesignLayoutSection";
+import { ResumeDesignOptimizationSection } from "@/components/product/editor/ResumeDesignOptimizationSection";
 import { ResumeDesignPhotoSection } from "@/components/product/editor/ResumeDesignPhotoSection";
 import { ResumeDesignPresetSection } from "@/components/product/editor/ResumeDesignPresetSection";
 import { ResumeDesignTypographySection } from "@/components/product/editor/ResumeDesignTypographySection";
@@ -17,6 +18,18 @@ export function ResumeDesignPanel(props: ResumeDesignPanelProps) {
         </div>
       </div>
 
+      <ResumeDesignOptimizationSection
+        isCreatingOptimizedVersion={props.isCreatingOptimizedVersion}
+        isOptimizationPreviewActive={props.isOptimizationPreviewActive}
+        onApplyCurrentOptimization={props.onApplyCurrentOptimization}
+        onDeriveOptimizedDocument={props.onDeriveOptimizedDocument}
+        onOptimizationGoalChange={props.onOptimizationGoalChange}
+        onOptimizationTargetChange={props.onOptimizationTargetChange}
+        onPreviewOptimization={props.onPreviewOptimization}
+        onRestoreOptimizationPreview={props.onRestoreOptimizationPreview}
+        optimizationGoal={props.optimizationGoal}
+        optimizationTarget={props.optimizationTarget}
+      />
       <ResumeDesignPresetSection onApplyPreset={props.onApplyPreset} />
       <ResumeDesignLayoutSection
         document={props.document}

@@ -24,7 +24,9 @@ export function ResumeLibraryPage({
     activeDeleteId,
     confirmation,
     generatingInProgress,
+    optimizingInProgress,
     pendingKey,
+    generateOptimizedVersion,
     requestDeleteResume,
     generateTailoredVariant,
     setConfirmation,
@@ -68,8 +70,10 @@ export function ResumeLibraryPage({
               activeDeleteId={activeDeleteId}
               deletingSourceInSelectedGroup={deletingSourceInSelectedGroup}
               generatingInProgress={generatingInProgress}
+              optimizingInProgress={optimizingInProgress}
               pendingKey={pendingKey}
               selectedGroup={selectedGroup}
+              onGenerateOptimizedVersion={generateOptimizedVersion}
               onGenerateTailoredVariant={generateTailoredVariant}
               onRequestDeleteResume={requestDeleteResume}
             />

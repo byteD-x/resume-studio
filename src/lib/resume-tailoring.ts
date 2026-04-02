@@ -1,4 +1,5 @@
 import type { ResumeDocument, ResumeSection, ResumeSectionItem } from "@/types/resume";
+import { mergeDerivedSourceRefs } from "@/lib/resume-derivatives";
 import { extractFocusKeywordsFromJobDescription } from "@/lib/resume-targeting";
 import { nowIso, stripHtml } from "@/lib/utils";
 
@@ -275,9 +276,7 @@ export function createTailoredVariantDocument(
       id: input.nextId,
       title,
       updatedAt: nowIso(),
-      sourceRefs: Array.from(
-        new Set([...sourceDocument.meta.sourceRefs, `resume:${sourceDocument.meta.id}`]),
-      ),
+      sourceRefs: mergeDerivedSourceRefs(sourceDocument.meta.sourceRefs, sourceDocument.meta.id, "tailored"),
     },
     sections,
     importTrace: {
