@@ -1,4 +1,3 @@
-
 .editor-shortcut-dialog {
   width: min(820px, calc(100vw - 2rem));
   border: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
@@ -106,17 +105,17 @@
 
 .resume-editor-field-grid {
   display: grid;
-  gap: 0.9rem;
+  gap: 0.75rem;
   grid-template-columns: minmax(0, 1fr);
 }
 
 .editor-item-stack {
   display: grid;
-  gap: 0.95rem;
+  gap: 0.85rem;
 }
 
 .editor-item-card {
-  padding: 0.78rem 0.84rem;
+  padding: 0.72rem 0.78rem;
   border: 1px solid var(--line);
   border-radius: 0.5rem;
   background: rgba(255, 255, 255, 0.9);
@@ -157,26 +156,26 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 1.8rem;
-  height: 1.8rem;
-  margin-top: 0.1rem;
-  border-radius: 0.75rem;
+  width: 1.7rem;
+  height: 1.7rem;
+  margin-top: 0.05rem;
+  border-radius: 0.65rem;
   background: #eef2f6;
   color: var(--ink-muted);
 }
 
 .editor-item-title {
   margin: 0;
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 700;
   color: var(--ink-strong);
 }
 
 .editor-item-subtitle {
-  margin: 0.18rem 0 0;
+  margin: 0.16rem 0 0;
   color: var(--ink-soft);
-  font-size: 0.8rem;
-  line-height: 1.45;
+  font-size: 0.78rem;
+  line-height: 1.4;
 }
 
 .editor-item-actions {
@@ -186,18 +185,18 @@
 
 .editor-item-primary-fields,
 .editor-item-block {
-  margin-top: 0.9rem;
+  margin-top: 0.75rem;
 }
 
 .editor-item-secondary {
-  margin-top: 0.9rem;
-  padding-top: 0.9rem;
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
   border-top: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
 }
 
 .editor-item-secondary summary {
   color: var(--ink-soft);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 700;
   list-style: none;
   cursor: pointer;
@@ -209,13 +208,13 @@
 
 .editor-item-secondary-fields {
   display: grid;
-  gap: 0.9rem;
-  margin-top: 0.9rem;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .empty-surface-actions {
-  margin-top: 0.9rem;
+  margin-top: 0.75rem;
 }
 
 .site-footer {
@@ -263,58 +262,52 @@
 .resume-editor-workspace {
   display: flex;
   flex-direction: column;
+  width: 100%;
+  height: 100dvh;
   min-height: 100dvh;
-  width: min(var(--workspace-shell-max), calc(100vw - (var(--page-shell-gutter) * 2)));
-  margin: 0 auto;
-  overflow-x: clip;
+  overflow: hidden;
 }
 
 .resume-editor-layout {
   display: grid;
   flex: 1;
+  min-width: 0;
   min-height: 0;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 14px;
-  padding: 10px 14px 14px;
+  height: calc(100dvh - var(--editor-toolbar-height, 64px));
+  grid-template-columns: var(--editor-rail-width) minmax(440px, 32%) minmax(760px, 1fr);
+  gap: 12px;
+  padding: 0 12px 12px;
   overflow: hidden;
-  align-items: start;
+  align-items: stretch;
 }
 
-.resume-editor-layout-edit .resume-editor-right {
-  display: none;
-}
-
-.resume-editor-layout-preview .resume-editor-left {
-  display: none;
-}
-
-.resume-editor-layout-preview .resume-editor-right {
-  width: min(1320px, 100%);
-  margin: 0 auto;
+.resume-editor-layout-edit {
+  grid-template-columns: var(--editor-rail-width) minmax(480px, 35%) minmax(720px, 1fr);
 }
 
 .resume-editor-layout-split {
-  grid-template-columns: minmax(0, 1.08fr) minmax(36rem, 0.92fr);
+  grid-template-columns: var(--editor-rail-width) minmax(440px, 32%) minmax(760px, 1fr);
 }
 
-.resume-editor-left {
-  display: grid;
+.resume-editor-layout-preview {
+  grid-template-columns: var(--editor-rail-width) minmax(420px, 28%) minmax(820px, 1fr);
+}
+
+.resume-editor-main,
+.resume-editor-right,
+.editor-sidebar,
+.resume-editor-stack,
+.editor-surface-section {
   min-width: 0;
   min-height: 0;
-  grid-template-columns: 60px minmax(0, 1fr);
-  gap: 14px;
-  overflow: hidden;
-}
-
-.resume-editor-left .editor-sidebar {
-  grid-column: 1 / 2;
-  position: static;
 }
 
 .resume-editor-main {
   display: flex;
   flex-direction: column;
-  min-height: 0;
   overflow: hidden;
-  gap: 12px;
+}
+
+.editor-surface-section {
+  overscroll-behavior: contain;
 }

@@ -8,10 +8,7 @@ import { resolveImportStatusMessage, resolveLatestImportKind } from "@/component
 import type { PendingEditorConfirmation } from "@/components/product/editor/useResumeEditorSectionActions";
 import { readClientAiConfig } from "@/lib/client-ai-config";
 import { getJsonOrThrow } from "@/lib/client-auth";
-import {
-  buildOptimizedResumeTitle,
-  getResumeOptimizationGoalLabel,
-} from "@/lib/resume-derivatives";
+import { buildOptimizedResumeTitle, getResumeOptimizationGoalLabel } from "@/lib/resume-derivatives";
 import type { ResumeOptimizationGoal } from "@/lib/resume-layout";
 import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
 import { buildTailoredVariantPlan, type TailoredVariantPlan } from "@/lib/resume-tailoring";
@@ -66,19 +63,40 @@ export function useResumeEditorPageActions({
   setStatusMessage: (value: string) => void;
   updateDocument: (updater: (current: ResumeDocument) => ResumeDocument, options?: UpdateDocumentOptions) => void;
 }) {
-  const focusFormPanel = (panel: FormPanel, message = "继续编辑") => {
-    lastFormPanelRef.current = panel;
-    setActivePanel(panel);
-    setStatusMessage(message);
+  const scrollEditorSurface = (anchor?: string) => {
+    const tryScroll = (attempt = 0) => {
+      const surface = editorSurfaceRef.current;
+      const anchorElement = anchor
+        ? surface?.querySelector<HTMLElement>(`[data-editor-anchor="${anchor}"]`)
+        : null;
+      const target = anchorElement ?? surface;
+
+      if (!target || (anchor && !anchorElement)) {
+        if (attempt < 8) {
+          window.setTimeout(() => tryScroll(attempt + 1), 40);
+        }
+        return;
+      }
+
+      target.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+      anchorElement?.focus({ preventScroll: true });
+    };
 
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        editorSurfaceRef.current?.scrollIntoView({
-          behavior: "smooth",
-          block: "start",
-        });
+        tryScroll();
       });
     });
+  };
+
+  const focusFormPanel = (panel: FormPanel, message = "继续编辑", anchor?: string) => {
+    lastFormPanelRef.current = panel;
+    setActivePanel(panel);
+    setStatusMessage(message);
+    scrollEditorSurface(anchor);
   };
 
   const syncClientAiConfig = useEffectEvent(() => {
@@ -218,9 +236,7 @@ export function useResumeEditorPageActions({
         }),
       );
 
-      setStatusMessage(
-        options?.successMessage ?? `已另存为${goalLabel}，接下来可以在新稿里压缩篇幅`,
-      );
+      setStatusMessage(options?.successMessage ?? `已另存为${goalLabel}，可继续压缩与微调`);
       pushRoute(`/studio/${result.document.meta.id}?focus=${options?.focus ?? "content"}`);
       return true;
     } catch (error) {
@@ -235,7 +251,7 @@ export function useResumeEditorPageActions({
     if (latestMarkdownErrorRef.current) {
       setConfirmation({
         title: "Markdown 还有解析错误",
-        description: "现在返回会放弃未保存的 Markdown 修改。确认后我会直接离开当前编辑页。",
+        description: "现在返回会放弃未保存的 Markdown 修改。确认后将直接离开当前编辑页。",
         confirmLabel: "仍然返回",
         confirmVariant: "danger",
         onConfirm: () => {
@@ -266,7 +282,7 @@ export function useResumeEditorPageActions({
     focusFormPanel(panel, nextItem ? `正在编辑${nextItem.label}` : "继续编辑");
   };
 
-  const handleModeChange = (mode: "form" | "markdown") => {
+  const handleModeChange = (mode: "visual" | "markdown") => {
     if (mode === "markdown") {
       handlePanelSelect("markdown");
       return;
@@ -276,7 +292,7 @@ export function useResumeEditorPageActions({
   };
 
   const handleFocusImportedBasics = () => {
-    focusFormPanel("basics", "先核对基础信息。");
+    focusFormPanel("basics", "先核对基础信息", "import-review");
   };
 
   const handleGenerateAiSummary = async () => {
@@ -289,7 +305,7 @@ export function useResumeEditorPageActions({
     if (latestDocumentRef.current.ai.provider !== "openai-compatible") {
       setActivePanel("ai");
       lastFormPanelRef.current = "ai";
-      setStatusMessage("先把 AI 提供方切换到 OpenAI Compatible");
+      setStatusMessage("先把 AI 提供方切到 OpenAI Compatible");
       return;
     }
 
@@ -319,17 +335,17 @@ export function useResumeEditorPageActions({
 
   const handleFocusDiagnostic = (target: "basics" | "summary" | "content" | "targeting" | "export") => {
     if (target === "basics" || target === "summary") {
-      focusFormPanel("basics", target === "summary" ? "先补摘要。" : "先完善基础信息。");
+      focusFormPanel("basics", target === "summary" ? "先补摘要" : "先完善基础信息");
       return;
     }
 
     if (target === "targeting") {
-      focusFormPanel("targeting", "先补岗位和关键词。");
+      focusFormPanel("targeting", "先补岗位和关键词");
       return;
     }
 
     if (target === "content") {
-      focusFormPanel("experience", "先整理经历和结果要点。");
+      focusFormPanel("experience", "先整理经历和结果要点");
       return;
     }
 
@@ -344,37 +360,37 @@ export function useResumeEditorPageActions({
       lastFormPanelRef.current = "basics";
       setActivePanel("basics");
       if (focus === "summary") {
-        setStatusMessage("先补摘要。");
+        setStatusMessage("先补摘要");
       }
     } else if (focus === "design") {
       lastFormPanelRef.current = "design";
       setActivePanel("design");
-      setStatusMessage("先调整版式和外观。");
+      setStatusMessage("先调整版式");
     } else if (focus === "targeting") {
       lastFormPanelRef.current = "targeting";
       setActivePanel("targeting");
-      setStatusMessage("先定岗位和关键词。");
+      setStatusMessage("先定岗位和关键词");
     } else if (focus === "ai") {
       setActivePanel("ai");
       lastFormPanelRef.current = "ai";
-      setStatusMessage("先看 AI 分析和定制版计划。");
+      setStatusMessage("先看 AI 分析和定制计划");
     } else if (focus === "content") {
       setActivePanel("experience");
       lastFormPanelRef.current = "experience";
-      setStatusMessage("先补经历和结果。");
+      setStatusMessage("先补经历和结构");
     }
 
     const importedKind = resolveLatestImportKind(latestDocumentRef.current);
     if (importedKind) {
       setStatusMessage(resolveImportStatusMessage(importedKind));
     } else if (onboarding === "pdf") {
-      setStatusMessage("先核对 PDF 导入结果。");
+      setStatusMessage("先核对 PDF 导入结果");
     } else if (onboarding === "portfolio") {
-      setStatusMessage("先核对作品集导入结果。");
+      setStatusMessage("先核对作品集导入结果");
     } else if (onboarding === "template") {
-      setStatusMessage("先把模板示例替换成你的真实信息。");
+      setStatusMessage("先替换模板示例内容");
     } else if (onboarding === "guided") {
-      setStatusMessage("先补齐基础信息，再逐步添加内容。");
+      setStatusMessage("先补基础信息，再逐步补内容");
     }
   }, [lastFormPanelRef, latestDocumentRef, searchParams, setActivePanel, setStatusMessage]);
 

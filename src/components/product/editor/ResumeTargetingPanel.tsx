@@ -20,7 +20,7 @@ export function ResumeTargetingPanel({
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
-          <h3>目标信息</h3>
+          <h3>目标</h3>
         </div>
 
         <div className="resume-editor-field-grid">
@@ -38,7 +38,7 @@ export function ResumeTargetingPanel({
                   onValueChange: (nextValue) => onTargetingChange("role", nextValue),
                 })
               }
-              placeholder="例如：前端负责人 / Staff Frontend Engineer"
+              placeholder="Frontend Engineer"
               value={document.targeting.role}
             />
           </label>
@@ -57,7 +57,7 @@ export function ResumeTargetingPanel({
                   onValueChange: (nextValue) => onTargetingChange("company", nextValue),
                 })
               }
-              placeholder="例如：字节跳动 / Acme"
+              placeholder="Acme"
               value={document.targeting.company}
             />
           </label>
@@ -104,7 +104,7 @@ export function ResumeTargetingPanel({
                 onValueChange: (nextValue) => onTargetingChange("focusKeywords", nextValue),
               })
             }
-            placeholder="例如：React, Next.js, Design Systems, Growth, SQL"
+            placeholder="React, Next.js, SQL"
             spellCheck={false}
             value={document.targeting.focusKeywords.join(", ")}
           />
@@ -113,7 +113,7 @@ export function ResumeTargetingPanel({
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
-          <h3>职位描述</h3>
+          <h3>JD</h3>
         </div>
         <label className="field-shell">
           <span className="field-label">JD 原文</span>
@@ -129,7 +129,7 @@ export function ResumeTargetingPanel({
                 onValueChange: (nextValue) => onTargetingChange("jobDescription", nextValue),
               })
             }
-            placeholder="粘贴职位描述原文。"
+            placeholder="粘贴 JD"
             value={document.targeting.jobDescription}
           />
         </label>
@@ -137,7 +137,7 @@ export function ResumeTargetingPanel({
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
-          <h3>版本备注</h3>
+          <h3>备注</h3>
         </div>
         <label className="field-shell">
           <span className="field-label">备注</span>
@@ -153,7 +153,7 @@ export function ResumeTargetingPanel({
                 onValueChange: (nextValue) => onTargetingChange("notes", nextValue),
               })
             }
-            placeholder="例如：这一版优先突出设计系统、跨团队影响力和增长实验经验。"
+            placeholder="这一版突出什么"
             value={document.targeting.notes}
           />
         </label>

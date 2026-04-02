@@ -1,7 +1,30 @@
 "use client";
 
 import type { ReactNode, RefObject } from "react";
+import { Badge } from "@/components/ui/Badge";
 import type { EditorPanelGroup, EditorPanelItem } from "@/components/product/editor/ResumeEditorSidebar";
+
+function resolveStatusTone(status: EditorPanelItem["status"]): "neutral" | "accent" | "success" | "warning" {
+  switch (status) {
+    case "ready":
+      return "success";
+    case "in_progress":
+      return "accent";
+    default:
+      return "neutral";
+  }
+}
+
+function resolveStatusLabel(status: EditorPanelItem["status"]) {
+  switch (status) {
+    case "ready":
+      return "已就绪";
+    case "in_progress":
+      return "编辑中";
+    default:
+      return "待补充";
+  }
+}
 
 export function ResumeEditorWorkbench({
   activePanelGroup,
@@ -9,6 +32,7 @@ export function ResumeEditorWorkbench({
   children,
   editorMode,
   editorSurfaceRef,
+  focusLabel,
   notices,
   onModeChange,
   onSurfaceFocusCapture,
@@ -16,35 +40,34 @@ export function ResumeEditorWorkbench({
   activePanelGroup?: EditorPanelGroup;
   activePanelMeta?: EditorPanelItem;
   children: ReactNode;
-  editorMode: "form" | "markdown";
+  editorMode: "visual" | "markdown";
   editorSurfaceRef: RefObject<HTMLElement | null>;
+  focusLabel?: string;
   notices?: ReactNode;
-  onModeChange: (mode: "form" | "markdown") => void;
+  onModeChange: (mode: "visual" | "markdown") => void;
   onSurfaceFocusCapture: () => void;
 }) {
-  const panelDescription =
-    editorMode === "markdown"
-      ? "适合长文修改、结构重排与批量粘贴。"
-      : activePanelMeta?.hint || "聚焦当前模块，右侧同步校对纸面排版。";
-
   return (
-    <div className="resume-editor-stack flex flex-1 flex-col min-h-0 overflow-hidden">
+    <div className="resume-editor-stack flex min-h-0 flex-1 flex-col overflow-hidden">
       <section className="editor-workbench-header shrink-0">
         <div className="editor-workbench-row">
           <div className="editor-workbench-caption">
-            <div className="editor-workbench-titleblock">
-              <span className="editor-workbench-label">{activePanelGroup?.label ?? "编辑模块"}</span>
-              <strong className="editor-workbench-title">{activePanelMeta?.label ?? "编辑"}</strong>
-              <p className="editor-workbench-copy">{panelDescription}</p>
+            <strong className="editor-workbench-title">{activePanelMeta?.label ?? focusLabel ?? "编辑"}</strong>
+            <div className="editor-workbench-tagrow">
+              {activePanelGroup?.label ? <Badge tone="neutral">{activePanelGroup.label}</Badge> : null}
+              <Badge tone={resolveStatusTone(activePanelMeta?.status ?? "empty")}>
+                {resolveStatusLabel(activePanelMeta?.status ?? "empty")}
+              </Badge>
+              {activePanelMeta?.countLabel ? <Badge tone="neutral">{activePanelMeta.countLabel}</Badge> : null}
             </div>
           </div>
 
           <div className="editor-workbench-controls">
-            <div aria-label="内容编辑方式" className="editor-input-mode">
+            <div aria-label="编辑模式" className="editor-input-mode">
               <button
-                aria-pressed={editorMode === "form"}
-                className={`editor-input-mode-tab ${editorMode === "form" ? "editor-input-mode-tab-active" : ""}`}
-                onClick={() => onModeChange("form")}
+                aria-pressed={editorMode === "visual"}
+                className={`editor-input-mode-tab ${editorMode === "visual" ? "editor-input-mode-tab-active" : ""}`}
+                onClick={() => onModeChange("visual")}
                 type="button"
               >
                 可视化
@@ -58,10 +81,6 @@ export function ResumeEditorWorkbench({
                 Markdown
               </button>
             </div>
-
-            <span className="editor-workbench-modehint">
-              {editorMode === "markdown" ? "源码模式" : "所见即所得"}
-            </span>
           </div>
         </div>
 

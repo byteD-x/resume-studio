@@ -20,6 +20,7 @@ export function buildResumeEditorNotices({
   importReview:
     | {
         remainingCount: number;
+        reviewTaskCount: number;
       }
     | null;
   lineage: ResumeLineageMeta | null;
@@ -34,15 +35,15 @@ export function buildResumeEditorNotices({
   if (lineage) {
     notices.push({
       key: "lineage",
-      badge: "版本关系",
+      badge: "版本",
       tone: "accent",
       message:
         lineage.kind === "variant"
-          ? `当前正在编辑一份${getResumeDerivativeLabel(lineage.derivativeKind)}`
+          ? getResumeDerivativeLabel(lineage.derivativeKind)
           : lineage.kind === "source"
-            ? "当前正在编辑一份主稿"
-            : "当前是一份独立草稿",
-      actionLabel: lineage.parentId ? "查看来源" : undefined,
+            ? "源简历"
+            : "草稿",
+      actionLabel: lineage.parentId ? "来源" : undefined,
       onAction: lineage.parentId ? onOpenParent : undefined,
     });
   }
@@ -50,10 +51,15 @@ export function buildResumeEditorNotices({
   if (importReview) {
     notices.push({
       key: "import-review",
-      badge: "导入校对",
+      badge: "校对",
       tone: "accent",
-      message: importReview.remainingCount > 0 ? `还有 ${importReview.remainingCount} 个待校对项` : "首轮导入已完成",
-      actionLabel: "去核对",
+      message:
+        importReview.remainingCount > 0
+          ? `待校对 ${importReview.remainingCount}`
+          : importReview.reviewTaskCount > 0
+            ? "继续校对"
+            : "已完成",
+      actionLabel: "查看",
       onAction: onFocusImportedBasics,
     });
   } else if (highlightedDiagnostics.length > 0) {
@@ -63,7 +69,7 @@ export function buildResumeEditorNotices({
       badge: "提醒",
       tone: "warning",
       message: diagnostic.message,
-      actionLabel: "去处理",
+      actionLabel: "处理",
       onAction: () => onFocusDiagnostic(diagnostic.target),
     });
   }
@@ -71,7 +77,7 @@ export function buildResumeEditorNotices({
   if (recentDeletion) {
     notices.push({
       key: `recent-deletion-${recentDeletion.item.id}`,
-      badge: "已删除",
+      badge: "删除",
       tone: "neutral",
       message: recentDeletion.item.title || recentDeletion.sectionTitle,
       actionLabel: "恢复",

@@ -23,7 +23,7 @@ function normalizeValue(value: string | string[] | null | undefined) {
 
 function renderCompareList(lines: string[]) {
   if (lines.length === 0) {
-    return <p className="resume-assist-compare-empty">暂无内容</p>;
+    return <p className="resume-assist-compare-empty">暂无</p>;
   }
 
   return (
@@ -38,16 +38,16 @@ function renderCompareList(lines: string[]) {
 function buildMetaLine(issues: ResumeAssistIssue[], suggestions: ResumeAssistSuggestion[]) {
   const parts: string[] = [];
   if (issues.length > 0) {
-    parts.push(`${issues.length} 项待处理`);
+    parts.push(`${issues.length} 项`);
   }
   if (suggestions.length > 0) {
-    parts.push(`${suggestions.length} 条参考`);
+    parts.push(`${suggestions.length} 条`);
   }
-  return parts.length > 0 ? parts.join(" · ") : null;
+  return parts.length > 0 ? parts.join(" / ") : null;
 }
 
 export function ResumeAssistPanel({
-  title = "写作辅助",
+  title = "辅助",
   description = "",
   issues,
   suggestions,

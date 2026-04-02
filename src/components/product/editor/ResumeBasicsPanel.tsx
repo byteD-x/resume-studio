@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { Badge } from "@/components/ui/Badge";
 import { ResumeAssistPanel } from "@/components/product/editor/ResumeAssistPanel";
 import { RichTextField } from "@/components/product/editor/RichTextField";
+import type { ResumeEditorImportReview } from "@/components/product/editor/workspace/import-review";
 import { readClientAiConfig } from "@/lib/client-ai-config";
 import { handleSanitizedPaste } from "@/lib/editor-input";
 import { buildBasicsAssistPack } from "@/lib/resume-assistant";
@@ -14,9 +16,9 @@ type BasicsTextField = "name" | "headline" | "location" | "website" | "email" | 
 
 const profileFields = [
   ["name", "姓名", "你的姓名"],
-  ["headline", "定位", "例如：AI 应用工程师"],
-  ["location", "地区", "城市或远程"],
-  ["website", "个人网站", "https://your-site.com"],
+  ["headline", "目标岗位", "例如：前端工程师"],
+  ["location", "地点", "城市 / 远程"],
+  ["website", "个人链接", "https://your-site.com"],
 ] as const;
 
 const contactFields = [
@@ -26,10 +28,12 @@ const contactFields = [
 
 export function ResumeBasicsPanel({
   document,
+  importReview,
   onBasicsChange,
   onSummaryHtmlChange,
 }: {
   document: ResumeDocument;
+  importReview: ResumeEditorImportReview | null;
   onBasicsChange: (field: BasicsTextField, value: string) => void;
   onSummaryHtmlChange: (value: string) => void;
 }) {
@@ -43,6 +47,37 @@ export function ResumeBasicsPanel({
   const targetingKeywordsKey = document.targeting.focusKeywords.join("|");
   const combinedSuggestions =
     remoteSuggestions.length > 0 ? [...remoteSuggestions, ...assistPack.suggestions] : assistPack.suggestions;
+
+  const importHighlights = useMemo(() => {
+    if (!importReview) {
+      return [];
+    }
+
+    const rows = [
+      ...importReview.pendingItemsPreview.map((item) => ({
+        key: `pending-${item}`,
+        label: "待确认",
+        value: item,
+      })),
+      ...importReview.fieldSuggestions.map((suggestion) => ({
+        key: suggestion.id,
+        label: suggestion.label,
+        value: summarizeImportValue(suggestion.importedValue),
+      })),
+      ...importReview.unmappedItems.map((item) => ({
+        key: `unmapped-${item}`,
+        label: "未映射",
+        value: item,
+      })),
+      ...importReview.snapshots.map((snapshot) => ({
+        key: snapshot.id,
+        label: snapshot.label || "来源片段",
+        value: snapshot.mappedTo || summarizeImportValue(snapshot.excerpt),
+      })),
+    ];
+
+    return rows.slice(0, 6);
+  }, [importReview]);
 
   useEffect(() => {
     setRemoteSuggestions([]);
@@ -91,13 +126,46 @@ export function ResumeBasicsPanel({
     <section className="resume-editor-panel">
       <div className="resume-editor-panel-head">
         <div>
-          <h2 className="resume-editor-panel-title">抬头信息</h2>
+          <h2 className="resume-editor-panel-title">头部信息</h2>
         </div>
       </div>
 
+      {importReview ? (
+        <div
+          className="resume-editor-group resume-editor-group-compact resume-import-review"
+          data-editor-anchor="import-review"
+          tabIndex={-1}
+        >
+          <div className="resume-editor-group-head">
+            <h3>导入校对</h3>
+          </div>
+
+          <div className="resume-import-review-meta">
+            <Badge tone={importReview.remainingCount > 0 ? "warning" : "success"}>
+              {importReview.remainingCount > 0 ? `待校对 ${importReview.remainingCount}` : "已清空"}
+            </Badge>
+            {importReview.pendingItemCount > 0 ? <Badge tone="neutral">待确认 {importReview.pendingItemCount}</Badge> : null}
+            {importReview.fieldSuggestionCount > 0 ? <Badge tone="neutral">字段 {importReview.fieldSuggestionCount}</Badge> : null}
+            {importReview.snapshotCount > 0 ? <Badge tone="neutral">片段 {importReview.snapshotCount}</Badge> : null}
+            {importReview.unmappedItemCount > 0 ? <Badge tone="neutral">未映射 {importReview.unmappedItemCount}</Badge> : null}
+          </div>
+
+          {importHighlights.length > 0 ? (
+            <div className="resume-import-review-list">
+              {importHighlights.map((item) => (
+                <div className="resume-import-review-row" key={item.key}>
+                  <span className="resume-import-review-label">{item.label}</span>
+                  <strong className="resume-import-review-value">{item.value}</strong>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
-          <h3>身份信息</h3>
+          <h3>身份</h3>
         </div>
         <div className="resume-editor-field-grid">
           {profileFields.map(([field, label, placeholder]) => (
@@ -136,7 +204,7 @@ export function ResumeBasicsPanel({
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
-          <h3>联系方式</h3>
+          <h3>联系</h3>
         </div>
         <div className="resume-editor-field-grid">
           {contactFields.map(([field, label, placeholder]) => (
@@ -167,16 +235,15 @@ export function ResumeBasicsPanel({
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
-          <h3>职业摘要</h3>
+          <h3>摘要</h3>
         </div>
 
         <RichTextField
           ariaLabel="职业摘要"
-          helper="适合写你最核心的方向、优势和代表性价值。"
           label="摘要"
           minHeight={176}
           onChange={onSummaryHtmlChange}
-          placeholder="概括你的方向、优势，以及你能为目标岗位带来的结果。"
+          placeholder="方向、能力、结果"
           value={document.basics.summaryHtml}
         />
 
@@ -191,21 +258,17 @@ export function ResumeBasicsPanel({
           onGenerateRemote={() => void handleGenerateRemoteAssist()}
           remoteDisabled={!usesRemoteProvider || remoteLoading}
           remoteError={remoteError}
-          remoteHint={
-            usesRemoteProvider
-              ? "使用当前 AI 配置生成摘要建议。"
-              : "请先在 AI 面板完成配置，再生成远程摘要建议。"
-          }
-          remoteLabel="生成摘要"
+          remoteHint={usesRemoteProvider ? null : "先配置 AI"}
+          remoteLabel="生成"
           remoteLoading={remoteLoading}
           suggestions={combinedSuggestions}
-          title="摘要润色"
+          title="润色"
         />
       </div>
 
       <div className="resume-editor-group">
         <div className="resume-editor-group-head">
-          <h3>附加链接</h3>
+          <h3>链接</h3>
         </div>
         <label className="field-shell">
           <span className="field-label">链接</span>
@@ -229,4 +292,8 @@ export function ResumeBasicsPanel({
       </div>
     </section>
   );
+}
+
+function summarizeImportValue(value: string) {
+  return stripHtml(value).replace(/\s+/g, " ").trim() || "待校对";
 }

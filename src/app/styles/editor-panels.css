@@ -1,27 +1,3 @@
-
-.resume-assist-compare-lines {
-  display: grid;
-  gap: 0.34rem;
-  margin-top: 0.52rem;
-}
-
-.resume-assist-compare-lines p,
-.resume-assist-compare-empty {
-  margin: 0;
-  color: var(--ink-strong);
-  font-size: 0.82rem;
-  line-height: 1.58;
-}
-
-.resume-assist-compare-empty {
-  margin-top: 0.52rem;
-  color: var(--ink-muted);
-}
-
-
-
-
-
 .editor-sidebar-block,
 .resume-editor-panel {
   border: none;
@@ -29,7 +5,6 @@
   background: transparent;
   box-shadow: none;
 }
-
 
 .editor-sidebar-block {
   display: flex;
@@ -40,108 +15,12 @@
   background: transparent;
 }
 
-
-.editor-sidebar-group {
+.editor-sidebar-group,
+.editor-sidebar-list {
+  margin-top: 0;
   padding: 0;
   border: 0;
-  border-radius: 0;
   background: transparent;
-}
-
-.editor-sidebar-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.08rem;
-  margin-top: 0;
-}
-
-.editor-sidebar-item {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100%;
-  padding: 0.35rem 0.25rem;
-  border: 1px solid transparent;
-  border-radius: 0.35rem;
-  background: transparent;
-  text-align: center;
-  transition: border-color 140ms ease, background-color 140ms ease;
-  cursor: pointer;
-}
-
-.editor-sidebar-item:hover {
-  background: rgba(248, 246, 241, 0.78);
-}
-
-.editor-sidebar-item-active {
-  border-color: color-mix(in srgb, var(--accent-strong) 20%, white);
-  background: color-mix(in srgb, var(--accent-soft) 50%, white);
-}
-
-.editor-sidebar-item-index {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 1.1rem;
-  height: 1.1rem;
-  border-radius: 999px;
-  background: rgba(237, 242, 247, 0.72);
-  color: var(--ink-soft);
-  font-size: 0.65rem;
-  flex-shrink: 0;
-}
-
-.editor-sidebar-item-active .editor-sidebar-item-index {
-  background: white;
-  color: var(--accent-strong);
-}
-
-.editor-sidebar-item-dot {
-  display: inline-flex;
-  align-items: center;
-  width: 0.5rem;
-  height: 0.5rem;
-  border-radius: 999px;
-  flex: none;
-}
-
-.editor-sidebar-item-dot-empty {
-  background: rgba(203, 213, 225, 0.95);
-}
-
-.editor-sidebar-item-dot-in_progress {
-  background: #d6a33d;
-}
-
-.editor-sidebar-item-dot-ready {
-  background: #4aa36b;
-}
-
-
-
-.editor-workbench-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
-  padding: 0;
-  border: none;
-  border-radius: 0;
-  background: transparent;
-}
-
-.editor-workbench-caption {
-  display: flex;
-  align-items: center;
-  min-width: 0;
-}
-
-.editor-workbench-label {
-  display: none;
-}
-
-.editor-workbench-copy {
-  display: none;
 }
 
 .resume-editor-panel {
@@ -150,96 +29,110 @@
   background: transparent;
 }
 
-.resume-editor-source-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
 .resume-editor-panel-head {
   display: flex;
-  align-items: start;
+  align-items: center;
   justify-content: space-between;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .resume-editor-panel-title {
-  margin: 0.22rem 0 0;
-  font-size: 1.05rem;
-  font-weight: 600;
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 700;
   color: var(--ink-strong);
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
 }
 
 .resume-editor-panel-copy {
-  margin: 0.45rem 0 0;
-  color: var(--ink-soft);
-  font-size: 0.95rem;
-  line-height: 1.72;
-  max-width: 42rem;
+  display: none;
 }
 
 .resume-editor-panel-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.48rem;
-}
-
-.resume-editor-group {
-  padding-top: 1rem;
-  margin-top: 1rem;
-  border-top: 1px solid var(--line);
+  gap: 0.4rem;
 }
 
 .resume-editor-group-compact {
-  padding-top: 0.88rem;
-  margin-top: 0.88rem;
-}
-
-.resume-editor-group-head {
-  margin-bottom: 0.62rem;
+  padding-top: 0.75rem;
+  margin-top: 0.75rem;
 }
 
 .resume-editor-group-head h3 {
   margin: 0;
-  font-size: 0.9375rem;
-  font-weight: 600;
-  letter-spacing: -0.02em;
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: -0.01em;
   color: var(--ink-strong);
 }
 
 .resume-editor-group-head p {
-  margin: 0.24rem 0 0;
-  color: var(--ink-soft);
-  font-size: 0.82rem;
-  line-height: 1.5;
+  display: none;
+}
+
+.resume-import-review {
+  display: grid;
+  gap: 0.6rem;
+  scroll-margin-top: 5rem;
+  outline: none;
+}
+
+.resume-import-review-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.resume-import-review-list {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.resume-import-review-row {
+  display: grid;
+  gap: 0.14rem;
+  padding: 0.5rem 0.62rem;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-radius: 0.72rem;
+  background: rgba(248, 246, 241, 0.72);
+}
+
+.resume-import-review-label {
+  color: var(--ink-muted);
+  font-size: 0.64rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.resume-import-review-value {
+  color: var(--ink-strong);
+  font-size: 0.78rem;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .editor-preset-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 0.6rem;
 }
 
 .editor-preset-card {
   display: grid;
-  gap: 0.45rem;
-  padding: 0.95rem 1rem;
+  gap: 0.32rem;
+  padding: 0.72rem 0.8rem;
   border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
   border-radius: 0.92rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 246, 241, 0.92)),
     #fff;
   text-align: left;
-  transition:
-    transform 160ms ease,
-    border-color 160ms ease,
-    box-shadow 160ms ease;
   cursor: pointer;
 }
 
 .editor-preset-card:hover {
-  transform: translateY(-1px);
   border-color: color-mix(in srgb, var(--accent-strong) 24%, white);
   box-shadow: 0 12px 26px rgba(15, 23, 42, 0.08);
 }
@@ -254,14 +147,14 @@
 
 .editor-preset-card strong {
   color: var(--ink-strong);
-  font-size: 0.96rem;
+  font-size: 0.88rem;
   font-weight: 700;
 }
 
 .editor-preset-card span {
   color: var(--ink-soft);
-  font-size: 0.87rem;
-  line-height: 1.6;
+  font-size: 0.78rem;
+  line-height: 1.45;
 }
 
 .field-shell-full {
@@ -269,107 +162,10 @@
 }
 
 .input-control-code {
-  min-height: 14rem;
-  font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", monospace;
-  font-size: 0.84rem;
-  line-height: 1.72;
-  resize: vertical;
-  tab-size: 2;
-}
-
-.resume-editor-source-banner {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: 1rem;
-  padding: 0.6rem 0.8rem;
-  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-  border-radius: 0.92rem;
-  background: rgba(248, 246, 241, 0.9);
-}
-
-.resume-editor-source-banner strong {
-  display: block;
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--ink-strong);
-}
-
-.resume-editor-source-banner p {
-  margin: 0.35rem 0 0;
-  color: var(--ink-soft);
-  font-size: 0.9rem;
-  line-height: 1.65;
-}
-
-.resume-editor-source-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
-.editor-source-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.42rem;
-  min-height: 2.25rem;
-  padding: 0.5rem 0.78rem;
-  border: 1px solid var(--line);
-  border-radius: 0.5rem;
-  background: rgba(255, 255, 255, 0.92);
-  color: var(--ink-soft);
-  font-size: 0.84rem;
-  font-weight: 600;
-  transition:
-    color 140ms ease,
-    border-color 140ms ease,
-    background-color 140ms ease;
-  cursor: pointer;
-}
-
-.editor-source-chip:hover {
-  border-color: color-mix(in srgb, var(--line-strong) 68%, white);
-  color: var(--ink-strong);
-  background: rgba(255, 255, 255, 0.98);
-}
-
-.editor-source-chip-active {
-  border-color: color-mix(in srgb, var(--accent-strong) 26%, white);
-  background: color-mix(in srgb, var(--accent-soft) 34%, white);
-  color: var(--accent-strong);
-}
-
-.resume-editor-source-shell {
-  display: grid;
-  grid-template-columns: 3.4rem minmax(0, 1fr);
-  min-height: 35rem;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-  border-radius: 0.5rem;
-  background: #f7f4ef;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
-}
-
-.resume-editor-source-shell:focus-within {
-  border-color: color-mix(in srgb, var(--accent-strong) 24%, white);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.75),
-    0 0 0 4px rgba(64, 95, 173, 0.08);
-}
-
-.resume-editor-source-shell-error {
-  border-color: color-mix(in srgb, var(--danger) 34%, white);
-}
-
-.resume-editor-source-gutter {
-  overflow: hidden;
-  padding: 1.15rem 0 1.15rem 1rem;
-  border-right: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-  background: rgba(242, 239, 232, 0.92);
-  color: var(--ink-muted);
+  min-height: 12rem;
   font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", monospace;
   font-size: 0.8rem;
-  line-height: 1.75;
-  text-align: right;
-  user-select: none;
+  line-height: 1.6;
+  resize: vertical;
+  tab-size: 2;
 }

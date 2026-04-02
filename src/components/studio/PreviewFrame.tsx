@@ -10,7 +10,7 @@ import {
 const FALLBACK_PREVIEW_WIDTH = 794;
 const FALLBACK_PREVIEW_HEIGHT = 1123;
 
-export type PreviewZoomPreset = "fit-width" | "fit-page" | 80 | 100 | 120;
+export type PreviewZoomPreset = "fit-width" | "fit-page" | 80 | 100 | 110;
 
 export interface PreviewFrameMetrics {
   pageCount: number;
@@ -157,12 +157,17 @@ export function PreviewFrame({
   const fitPageScale = Math.min(fitWidthScale, availableSize.height / FALLBACK_PREVIEW_HEIGHT);
   const resolvedScale =
     typeof zoom === "number"
-      ? zoom / 100
+      ? Math.min(zoom / 100, fitWidthScale)
       : zoom === "fit-page"
         ? fitPageScale
         : fitWidthScale;
   const scale = Math.max(0.35, Math.min(resolvedScale, 2));
   const pageCount = Math.max(1, Math.ceil(intrinsicSize.height / FALLBACK_PREVIEW_HEIGHT));
+  const scaledWidth =
+    zoom === "fit-width" || zoom === "fit-page"
+      ? Math.min(intrinsicSize.width * scale, availableSize.width)
+      : intrinsicSize.width * scale;
+  const scaledHeight = intrinsicSize.height * scale;
 
   useEffect(() => {
     if (!focusedTarget) {
@@ -170,7 +175,7 @@ export function PreviewFrame({
     }
 
     const shell = shellRef.current;
-    const scrollContainer = shell?.parentElement;
+    const scrollContainer = shell?.closest(".editor-preview-panel");
     const document = iframeRef.current?.contentDocument;
     if (!shell || !scrollContainer || !document) {
       return;
@@ -187,7 +192,7 @@ export function PreviewFrame({
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const targetRect = targetElement.getBoundingClientRect();
-    const nextScrollTop = Math.max(0, targetRect.top * scale - 24);
+    const nextScrollTop = Math.max(0, scrollContainer.scrollTop + targetRect.top * scale - 96);
 
     scrollContainer.scrollTo({
       top: nextScrollTop,
@@ -205,11 +210,11 @@ export function PreviewFrame({
   }, [intrinsicSize.height, intrinsicSize.width, onMetricsChange, pageCount, scale]);
 
   const shellStyle = {
-    "--preview-frame-height": `${Math.max(intrinsicSize.height * scale, 320)}px`,
+    "--preview-frame-height": `${Math.max(scaledHeight, 320)}px`,
   } as CSSProperties;
   const viewportStyle = {
-    width: `${intrinsicSize.width * scale}px`,
-    height: `${intrinsicSize.height * scale}px`,
+    width: `${scaledWidth}px`,
+    height: `${scaledHeight}px`,
   } as CSSProperties;
   const stageStyle = {
     width: `${intrinsicSize.width}px`,

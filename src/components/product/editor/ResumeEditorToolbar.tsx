@@ -39,7 +39,7 @@ function lineageBadgeTone(kind: ResumeLineageMeta["kind"]): "accent" | "neutral"
 
 function lineageShortLabel(meta: ResumeLineageMeta) {
   if (meta.kind === "variant") return getResumeDerivativeLabel(meta.derivativeKind);
-  if (meta.kind === "source") return meta.childCount > 0 ? `主简历 · ${meta.childCount}` : "主简历";
+  if (meta.kind === "source") return meta.childCount > 0 ? `源简历 ${meta.childCount}` : "源简历";
   return "草稿";
 }
 
@@ -120,9 +120,11 @@ export function ResumeEditorToolbar({
                 <span aria-hidden className="editor-toolbar-save-dot" />
                 {saveStateLabel(saveState)}
               </span>
-              <span className="editor-toolbar-message" title={statusMessage}>
-                {statusMessage}
-              </span>
+              {statusMessage ? (
+                <span className="editor-toolbar-message" title={statusMessage}>
+                  {statusMessage}
+                </span>
+              ) : null}
             </div>
           </div>
         </div>
@@ -149,7 +151,7 @@ export function ResumeEditorToolbar({
         <div className="editor-toolbar-actions">
           <Button className="editor-toolbar-export" onClick={onOpenPreview}>
             <ExternalLink className="size-4 shrink-0" />
-            预览 / 导出
+            导出
           </Button>
 
           <details className="editor-toolbar-menu">
@@ -160,7 +162,7 @@ export function ResumeEditorToolbar({
             <div className="editor-toolbar-menu-popover">
               <button className="editor-toolbar-menu-item" onClick={onSave} type="button">
                 <Save className="size-4" />
-                立即保存
+                保存
               </button>
               <button
                 className="editor-toolbar-menu-item"

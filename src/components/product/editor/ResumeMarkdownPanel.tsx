@@ -85,16 +85,18 @@ export function ResumeMarkdownPanel({
 
   return (
     <section className="resume-editor-panel resume-editor-source-panel">
-      <div className="resume-editor-panel-head">
-        <div>
-          <h2 className="resume-editor-panel-title">Markdown</h2>
+      <div className="resume-editor-source-head">
+        <div className="resume-editor-source-meta">
+          <Badge tone="warning">Markdown</Badge>
+          <Badge tone={parseError ? "warning" : "success"}>{parseError ? "错误" : "正常"}</Badge>
+          <Badge tone="neutral">{lineCount} 行</Badge>
+          <Badge tone="neutral">{charCount} 字</Badge>
         </div>
 
         <div className="resume-editor-panel-actions">
-          <Badge tone={parseError ? "warning" : "success"}>{parseError ? "需修正" : "可解析"}</Badge>
           <Button onClick={onInsertStarter} variant="secondary">
             <RotateCcw className="size-4" />
-            插入结构
+            模板
           </Button>
           <Button onClick={onClear} variant="ghost">
             <Eraser className="size-4" />
@@ -106,7 +108,7 @@ export function ResumeMarkdownPanel({
       <div className="resume-editor-source-toolbar">
         <button
           className="editor-source-chip"
-          onClick={() => applyAction({ type: "insert", snippet: "## 新小节[custom]\n" })}
+          onClick={() => applyAction({ type: "insert", snippet: "## 新小节 [custom]\n" })}
           type="button"
         >
           <Heading2 className="size-4" />
@@ -236,16 +238,9 @@ export function ResumeMarkdownPanel({
         />
       </div>
 
-      <div className="resume-editor-source-footer">
-        <div className="resume-editor-source-stats">
-          <Badge tone="neutral">{lineCount} 行</Badge>
-          <Badge tone="neutral">{charCount} 字</Badge>
-          <Badge tone="accent">实时预览</Badge>
-        </div>
-        <p className={`resume-editor-source-note ${parseError ? "resume-editor-source-note-error" : ""}`} id={noteId}>
-          {parseError || ""}
-        </p>
-      </div>
+      <p className={`resume-editor-source-note ${parseError ? "resume-editor-source-note-error" : ""}`} id={noteId}>
+        {parseError || ""}
+      </p>
     </section>
   );
 }

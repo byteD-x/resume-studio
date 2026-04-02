@@ -15,7 +15,10 @@ import { useResumeEditorKeyboardShortcuts } from "@/components/product/editor/us
 import { useResumeEditorPageActions } from "@/components/product/editor/useResumeEditorPageActions";
 import { useResumeEditorPreviewBridge } from "@/components/product/editor/useResumeEditorPreviewBridge";
 import { useResumeEditorPersistence } from "@/components/product/editor/useResumeEditorPersistence";
-import type { PendingEditorConfirmation, RecentDeletion } from "@/components/product/editor/useResumeEditorSectionActions";
+import type {
+  PendingEditorConfirmation,
+  RecentDeletion,
+} from "@/components/product/editor/useResumeEditorSectionActions";
 import {
   buildImportReview,
   buildSidebarGroups,
@@ -102,7 +105,7 @@ export function ResumeEditorPage({
   const editorSurfaceRef = useRef<HTMLElement | null>(null);
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const saveQueueRef = useRef<Promise<boolean>>(Promise.resolve(true));
-  const editorMode = activePanel === "markdown" ? "markdown" : "form";
+  const editorMode = activePanel === "markdown" ? "markdown" : "visual";
   const history = useEditorHistory<ResumeEditorSnapshot>(120);
 
   const markdownStarter = useMemo(() => createMarkdownStarter(document), [document]);
@@ -133,6 +136,10 @@ export function ResumeEditorPage({
     () => (isSectionPanel(activePanel) ? getEditorSection(document, activePanel) : null),
     [activePanel, document],
   );
+  const activeSectionItem = useMemo(
+    () => activeSection?.items.find((item) => item.id === activeSectionItemId) ?? null,
+    [activeSection, activeSectionItemId],
+  );
 
   const optimizationGoalLabel = getResumeOptimizationGoalLabel(optimizationGoal);
   const activePreviewTargetLabel = useMemo(() => {
@@ -146,6 +153,38 @@ export function ResumeEditorPage({
 
     return undefined;
   }, [activePanel, activePanelMeta, isOptimizationPreviewActive, optimizationGoalLabel]);
+
+  const activeWorkbenchFocusLabel = useMemo(() => {
+    if (editorMode === "markdown") {
+      return "Markdown 源码";
+    }
+
+    if (activePanel === "basics") {
+      return "头部信息与职业摘要";
+    }
+
+    if (activeSectionItem) {
+      return activeSectionItem.title.trim() || "未命名条目";
+    }
+
+    if (activeSection) {
+      return activeSection.title;
+    }
+
+    if (activePanel === "targeting") {
+      return "岗位定向";
+    }
+
+    if (activePanel === "design") {
+      return "模板与版式";
+    }
+
+    if (activePanel === "ai") {
+      return "AI 辅助";
+    }
+
+    return undefined;
+  }, [activePanel, activeSection, activeSectionItem, editorMode]);
 
   const {
     applyAiPreset,
@@ -243,7 +282,7 @@ export function ResumeEditorPage({
   const handlePreviewOptimization = () => {
     if (latestMarkdownErrorRef.current) {
       setActivePanel("markdown");
-      setStatusMessage("请先修正 Markdown");
+      setStatusMessage("请先修正 Markdown 源码错误");
       return;
     }
 
@@ -253,18 +292,18 @@ export function ResumeEditorPage({
     if (workspaceView === "edit") {
       setWorkspaceView("split");
     }
-    setStatusMessage(`正在预览${optimizationGoalLabel}，右侧结果尚未写回文稿`);
+    setStatusMessage(`正在预览${optimizationGoalLabel}，右侧结果尚未写回文档`);
   };
 
   const handleRestoreOptimizationPreview = () => {
     setIsOptimizationPreviewActive(false);
-    setStatusMessage("已还原优化预览，当前文稿内容没有被改动");
+    setStatusMessage("已恢复原始版式，当前文档内容没有被改写");
   };
 
   const handleApplyCurrentOptimization = () => {
     if (latestMarkdownErrorRef.current) {
       setActivePanel("markdown");
-      setStatusMessage("请先修正 Markdown");
+      setStatusMessage("请先修正 Markdown 源码错误");
       return;
     }
 
@@ -272,7 +311,7 @@ export function ResumeEditorPage({
       (current) => applyResumeOptimization(current, optimizationGoal),
       {
         historyLabel: `应用${optimizationGoalLabel}`,
-        message: `已将${optimizationGoalLabel}应用到当前文稿`,
+        message: `已将${optimizationGoalLabel}应用到当前文档`,
         clearDeletion: true,
       },
     );
@@ -282,7 +321,7 @@ export function ResumeEditorPage({
   const handleDeriveOptimizedDocument = async () => {
     await handleCreateOptimizedVersion(optimizationGoal, {
       focus: "design",
-      successMessage: `已派生${optimizationGoalLabel}，可以在新稿里继续压缩与调整`,
+      successMessage: `已派生${optimizationGoalLabel}，可以在新稿里继续压缩与微调`,
     });
   };
 
@@ -363,108 +402,108 @@ export function ResumeEditorPage({
       />
 
       <div className={`resume-editor-layout resume-editor-layout-${workspaceView}`}>
-        <div className="resume-editor-left">
-          <ResumeEditorSidebar activePanel={activePanel} groups={sidebarGroups} onSelect={handlePanelSelect} />
+        <ResumeEditorSidebar activePanel={activePanel} groups={sidebarGroups} onSelect={handlePanelSelect} />
 
-          <div className="resume-editor-main">
-            <ResumeEditorWorkbench
-              activePanelGroup={activePanelGroup}
-              activePanelMeta={activePanelMeta}
+        <div className="resume-editor-main">
+          <ResumeEditorWorkbench
+            activePanelGroup={activePanelGroup}
+            activePanelMeta={activePanelMeta}
+            editorMode={editorMode}
+            editorSurfaceRef={editorSurfaceRef}
+            focusLabel={activeWorkbenchFocusLabel}
+            notices={notices.length > 0 ? <ResumeEditorNoticeList notices={notices} /> : null}
+            onModeChange={handleModeChange}
+            onSurfaceFocusCapture={() => setActivePanel(activePanel)}
+          >
+            <ResumeEditorPanelContent
+              activePanel={activePanel}
+              activeSectionItemId={activeSectionItemId}
+              apiKey={clientAiApiKey}
+              document={document}
               editorMode={editorMode}
-              editorSurfaceRef={editorSurfaceRef}
-              notices={notices.length > 0 ? <ResumeEditorNoticeList notices={notices} /> : null}
-              onModeChange={handleModeChange}
-              onSurfaceFocusCapture={() => setActivePanel(activePanel)}
-            >
-              <ResumeEditorPanelContent
-                activePanel={activePanel}
-                activeSectionItemId={activeSectionItemId}
-                apiKey={clientAiApiKey}
-                document={document}
-                editorMode={editorMode}
-                focusItemId={focusItemId}
-                generatedSummarySuggestions={generatedAiSummarySuggestions}
-                isCreatingOptimizedVersion={isCreatingOptimizedVersion}
-                isGeneratingAiSummary={isGeneratingAiSummary}
-                isGeneratingVariant={isGeneratingVariant}
-                isOptimizationPreviewActive={isOptimizationPreviewActive}
-                markdownDraft={markdownDraft}
-                markdownError={markdownError}
-                onActiveItemChange={(panel, itemId) => {
-                  setActivePanel(panel);
-                  setActiveSectionItemId(itemId);
-                }}
-                onFocusItemHandled={() => {
-                  setFocusItemId(null);
-                }}
-                onAiApiKeyChange={updateAiApiKey}
-                onAiChange={updateAiField}
-                onAiPresetApply={applyAiPreset}
-                onApplyCurrentOptimization={handleApplyCurrentOptimization}
-                onApplyGeneratedSummary={applyGeneratedAiSummarySuggestion}
-                onApplyStylePreset={applyStylePreset}
-                onApplySuggestedKeywords={applySuggestedKeywords}
-                onBasicsChange={updateBasicsField}
-                onClearMarkdown={() => {
-                  setConfirmation({
-                    title: "清空 Markdown 草稿？",
-                    description: "这会移除当前源码内容，但你仍可以通过撤销立即找回。",
-                    confirmLabel: "清空 Markdown",
-                    confirmVariant: "danger",
-                    onConfirm: () => {
-                      setConfirmation(null);
-                      applyMarkdownDraft("", "已清空 Markdown");
-                    },
+              focusItemId={focusItemId}
+              generatedSummarySuggestions={generatedAiSummarySuggestions}
+              importReview={importReview}
+              isCreatingOptimizedVersion={isCreatingOptimizedVersion}
+              isGeneratingAiSummary={isGeneratingAiSummary}
+              isGeneratingVariant={isGeneratingVariant}
+              isOptimizationPreviewActive={isOptimizationPreviewActive}
+              markdownDraft={markdownDraft}
+              markdownError={markdownError}
+              onActiveItemChange={(panel, itemId) => {
+                setActivePanel(panel);
+                setActiveSectionItemId(itemId);
+              }}
+              onFocusItemHandled={() => {
+                setFocusItemId(null);
+              }}
+              onAiApiKeyChange={updateAiApiKey}
+              onAiChange={updateAiField}
+              onAiPresetApply={applyAiPreset}
+              onApplyCurrentOptimization={handleApplyCurrentOptimization}
+              onApplyGeneratedSummary={applyGeneratedAiSummarySuggestion}
+              onApplyStylePreset={applyStylePreset}
+              onApplySuggestedKeywords={applySuggestedKeywords}
+              onBasicsChange={updateBasicsField}
+              onClearMarkdown={() => {
+                setConfirmation({
+                  title: "清空 Markdown 源码？",
+                  description: "这会移除当前源码内容，但你仍然可以通过撤销立即找回。",
+                  confirmLabel: "清空源码",
+                  confirmVariant: "danger",
+                  onConfirm: () => {
+                    setConfirmation(null);
+                    applyMarkdownDraft("", "已清空 Markdown 源码");
+                  },
+                });
+              }}
+              onCopySectionItem={(sectionType, itemId) => void copySectionItem(sectionType, itemId)}
+              onDeleteSectionItem={deleteSectionItem}
+              onDeriveOptimizedDocument={() => void handleDeriveOptimizedDocument()}
+              onDuplicateSectionItem={(sectionType, itemId) => {
+                const section = getEditorSection(document, sectionType);
+                const source = section?.items.find((item) => item.id === itemId);
+                if (source) {
+                  insertSectionItem(sectionType, {
+                    afterItemId: itemId,
+                    duplicateFrom: source,
                   });
-                }}
-                onCopySectionItem={(sectionType, itemId) => void copySectionItem(sectionType, itemId)}
-                onDeleteSectionItem={deleteSectionItem}
-                onDeriveOptimizedDocument={() => void handleDeriveOptimizedDocument()}
-                onDuplicateSectionItem={(sectionType, itemId) => {
-                  const section = getEditorSection(document, sectionType);
-                  const source = section?.items.find((item) => item.id === itemId);
-                  if (source) {
-                    insertSectionItem(sectionType, {
-                      afterItemId: itemId,
-                      duplicateFrom: source,
-                    });
-                  }
-                }}
-                onGenerateAiSummary={() => void handleGenerateAiSummary()}
-                onGenerateTailoredVariant={() => void handleGenerateTailoredVariant()}
-                onInsertSectionItem={(sectionType, afterItemId) => insertSectionItem(sectionType, { afterItemId })}
-                onInsertStarterMarkdown={() => applyMarkdownDraft(markdownStarter, "已插入结构化 Markdown 草稿")}
-                onLayoutChange={updateLayoutField}
-                onMarkdownChange={(value) => applyMarkdownDraft(value, "已更新 Markdown")}
-                onMoveSectionItem={moveSectionItem}
-                onOptimizationGoalChange={setOptimizationGoal}
-                onOptimizationTargetChange={setOptimizationTarget}
-                onPhotoChange={updateBasicsVisualField}
-                onPreviewOptimization={handlePreviewOptimization}
-                onRestoreOptimizationPreview={handleRestoreOptimizationPreview}
-                onSectionChange={(nextSection, title) =>
-                  updateDocument(
-                    (current) => ({
-                      ...current,
-                      sections: current.sections.map((item) => (item.id === nextSection.id ? nextSection : item)),
-                    }),
-                    {
-                      historyLabel: `修改${title}`,
-                      clearDeletion: true,
-                    },
-                  )
                 }
-                onSummaryHtmlChange={updateBasicsSummaryHtml}
-                onTargetingChange={updateTargetingField}
-                onTemplateChange={updateTemplate}
-                optimizationGoal={optimizationGoal}
-                optimizationTarget={optimizationTarget}
-                setActivePanel={setActivePanel}
-                tailoredPlan={tailoredVariantPlan}
-                targetingAnalysis={targetingAnalysis}
-              />
-            </ResumeEditorWorkbench>
-          </div>
+              }}
+              onGenerateAiSummary={() => void handleGenerateAiSummary()}
+              onGenerateTailoredVariant={() => void handleGenerateTailoredVariant()}
+              onInsertSectionItem={(sectionType, afterItemId) => insertSectionItem(sectionType, { afterItemId })}
+              onInsertStarterMarkdown={() => applyMarkdownDraft(markdownStarter, "已插入结构化 Markdown 草稿")}
+              onLayoutChange={updateLayoutField}
+              onMarkdownChange={(value) => applyMarkdownDraft(value, "已更新 Markdown 源码")}
+              onMoveSectionItem={moveSectionItem}
+              onOptimizationGoalChange={setOptimizationGoal}
+              onOptimizationTargetChange={setOptimizationTarget}
+              onPhotoChange={updateBasicsVisualField}
+              onPreviewOptimization={handlePreviewOptimization}
+              onRestoreOptimizationPreview={handleRestoreOptimizationPreview}
+              onSectionChange={(nextSection, title) =>
+                updateDocument(
+                  (current) => ({
+                    ...current,
+                    sections: current.sections.map((item) => (item.id === nextSection.id ? nextSection : item)),
+                  }),
+                  {
+                    historyLabel: `修改${title}`,
+                    clearDeletion: true,
+                  },
+                )
+              }
+              onSummaryHtmlChange={updateBasicsSummaryHtml}
+              onTargetingChange={updateTargetingField}
+              onTemplateChange={updateTemplate}
+              optimizationGoal={optimizationGoal}
+              optimizationTarget={optimizationTarget}
+              setActivePanel={setActivePanel}
+              tailoredPlan={tailoredVariantPlan}
+              targetingAnalysis={targetingAnalysis}
+            />
+          </ResumeEditorWorkbench>
         </div>
 
         <ResumeEditorPreviewPane

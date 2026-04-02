@@ -9,6 +9,8 @@ import {
 import type { ResumeDocument } from "@/types/resume";
 import type { ResumeEditorImportReviewKind } from "@/components/product/editor/workspace/types";
 
+export type ResumeEditorImportReview = NonNullable<ReturnType<typeof buildImportReview>>;
+
 export function resolveLatestImportKind(document: ResumeDocument): ResumeEditorImportReviewKind | null {
   const { pdfImportedAt, portfolioImportedAt } = document.importTrace;
 
@@ -71,7 +73,6 @@ export function buildImportReview(document: ResumeDocument) {
   const reviewTasks = buildResumeImportReviewTasks(document);
   const remainingCount =
     pendingItems.length +
-    reviewTasks.length +
     snapshots.length +
     fieldSuggestions.length +
     unmappedItems.length;

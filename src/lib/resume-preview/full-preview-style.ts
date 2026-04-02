@@ -206,10 +206,20 @@ export function buildPreviewStyles(document: ResumeDocument, context: PreviewTem
         page-break-inside: avoid;
       }
       .item-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        gap: 1mm 4mm;
+        align-items: start;
+      }
+      .item-headingline {
         display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        align-items: ${context.isModern ? "baseline" : "flex-start"};
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 0.6mm 1.6mm;
+        min-width: 0;
+      }
+      .item-headingline > * {
+        min-width: 0;
       }
       .item-header h3 {
         margin: 0;
@@ -218,12 +228,17 @@ export function buildPreviewStyles(document: ResumeDocument, context: PreviewTem
       }
       .item-subtitle,
       .item-meta {
-        margin: 1mm 0 0;
         color: var(--ink-soft);
         font-size: var(--meta-size);
       }
+      .item-subtitle {
+        margin: 0;
+        white-space: nowrap;
+      }
       .item-meta {
+        margin: 0;
         text-align: ${context.isModern ? "right" : "left"};
+        white-space: nowrap;
         min-width: ${context.isModern ? "auto" : "30mm"};
       }
       .rich-text {

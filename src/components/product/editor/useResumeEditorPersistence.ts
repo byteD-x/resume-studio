@@ -53,7 +53,7 @@ export function useResumeEditorPersistence({
 }: {
   clientAiApiKey: string;
   document: ResumeDocument;
-  editorMode: "form" | "markdown";
+  editorMode: "visual" | "markdown";
   history: ReturnType<typeof useEditorHistory<ResumeEditorSnapshot>>;
   latestDocumentRef: MutableRefObject<ResumeDocument>;
   markdownError: string | null;

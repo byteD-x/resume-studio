@@ -13,22 +13,22 @@ import type { ResumeEditorSectionPanel } from "@/components/product/editor/works
 
 const editorPanelGroupDefinitions = [
   {
-    key: "foundation",
-    label: "核心信息",
-    description: "先补姓名、定位和岗位信息。",
-    panels: ["basics", "targeting"] as const,
+    key: "modules",
+    label: "内容模块",
+    description: "围绕简历结构切换模块与条目焦点。",
+    panels: ["basics", "experience", "projects", "education", "skills"] as const,
   },
   {
-    key: "content",
-    label: "简历内容",
-    description: "集中整理经历、项目和技能。",
-    panels: ["experience", "projects", "education", "skills"] as const,
+    key: "tools",
+    label: "定向与工具",
+    description: "岗位定向、版式和 AI 辅助。",
+    panels: ["targeting", "design", "ai"] as const,
   },
   {
-    key: "advanced",
-    label: "版式工具",
-    description: "调整版式，处理 AI 与 Markdown。",
-    panels: ["design", "ai", "markdown"] as const,
+    key: "modes",
+    label: "编辑模式",
+    description: "切换到 Markdown 源码路径。",
+    panels: ["markdown"] as const,
   },
 ] satisfies Array<{
   key: string;
@@ -126,8 +126,8 @@ export function buildSidebarItems(
   return [
     {
       key: "basics",
-      label: "基本信息",
-      hint: "姓名、定位、链接",
+      label: "头部信息",
+      hint: "姓名、定位、摘要与联系方式",
       status: deriveBasicsStatus(document),
     },
     ...editorSectionDefinitions.map((definition) => {
@@ -145,27 +145,27 @@ export function buildSidebarItems(
       } satisfies EditorPanelItem;
     }),
     {
-      key: "design",
-      label: "版式与外观",
-      hint: "模板、字体、间距、颜色",
-      status: deriveDesignStatus(document),
-    },
-    {
       key: "targeting",
-      label: "岗位信息",
-      hint: "岗位、关键词、JD",
+      label: "岗位定向",
+      hint: "岗位、关键词与 JD",
       status: deriveTargetingStatus(document, targetingAnalysis),
     },
     {
+      key: "design",
+      label: "模板与版式",
+      hint: "模板、版式密度与排版参数",
+      status: deriveDesignStatus(document),
+    },
+    {
       key: "ai",
-      label: "AI",
-      hint: "摘要、分析、定制版",
+      label: "AI 辅助",
+      hint: "摘要建议、分析与定制版",
       status: deriveAiStatus(document, targetingAnalysis, tailoredPlan),
     },
     {
       key: "markdown",
-      label: "Markdown",
-      hint: "直接编辑源码",
+      label: "Markdown 源码",
+      hint: "结构化文本编辑，不是所见即所得",
       status: deriveMarkdownStatus(markdownDraft),
       countLabel: markdownDraft.trim() ? `${markdownDraft.split("\n").length} 行` : undefined,
     },

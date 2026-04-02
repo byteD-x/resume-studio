@@ -9,6 +9,7 @@ import {
   type ResumeEditorStylePreset,
 } from "@/components/product/editor/resume-editor-workspace";
 import type { OptimizationTarget } from "@/components/product/editor/resume-design-panel-shared";
+import type { ResumeEditorImportReview } from "@/components/product/editor/workspace/import-review";
 import { editorSectionDefinitions, getEditorSection } from "@/lib/resume-editor";
 import type { ResumeOptimizationGoal } from "@/lib/resume-layout";
 import type { TailoredVariantPlan } from "@/lib/resume-tailoring";
@@ -71,6 +72,7 @@ export function ResumeEditorPanelContent({
   editorMode,
   focusItemId,
   generatedSummarySuggestions,
+  importReview,
   isCreatingOptimizedVersion,
   isGeneratingAiSummary,
   isGeneratingVariant,
@@ -118,9 +120,10 @@ export function ResumeEditorPanelContent({
   activeSectionItemId: string | null;
   apiKey: string;
   document: ResumeDocument;
-  editorMode: "form" | "markdown";
+  editorMode: "visual" | "markdown";
   focusItemId: string | null;
   generatedSummarySuggestions: ResumeAssistSuggestion[];
+  importReview: ResumeEditorImportReview | null;
   isCreatingOptimizedVersion: boolean;
   isGeneratingAiSummary: boolean;
   isGeneratingVariant: boolean;
@@ -188,6 +191,7 @@ export function ResumeEditorPanelContent({
     return (
       <ResumeBasicsPanel
         document={document}
+        importReview={importReview}
         onBasicsChange={onBasicsChange}
         onSummaryHtmlChange={onSummaryHtmlChange}
       />

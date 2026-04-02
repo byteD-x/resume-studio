@@ -36,15 +36,15 @@ export function ResumeSectionEditorSettings({
           />
         </label>
         <RichTextField
-          ariaLabel="Section description"
-          minHeight={128}
+          ariaLabel={`${definition.title} 区块内容`}
+          minHeight={112}
           onChange={(nextValue) =>
             onChange({
               ...section,
               contentHtml: nextValue,
             })
           }
-          placeholder={definition.description}
+          placeholder=""
           value={section.contentHtml}
         />
       </div>

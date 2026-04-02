@@ -1,143 +1,10 @@
-.resume-editor-import-disclosure[open] summary {
-  padding-top: 0.5rem;
-}
-
-.resume-editor-import-list {
-  display: grid;
-  gap: 0.65rem;
-  align-content: start;
-}
-
-.resume-editor-import-snapshots {
-  display: grid;
-  gap: 0.65rem;
-  align-content: start;
-}
-
-.resume-editor-import-review-tasks {
-  display: grid;
-  gap: 0.65rem;
-  align-content: start;
-}
-
-.resume-editor-import-item {
-  padding: 0.72rem 0.76rem;
-  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
-  border-radius: 0.92rem;
-  background: rgba(255, 255, 255, 0.88);
-  display: grid;
-  gap: 0.62rem;
-  color: var(--ink-soft);
-  font-size: 0.84rem;
-  line-height: 1.6;
-}
-
-.resume-editor-import-item p {
-  margin: 0;
-}
-
-.resume-editor-import-snapshot {
-  padding: 0.76rem 0.8rem;
-  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
-  border-radius: 0.92rem;
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.resume-editor-import-snapshot-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-}
-
-.resume-editor-import-snapshot-head strong {
-  color: var(--ink-strong);
-  font-size: 0.88rem;
-}
-
-.resume-editor-import-snapshot-source,
-.resume-editor-import-snapshot-excerpt {
-  margin: 0.42rem 0 0;
-  font-size: 0.82rem;
-  line-height: 1.58;
-}
-
-.resume-editor-import-snapshot-source {
-  color: var(--ink-muted);
-  word-break: break-all;
-}
-
-.resume-editor-import-snapshot-excerpt {
-  color: var(--ink-soft);
-}
-
-.resume-editor-import-review-task {
-  padding: 0.76rem 0.8rem;
-  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
-  border-radius: 0.92rem;
-  background: rgba(255, 255, 255, 0.9);
-}
-
-.resume-editor-import-review-task-head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.7rem;
-  flex-wrap: wrap;
-}
-
-.resume-editor-import-review-task-head strong {
-  color: var(--ink-strong);
-  font-size: 0.88rem;
-}
-
-.resume-editor-import-review-task p {
-  margin: 0.42rem 0 0.78rem;
-  color: var(--ink-soft);
-  font-size: 0.82rem;
-  line-height: 1.58;
-}
-
-.resume-editor-import-field-value,
-.resume-editor-import-field-previous {
-  margin: 0.42rem 0 0;
-  color: var(--ink-soft);
-  font-size: 0.82rem;
-  line-height: 1.58;
-}
-
-.resume-editor-import-field-value {
-  color: var(--ink-strong);
-}
-
-.resume-editor-import-item-actions,
-.resume-editor-import-task-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.55rem;
-}
-
 .resume-assist-panel {
   margin-top: 0.65rem;
   padding: 0.55rem 0.65rem;
   border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
   border-radius: 0.65rem;
   background: color-mix(in srgb, var(--paper) 55%, white);
-  transition: padding 200ms ease, border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
-}
-
-.resume-assist-panel-collapsed {
-  padding: 0.45rem 0.65rem;
-  background: color-mix(in srgb, var(--paper) 38%, white);
-  border-color: color-mix(in srgb, var(--line) 50%, transparent);
-}
-
-.resume-assist-panel-expanded {
-  padding: 0.65rem;
-  background: color-mix(in srgb, var(--paper) 65%, white);
-  border-color: color-mix(in srgb, var(--accent-soft) 40%, transparent);
-  box-shadow: 0 4px 16px rgba(64, 95, 173, 0.06);
+  transition: border-color 200ms ease, background-color 200ms ease, box-shadow 200ms ease;
 }
 
 .resume-assist-toolbar {
@@ -376,4 +243,23 @@
   font-size: 0.74rem;
   font-weight: 700;
   letter-spacing: 0.04em;
+}
+
+.resume-assist-compare-lines {
+  display: grid;
+  gap: 0.34rem;
+  margin-top: 0.52rem;
+}
+
+.resume-assist-compare-lines p,
+.resume-assist-compare-empty {
+  margin: 0;
+  color: var(--ink-strong);
+  font-size: 0.82rem;
+  line-height: 1.58;
+}
+
+.resume-assist-compare-empty {
+  margin-top: 0.52rem;
+  color: var(--ink-muted);
 }

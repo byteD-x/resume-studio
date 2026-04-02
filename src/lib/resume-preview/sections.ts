@@ -45,7 +45,7 @@ function renderItem(item: ResumeSectionItem, sectionType: ResumeSection["type"],
       ${
         item.title
           ? `<div class="item-header">
-              <div>
+              <div class="item-headingline">
                 <h3>${escapeHtml(item.title)}</h3>
                 ${item.subtitle ? `<p class="item-subtitle">${escapeHtml(item.subtitle)}</p>` : ""}
               </div>
