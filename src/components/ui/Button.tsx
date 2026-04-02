@@ -31,7 +31,7 @@ export function Button({
   ...props
 }: ButtonProps) {
   return (
-    <button className={cn(buttonVariants[variant], className)} {...props}>
+    <button className={cn(buttonVariants[variant], className)} type="button" {...props}>
       {children}
     </button>
   );

@@ -38,8 +38,8 @@ export function PortfolioImportResult({
   const extractionSummary = importResult.urlSummary ? buildExtractionSummary(importResult.urlSummary) : null;
 
   return (
-    <div className="mx-auto max-w-[32rem] overflow-hidden rounded-[1rem] bg-white shadow-sm ring-1 ring-[color:var(--line)]">
-      <div className="flex flex-col items-center px-8 pb-10 pt-10 text-center">
+    <div className="mx-auto w-full max-w-[60rem] overflow-hidden rounded-[1rem] bg-white shadow-sm ring-1 ring-[color:var(--line)]">
+      <div className="flex flex-col items-center px-5 pb-8 pt-8 text-center sm:px-8 sm:pb-10 sm:pt-10">
         <div className="mb-5 flex size-14 items-center justify-center rounded-full bg-slate-50 text-[color:var(--ink-strong)] ring-1 ring-[color:var(--line)]">
           <Sparkles className="size-6" />
         </div>
@@ -48,18 +48,18 @@ export function PortfolioImportResult({
           原始内容已整理成可编辑草稿，进入编辑器后继续核对与润色即可。
         </p>
 
-        <div className="mb-8 grid w-full grid-cols-3 gap-0 rounded-lg bg-[color:var(--paper-soft)] p-1 ring-1 ring-[color:var(--line)]">
+        <div className="mb-8 grid w-full grid-cols-1 gap-1 rounded-lg bg-[color:var(--paper-soft)] p-1 ring-1 ring-[color:var(--line)] sm:grid-cols-3 sm:gap-0">
           <div className="flex flex-col items-center py-4">
             <span className="mb-1 text-[0.7rem] font-bold uppercase tracking-widest text-[color:var(--ink-muted)]">识别身份</span>
             <strong className="max-w-full truncate px-2 text-[1rem] font-medium text-[color:var(--ink-strong)]">
               {importResult.summary.name && importResult.summary.name !== "未命名" ? importResult.summary.name : "待补全"}
             </strong>
           </div>
-          <div className="flex flex-col items-center border-l border-[color:var(--line)] py-4">
+          <div className="flex flex-col items-center py-4 sm:border-l sm:border-[color:var(--line)]">
             <span className="mb-1 text-[0.7rem] font-bold uppercase tracking-widest text-[color:var(--ink-muted)]">工作经历</span>
             <strong className="text-[1rem] font-medium text-[color:var(--ink-strong)]">{importResult.summary.experience} 段</strong>
           </div>
-          <div className="flex flex-col items-center border-l border-[color:var(--line)] py-4">
+          <div className="flex flex-col items-center py-4 sm:border-l sm:border-[color:var(--line)]">
             <span className="mb-1 text-[0.7rem] font-bold uppercase tracking-widest text-[color:var(--ink-muted)]">识别类型</span>
             <strong className="text-[1rem] font-medium text-[color:var(--ink-strong)]">
               {importResult.isPdf ? "旧版 PDF" : "履历片段"}
@@ -105,7 +105,7 @@ export function PortfolioImportResult({
           </div>
         ) : null}
 
-        <div className="home-flow-strip mb-8 w-full text-left">
+        <div className="home-flow-strip mb-8 w-full text-left md:grid-cols-2">
           {nextSteps.map((step, index) => (
             <article className="home-flow-step" key={step.title}>
               <span>{index + 1}</span>
@@ -118,7 +118,7 @@ export function PortfolioImportResult({
         </div>
 
         <Button
-          className="h-[2.8rem] w-full max-w-[16rem] justify-center rounded-[0.5rem] bg-[color:var(--ink-strong)] text-white hover:bg-[color:var(--ink)]"
+          className="h-[2.8rem] w-full max-w-[20rem] justify-center rounded-[0.5rem] bg-[color:var(--ink-strong)] text-white hover:bg-[color:var(--ink)]"
           disabled={isPending || isExtracting}
           onClick={onFinish}
         >

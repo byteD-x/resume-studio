@@ -291,7 +291,7 @@ function campusSwitchSeed(): TemplateStarterSeed {
 
 export const campusLineTemplate: TemplateCatalogItem = {
     id: "campus-line",
-    name: "Campus Line",
+    name: "校园线条",
     subtitle: "双栏 · 校招",
     category: "校招",
     family: "two-column",
@@ -302,7 +302,7 @@ export const campusLineTemplate: TemplateCatalogItem = {
     highlights: ["教育前置", "项目友好", "清爽专业"],
     recommendedProfiles: ["campus"],
     previewImage: "/template-previews/campus-line.png",
-    previewAlt: "Campus Line 模板预览图",
+    previewAlt: "校园线条 模板预览图",
     layoutPreset: {
       accentColor: "#0f766e",
       bodyFont: "Segoe UI",

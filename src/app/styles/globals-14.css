@@ -178,6 +178,10 @@
 }
 
 @media (max-width: 1023px) {
+  .resume-editor-workspace {
+    width: 100%;
+  }
+
   .resume-editor-layout {
     padding: 12px 14px 14px;
   }
@@ -190,6 +194,8 @@
     overflow-x: auto;
     overflow-y: hidden;
     padding: 10px;
+    max-width: 100%;
+    scrollbar-gutter: auto;
   }
 
   .editor-sidebar.editor-sidebar-rail {
@@ -233,6 +239,14 @@
   }
 
   .editor-toolbar-shell {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .editor-shortcut-grid,
+  .editor-item-secondary-fields,
+  .resume-editor-onboarding-grid,
+  .resume-editor-import-banner,
+  .resume-assist-compare-grid {
     grid-template-columns: minmax(0, 1fr);
   }
 }

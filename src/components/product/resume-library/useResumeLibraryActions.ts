@@ -133,6 +133,7 @@ export function useResumeLibraryActions(resumeCount: number) {
       router.push(`/studio/${result.document.meta.id}?focus=ai`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "生成定制版失败");
+    } finally {
       setPendingKey(null);
     }
   };
@@ -156,6 +157,7 @@ export function useResumeLibraryActions(resumeCount: number) {
       router.push(`/studio/${result.document.meta.id}?focus=content`);
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "新增两页优化版失败");
+    } finally {
       setPendingKey(null);
     }
   };

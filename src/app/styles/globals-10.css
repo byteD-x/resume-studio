@@ -440,3 +440,37 @@
   gap: 0.75rem;
   flex-wrap: wrap;
 }
+
+.ai-import-model-collapse {
+  border-radius: 0.7rem;
+  background: rgba(255, 255, 255, 0.84);
+  overflow: hidden;
+}
+
+.ai-import-model-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  cursor: pointer;
+  list-style: none;
+  padding: 0.75rem;
+  border-radius: 0.7rem;
+  transition: background-color 0.15s ease;
+}
+
+.ai-import-model-summary:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.ai-import-model-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ai-import-model-summary .ai-import-model-chevron {
+  flex-shrink: 0;
+}
+
+details[open] .ai-import-model-chevron {
+  transform: rotate(180deg);
+}

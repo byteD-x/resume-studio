@@ -241,15 +241,11 @@ function FieldMessage({ children, tone = "error" }: { children?: string; tone?: 
 function CharacterStage({
   activeMode,
   focusZone,
-  hasLegacyResumes,
-  hasUsers,
   passwordValue,
   showPassword,
 }: {
   activeMode: AuthMode;
   focusZone: FocusZone;
-  hasLegacyResumes: boolean;
-  hasUsers: boolean;
   passwordValue: string;
   showPassword: boolean;
 }) {
@@ -315,7 +311,7 @@ function CharacterStage({
   const yellowLook = passwordReveal ? { x: -5, y: -4 } : poseToLookOffset(yellowPose, 5, 5, 0.95);
 
   return (
-    <section className="relative flex min-h-0 flex-col overflow-hidden rounded-[26px] border border-[#d9e4f2]/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,246,255,0.92))] p-4 shadow-[0_18px_36px_rgba(15,35,95,0.08)] sm:rounded-[30px] sm:p-5 lg:p-6">
+    <section className="relative flex min-h-[22rem] flex-col overflow-hidden rounded-[26px] border border-[#d9e4f2]/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(241,246,255,0.92))] p-4 shadow-[0_18px_36px_rgba(15,35,95,0.08)] sm:rounded-[30px] sm:p-5 lg:p-6 xl:min-h-0">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(22,93,255,0.14),transparent_30%),radial-gradient(circle_at_bottom_right,rgba(64,128,255,0.1),transparent_28%)]" />
 
       <div className="relative z-10 flex h-full min-h-0 flex-col">
@@ -338,7 +334,7 @@ function CharacterStage({
           </div>
         </div>
 
-        <div className="mt-4 max-w-[28rem] sm:mt-5 lg:max-w-[32rem]">
+        <div className="mt-4 max-w-[32rem] sm:mt-5 lg:max-w-[38rem] 2xl:max-w-[42rem]">
           <h1
             className="text-[clamp(1.8rem,5vw,4.4rem)] font-semibold leading-[0.98] tracking-[-0.06em] text-[#1d2129]"
             style={{ textWrap: "balance" }}
@@ -359,14 +355,14 @@ function CharacterStage({
         </div>
 
         <div
-          className="relative mt-4 flex min-h-[170px] flex-1 items-end justify-center overflow-hidden rounded-[24px] border border-[#d9e4f2]/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(233,241,255,0.94))] px-3 pb-3 pt-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:mt-5 sm:min-h-[220px] sm:px-6 sm:pb-4 sm:pt-8 lg:mt-8 lg:min-h-[500px] lg:px-8 lg:pt-10"
+          className="relative mt-4 flex min-h-[190px] flex-1 items-end justify-center overflow-hidden rounded-[24px] border border-[#d9e4f2]/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.88),rgba(233,241,255,0.94))] px-3 pb-3 pt-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.9)] sm:mt-5 sm:min-h-[240px] sm:px-6 sm:pb-4 sm:pt-8 lg:mt-8 lg:min-h-[500px] lg:px-8 lg:pt-10 xl:min-h-[560px] 2xl:min-h-[620px]"
           data-testid="auth-character-stage"
         >
           <div className="absolute left-[-52px] top-[-52px] h-48 w-48 rounded-full bg-[#165dff]/12 blur-3xl" />
           <div className="absolute bottom-[-70px] right-[-40px] h-60 w-60 rounded-full bg-[#4080ff]/12 blur-3xl" />
           <div className="absolute inset-x-4 bottom-4 h-[88px] rounded-[28px] bg-[linear-gradient(180deg,rgba(214,227,249,0),rgba(201,219,247,0.66))]" />
 
-          <div className="relative h-[180px] w-[210px] sm:h-[250px] sm:w-[300px] md:h-[320px] md:w-[380px] lg:h-[420px] lg:w-[520px]">
+          <div className="relative h-[180px] w-[210px] sm:h-[250px] sm:w-[300px] md:h-[320px] md:w-[380px] lg:h-[420px] lg:w-[520px] xl:h-[470px] xl:w-[620px] 2xl:h-[540px] 2xl:w-[720px]">
             <div
               ref={purpleRef}
               className="absolute bottom-0 left-[12%] transition-transform duration-700 ease-out"
@@ -553,21 +549,19 @@ export function AnimatedCharactersLoginPage({
 
   return (
     <main
-      className="fixed inset-0 z-20 overflow-hidden bg-[radial-gradient(circle_at_top_left,rgba(22,93,255,0.12),transparent_28%),linear-gradient(180deg,#f5f7fa_0%,#f7f8fa_100%)] px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6"
+      className="fixed inset-0 z-20 overflow-x-hidden overflow-y-auto bg-[radial-gradient(circle_at_top_left,rgba(22,93,255,0.12),transparent_28%),linear-gradient(180deg,#f5f7fa_0%,#f7f8fa_100%)] px-3 py-3 sm:px-4 sm:py-4 md:px-6 md:py-6 xl:px-8 xl:py-8"
       data-auth-login="true"
     >
-      <div className="mx-auto grid h-full max-h-[980px] max-w-[1380px] min-h-0 grid-rows-[minmax(0,0.78fr)_minmax(0,1fr)] gap-3 overflow-hidden rounded-[28px] border border-white/80 bg-white/66 p-3 shadow-[0_24px_72px_rgba(15,35,95,0.08)] backdrop-blur sm:grid-rows-[minmax(0,0.88fr)_minmax(0,1fr)] sm:gap-4 sm:rounded-[32px] sm:p-4 md:p-5 lg:grid-cols-[minmax(0,1.08fr)_400px] lg:grid-rows-1 lg:gap-5">
+      <div className="mx-auto grid min-h-full w-full max-w-[1880px] grid-rows-[minmax(0,0.88fr)_minmax(0,1fr)] gap-3 rounded-[28px] border border-white/80 bg-white/66 p-3 shadow-[0_24px_72px_rgba(15,35,95,0.08)] backdrop-blur sm:grid-rows-[minmax(0,0.96fr)_minmax(0,1fr)] sm:gap-4 sm:rounded-[32px] sm:p-4 md:p-5 lg:h-full lg:min-h-0 lg:grid-cols-[minmax(0,1.18fr)_minmax(22rem,0.82fr)] lg:grid-rows-1 lg:gap-5 xl:grid-cols-[minmax(0,1.28fr)_minmax(24rem,0.78fr)] 2xl:grid-cols-[minmax(0,1.38fr)_minmax(26rem,0.72fr)]">
         <CharacterStage
           activeMode={activeMode}
           focusZone={focusedZone}
-          hasLegacyResumes={hasLegacyResumes}
-          hasUsers={hasUsers}
           passwordValue={activePasswordValue}
           showPassword={showPassword}
         />
 
         <section className="flex min-h-0 rounded-[26px] border border-[#d9e4f2]/90 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(247,250,255,0.96))] p-4 shadow-[0_18px_36px_rgba(15,35,95,0.06)] sm:rounded-[30px] sm:p-5 lg:p-6">
-          <div className="m-auto w-full max-w-[360px] min-h-0">
+          <div className="m-auto w-full max-w-[26rem] min-h-0 xl:max-w-[28rem]">
             <div className="max-h-full overflow-hidden rounded-[22px] border border-[#d9e4f2] bg-white/84 p-4 shadow-[0_12px_28px_rgba(15,35,95,0.05)] sm:rounded-[24px]">
               <div className="flex items-center justify-between gap-3">
                 <div>

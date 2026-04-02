@@ -119,9 +119,6 @@ export function HomeHubPage() {
         <aside className="rounded-[20px] border border-[#d9e4f2] bg-white p-5 shadow-[0_8px_20px_rgba(15,35,95,0.06)]">
           <div className="flex items-center justify-between">
             <p className="text-[14px] font-semibold text-[#1d2129]">Quick Entry</p>
-            <span className="rounded-[6px] bg-[#f2f3f5] px-2 py-1 text-[12px] font-medium text-[#4e5969]">
-              1
-            </span>
           </div>
 
           <div className="mt-4 space-y-3">

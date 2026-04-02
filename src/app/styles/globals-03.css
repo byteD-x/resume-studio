@@ -214,6 +214,41 @@
   line-height: 1.7;
 }
 
+@media (min-width: 1120px) {
+  .preview-layout {
+    align-items: start;
+    grid-template-columns: minmax(0, 1fr) minmax(19rem, 24rem);
+  }
+
+  .preview-layout .workspace-sidebar-card {
+    position: sticky;
+    top: calc(var(--studio-sticky-top) + 0.75rem);
+  }
+}
+
+@media (max-width: 767px) {
+  .preview-toolbar,
+  .workspace-header {
+    gap: 0.9rem;
+  }
+
+  .workspace-header-actions {
+    width: 100%;
+  }
+
+  .preview-stage {
+    min-width: 0;
+  }
+
+  .preview-sidebar-section {
+    padding: 0.9rem;
+  }
+
+  .preview-stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 .workspace-sidebar,
 .workspace-preview,
 .preview-sidebar {

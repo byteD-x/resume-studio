@@ -260,8 +260,14 @@
   color: var(--accent-strong);
 }
 
-
-
+.resume-editor-workspace {
+  display: flex;
+  flex-direction: column;
+  min-height: 100dvh;
+  width: min(var(--workspace-shell-max), calc(100vw - (var(--page-shell-gutter) * 2)));
+  margin: 0 auto;
+  overflow-x: clip;
+}
 
 .resume-editor-layout {
   display: grid;
@@ -282,12 +288,12 @@
 }
 
 .resume-editor-layout-preview .resume-editor-right {
-  width: min(1120px, 100%);
+  width: min(1320px, 100%);
   margin: 0 auto;
 }
 
 .resume-editor-layout-split {
-  grid-template-columns: minmax(0, 1.02fr) minmax(760px, 0.98fr);
+  grid-template-columns: minmax(0, 1.08fr) minmax(36rem, 0.92fr);
 }
 
 .resume-editor-left {

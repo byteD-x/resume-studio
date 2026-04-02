@@ -19,7 +19,7 @@ export function PortfolioImportPdfPanel({
   onOpenFilePicker: () => void;
 }) {
   return (
-    <div className="flex min-h-[20rem] flex-col items-center justify-center p-8 text-center">
+    <div className="flex min-h-[20rem] flex-col items-center justify-center p-6 text-center sm:p-8">
       <input
         accept=".pdf,application/pdf"
         className="sr-only"
@@ -36,7 +36,7 @@ export function PortfolioImportPdfPanel({
 
       <button
         aria-describedby="pdf-import-help"
-        className={`flex h-[10rem] w-[18rem] flex-col items-center justify-center rounded-[1rem] border-2 border-dashed transition-colors ${
+        className={`flex min-h-[11rem] w-full max-w-[36rem] flex-col items-center justify-center rounded-[1rem] border-2 border-dashed px-6 transition-colors sm:min-h-[13rem] ${
           isExtracting
             ? "border-slate-200 bg-slate-50"
             : "cursor-pointer border-[color:var(--accent-line)] hover:border-[color:var(--accent)] hover:bg-[color:var(--accent-layer)]"

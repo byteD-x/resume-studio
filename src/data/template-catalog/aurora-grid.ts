@@ -330,7 +330,7 @@ function auroraCareerSwitchSeed(): TemplateStarterSeed {
 
 export const auroraGridTemplate: TemplateCatalogItem = {
     id: "aurora-grid",
-    name: "Aurora Grid",
+    name: "极光网格",
     subtitle: "双栏 · 通用",
     category: "通用",
     family: "two-column",
@@ -341,7 +341,7 @@ export const auroraGridTemplate: TemplateCatalogItem = {
     highlights: ["双栏结构", "成熟稳健", "适配面广"],
     recommendedProfiles: ["experienced", "career-switch"],
     previewImage: "/template-previews/aurora-grid.png",
-    previewAlt: "Aurora Grid 模板预览图",
+    previewAlt: "极光网格 模板预览图",
     layoutPreset: {
       accentColor: "#3058b7",
       bodyFont: "Aptos",

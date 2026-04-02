@@ -313,7 +313,7 @@ function engineerSwitchSeed(): TemplateStarterSeed {
 
 export const engineerProTemplate: TemplateCatalogItem = {
     id: "engineer-pro",
-    name: "Engineer Pro",
+    name: "工程师专业版",
     subtitle: "双栏 · 技术",
     category: "技术",
     family: "two-column",
@@ -324,7 +324,7 @@ export const engineerProTemplate: TemplateCatalogItem = {
     highlights: ["工程导向", "结果明确", "技术栈突出"],
     recommendedProfiles: ["experienced", "campus"],
     previewImage: "/template-previews/engineer-pro.png",
-    previewAlt: "Engineer Pro 模板预览图",
+    previewAlt: "工程师专业版 模板预览图",
     layoutPreset: {
       accentColor: "#3347a0",
       bodyFont: "Aptos",

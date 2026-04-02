@@ -360,3 +360,22 @@
   font-weight: 700;
   color: var(--ink-strong);
 }
+
+@media (max-width: 767px) {
+  .workspace-preview-head,
+  .workspace-preview-toolbar,
+  .library-row-head,
+  .workspace-check-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .library-meta-strip,
+  .library-summary-strip {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .preview-paper-shell {
+    padding: 0.8rem;
+  }
+}

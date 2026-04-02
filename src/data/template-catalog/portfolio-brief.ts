@@ -293,7 +293,7 @@ function portfolioSwitchSeed(): TemplateStarterSeed {
 
 export const portfolioBriefTemplate: TemplateCatalogItem = {
     id: "portfolio-brief",
-    name: "Portfolio Brief",
+    name: "作品集简报",
     subtitle: "单栏 · 设计",
     category: "设计",
     family: "single-column",
@@ -304,7 +304,7 @@ export const portfolioBriefTemplate: TemplateCatalogItem = {
     highlights: ["单栏阅读", "叙事完整", "高级留白"],
     recommendedProfiles: ["experienced", "career-switch"],
     previewImage: "/template-previews/portfolio-brief.png",
-    previewAlt: "Portfolio Brief 模板预览图",
+    previewAlt: "作品集简报 模板预览图",
     layoutPreset: {
       accentColor: "#875a3c",
       bodyFont: "Georgia",

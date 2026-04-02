@@ -236,7 +236,7 @@ function WorkspaceInner() {
   const textModeTab = activeTab === "pdf" ? "url" : activeTab;
 
   return (
-    <div className="mx-auto max-w-[44rem]">
+    <div className="mx-auto w-full max-w-[82rem]">
       <PortfolioImportTabs activeTab={activeTab} onChange={setImportTab} />
 
       <div

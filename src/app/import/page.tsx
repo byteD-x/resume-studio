@@ -19,7 +19,7 @@ export default async function ImportPage() {
         <h1 className="mb-3 text-[2rem] font-bold tracking-tight text-[color:var(--ink-strong)]">
           导入经历
         </h1>
-        <p className="mx-auto max-w-lg text-[1rem] text-[color:var(--ink-soft)]">
+        <p className="mx-auto max-w-3xl text-[1rem] text-[color:var(--ink-soft)]">
           粘贴你的人才主页、作品内容或上传 PDF，快速整理成当前账号下的简历草稿。
         </p>
       </section>

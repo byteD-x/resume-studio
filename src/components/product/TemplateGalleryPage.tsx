@@ -159,7 +159,7 @@ export function TemplateGalleryPage() {
         </div>
       </section>
 
-      <section className="mb-7 flex flex-col items-start gap-5 rounded-[0.75rem] border border-[color:var(--line)] bg-[color:var(--paper-soft)] p-3 px-4 sm:flex-row sm:items-center">
+      <section className="mb-7 flex flex-col items-start gap-5 rounded-[0.75rem] border border-[color:var(--line)] bg-[color:var(--paper-soft)] p-3 px-4 sm:flex-row sm:flex-wrap sm:items-center xl:flex-nowrap">
         <div className="flex items-center gap-3">
           <span className="shrink-0 text-[0.75rem] font-bold uppercase tracking-wider text-[color:var(--ink-muted)]">
             求职语境
@@ -206,7 +206,7 @@ export function TemplateGalleryPage() {
       </section>
 
       {templates.length > 0 ? (
-        <section className="grid gap-5 lg:grid-cols-3">
+        <section className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4">
           {templates.map((template) => {
             const recommended = template.recommendedProfiles.includes(writerProfile);
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { Bot, Loader2, ScanSearch, Sparkles } from "lucide-react";
+import { Bot, ChevronDown, Loader2, ScanSearch, Sparkles } from "lucide-react";
 import { AiConfigForm } from "@/components/ai/AiConfigForm";
 import { Button } from "@/components/ui/Button";
 import type { ImportAiMode, ImportSource } from "@/components/import/portfolio-import/types";
@@ -37,7 +37,7 @@ function PortfolioImportUrlOptions({
   onMaxLinkedPagesChange: (value: number) => void;
 }) {
   return (
-    <div className="mt-3 rounded-[0.8rem] bg-[color:var(--paper-soft)] px-3 py-3 ring-1 ring-[color:var(--line)]">
+    <div className="mt-3 rounded-[0.8rem] bg-[color:var(--paper-soft)] px-3 py-3 ring-1 ring-[color:var(--line)] xl:mt-0 xl:h-full">
       <div className="mb-3 flex flex-col gap-2 text-left">
         <span className="text-[0.82rem] font-semibold text-[color:var(--ink-strong)]">网站导入模式</span>
         <div className="grid gap-2 sm:grid-cols-2" role="radiogroup" aria-label="网站导入模式">
@@ -107,25 +107,38 @@ function PortfolioImportUrlOptions({
       </div>
 
       {importAiMode === "ai" ? (
-        <div className="mb-3">
-          <AiConfigForm
-            apiKey={customAiApiKey}
-            baseUrl={customAiBaseUrl}
-            description=""
-            disabled={isExtracting}
-            model={customAiModel}
-            onApiKeyChange={onAiApiKeyChange}
-            onApplyPreset={onApplyAiPreset}
-            onBaseUrlChange={onAiBaseUrlChange}
-            onModelChange={onAiModelChange}
-            provider="openai-compatible"
-            showProvider={false}
-            title="网站导入模型"
-          />
-        </div>
+        <details className="ai-import-model-collapse">
+          <summary className="ai-import-model-summary">
+            <span className="flex items-center gap-2">
+              <span className="flex size-7 items-center justify-center rounded-xl bg-[color:var(--accent-soft)] text-[color:var(--accent-strong)]">
+                <svg className="size-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24">
+                  <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+              </span>
+              <strong className="text-[0.88rem] text-[color:var(--ink-strong)]">网站导入模型</strong>
+            </span>
+            <ChevronDown className="ai-import-model-chevron size-4 text-[color:var(--ink-muted)] transition-transform" />
+          </summary>
+          <div className="mt-3">
+            <AiConfigForm
+              apiKey={customAiApiKey}
+              baseUrl={customAiBaseUrl}
+              description=""
+              disabled={isExtracting}
+              model={customAiModel}
+              onApiKeyChange={onAiApiKeyChange}
+              onApplyPreset={onApplyAiPreset}
+              onBaseUrlChange={onAiBaseUrlChange}
+              onModelChange={onAiModelChange}
+              provider="openai-compatible"
+              showProvider={false}
+              title=""
+            />
+          </div>
+        </details>
       ) : null}
 
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="grid gap-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-start sm:gap-x-6">
         <label className="flex items-start gap-3 text-left">
           <input
             checked={includeLinkedPages}
@@ -142,8 +155,8 @@ function PortfolioImportUrlOptions({
           </span>
         </label>
 
-        <label className="flex items-center gap-2 text-[0.8rem] text-[color:var(--ink-soft)]">
-          最多抓取
+        <label className="flex flex-wrap items-center gap-2.5 pl-8 text-[0.8rem] text-[color:var(--ink-soft)] sm:justify-self-end sm:pl-0">
+          <span className="shrink-0">最多抓取</span>
           <select
             className="rounded-md border border-[color:var(--line)] bg-white px-2 py-1 text-[0.8rem] text-[color:var(--ink-strong)]"
             disabled={isExtracting || !includeLinkedPages}
@@ -207,41 +220,51 @@ export function PortfolioImportTextPanel({
   const isTextMode = activeTab === "markdown" || activeTab === "text";
 
   return (
-    <div className="flex min-h-[16rem] flex-col p-1.5">
+    <div className="flex min-h-[18rem] flex-col p-1.5 sm:p-2">
       {!isTextMode ? (
-        <div className="flex flex-1 flex-col justify-center px-4">
-          <input
-            className="w-full bg-transparent px-2 py-3 text-[1.1rem] text-[color:var(--ink-strong)] placeholder:text-slate-300 focus:outline-none"
-            disabled={isExtracting}
-            onChange={(event) => onInputChange(event.target.value)}
-            placeholder={placeholder}
-            spellCheck={false}
-            type="url"
-            value={inputValue}
-          />
+        <div
+          className={`flex flex-1 flex-col px-4 py-2 sm:px-5 ${
+            activeTab === "url"
+              ? "xl:grid xl:grid-cols-[minmax(0,1.1fr)_minmax(20rem,24rem)] xl:items-start xl:gap-6 xl:px-6"
+              : "justify-center"
+          }`}
+        >
+          <div className="flex w-full min-w-0 flex-1 flex-col justify-center">
+            <input
+              className="w-full bg-transparent px-2 py-3 text-[1.1rem] text-[color:var(--ink-strong)] placeholder:text-slate-300 focus:outline-none"
+              disabled={isExtracting}
+              onChange={(event) => onInputChange(event.target.value)}
+              placeholder={placeholder}
+              spellCheck={false}
+              type="url"
+              value={inputValue}
+            />
+          </div>
 
           {activeTab === "url" ? (
-            <PortfolioImportUrlOptions
-              customAiApiKey={customAiApiKey}
-              customAiBaseUrl={customAiBaseUrl}
-              customAiModel={customAiModel}
-              importAiMode={importAiMode}
-              includeLinkedPages={includeLinkedPages}
-              isExtracting={isExtracting}
-              maxLinkedPages={maxLinkedPages}
-              onAiApiKeyChange={onAiApiKeyChange}
-              onAiBaseUrlChange={onAiBaseUrlChange}
-              onAiModeChange={onAiModeChange}
-              onAiModelChange={onAiModelChange}
-              onApplyAiPreset={onApplyAiPreset}
-              onIncludeLinkedPagesChange={onIncludeLinkedPagesChange}
-              onMaxLinkedPagesChange={onMaxLinkedPagesChange}
-            />
+            <div className="w-full min-w-0 xl:self-stretch">
+              <PortfolioImportUrlOptions
+                customAiApiKey={customAiApiKey}
+                customAiBaseUrl={customAiBaseUrl}
+                customAiModel={customAiModel}
+                importAiMode={importAiMode}
+                includeLinkedPages={includeLinkedPages}
+                isExtracting={isExtracting}
+                maxLinkedPages={maxLinkedPages}
+                onAiApiKeyChange={onAiApiKeyChange}
+                onAiBaseUrlChange={onAiBaseUrlChange}
+                onAiModeChange={onAiModeChange}
+                onAiModelChange={onAiModelChange}
+                onApplyAiPreset={onApplyAiPreset}
+                onIncludeLinkedPagesChange={onIncludeLinkedPagesChange}
+                onMaxLinkedPagesChange={onMaxLinkedPagesChange}
+              />
+            </div>
           ) : null}
         </div>
       ) : (
         <textarea
-          className="flex-1 w-full resize-none rounded-md bg-transparent p-4 text-[0.95rem] leading-relaxed text-[color:var(--ink-strong)] placeholder:text-slate-300 focus:outline-none"
+          className="flex-1 w-full resize-none rounded-md bg-transparent p-4 text-[0.95rem] leading-relaxed text-[color:var(--ink-strong)] placeholder:text-slate-300 focus:outline-none sm:p-5"
           disabled={isExtracting}
           onChange={(event) => onInputChange(event.target.value)}
           placeholder={placeholder}
@@ -250,7 +273,7 @@ export function PortfolioImportTextPanel({
         />
       )}
 
-      <div className="m-[-0.375rem] mt-auto flex items-center justify-between rounded-b-[0.6rem] border-t border-[color:var(--line)] bg-[color:var(--paper-soft)] px-4 py-3">
+      <div className="m-[-0.375rem] mt-auto flex flex-col gap-3 rounded-b-[0.6rem] border-t border-[color:var(--line)] bg-[color:var(--paper-soft)] px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center text-[0.8rem] text-[color:var(--ink-muted)]">
           {error ? (
             <span className="font-medium text-red-500">{error}</span>
