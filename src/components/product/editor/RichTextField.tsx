@@ -9,7 +9,6 @@ import {
   Underline as UnderlineIcon,
 } from "lucide-react";
 import { Mark } from "@tiptap/core";
-import Underline from "@tiptap/extension-underline";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import { startTransition, useEffect, useState } from "react";
@@ -128,7 +127,6 @@ export function RichTextField({
         heading: false,
         horizontalRule: false,
       }),
-      Underline,
       InlineStyleMark,
     ],
     content: getEditorHtml(value),

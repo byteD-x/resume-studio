@@ -1,11 +1,5 @@
-import { ResumeLibraryPage } from "@/components/product/ResumeLibraryPage";
-import { listResumeSummaries } from "@/lib/storage";
+import { HomeHubPage } from "@/components/product/HomeHubPage";
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
-
-export default async function Home() {
-  const resumes = await listResumeSummaries();
-
-  return <ResumeLibraryPage resumes={resumes} />;
+export default function Home() {
+  return <HomeHubPage />;
 }

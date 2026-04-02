@@ -1,10 +1,7 @@
 "use client";
 
 import type { ReactNode, RefObject } from "react";
-import type {
-  EditorPanelGroup,
-  EditorPanelItem,
-} from "@/components/product/editor/ResumeEditorSidebar";
+import type { EditorPanelGroup, EditorPanelItem } from "@/components/product/editor/ResumeEditorSidebar";
 
 export function ResumeEditorWorkbench({
   activePanelGroup,
@@ -31,7 +28,7 @@ export function ResumeEditorWorkbench({
       : activePanelMeta?.hint || "聚焦当前模块，右侧同步校对纸面排版。";
 
   return (
-    <div className="resume-editor-stack flex-1 flex flex-col min-h-0 overflow-hidden">
+    <div className="resume-editor-stack flex flex-1 flex-col min-h-0 overflow-hidden">
       <section className="editor-workbench-header shrink-0">
         <div className="editor-workbench-row">
           <div className="editor-workbench-caption">
@@ -43,7 +40,7 @@ export function ResumeEditorWorkbench({
           </div>
 
           <div className="editor-workbench-controls">
-            <div className="editor-input-mode" aria-label="内容编辑方式">
+            <div aria-label="内容编辑方式" className="editor-input-mode">
               <button
                 aria-pressed={editorMode === "form"}
                 className={`editor-input-mode-tab ${editorMode === "form" ? "editor-input-mode-tab-active" : ""}`}

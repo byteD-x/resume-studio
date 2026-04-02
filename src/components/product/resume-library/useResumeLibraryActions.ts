@@ -15,9 +15,7 @@ import { getJson } from "@/components/product/resume-library/utils";
 export function useResumeLibraryActions(resumeCount: number) {
   const router = useRouter();
   const [pendingKey, setPendingKey] = useState<string | null>(null);
-  const [status, setStatus] = useState(
-    resumeCount > 0 ? `已加载 ${resumeCount} 份简历` : "简历库还是空的",
-  );
+  const [status, setStatus] = useState(resumeCount > 0 ? `已加载 ${resumeCount} 份简历` : "简历库还是空的");
   const [confirmation, setConfirmation] = useState<PendingLibraryConfirmation | null>(null);
   const [, startTransition] = useTransition();
 
@@ -44,9 +42,7 @@ export function useResumeLibraryActions(resumeCount: number) {
 
     try {
       const requestUrl = scope === "lineage" ? `/api/resumes/${id}?scope=lineage` : `/api/resumes/${id}`;
-      const response = await fetch(requestUrl, {
-        method: "DELETE",
-      });
+      const response = await fetch(requestUrl, { method: "DELETE" });
 
       if (!response.ok) {
         throw new Error((await response.text()) || "删除失败");
@@ -78,10 +74,7 @@ export function useResumeLibraryActions(resumeCount: number) {
       row.lineage?.kind === "source" ? "主稿" : row.lineage?.kind === "variant" ? "定制版" : "简历";
 
     setConfirmation({
-      title:
-        scope === "lineage"
-          ? `删除“${row.resume.meta.title}”整组版本？`
-          : `删除这份${noun}？`,
+      title: scope === "lineage" ? `删除“${row.resume.meta.title}”整组版本？` : `删除这份${noun}？`,
       description:
         scope === "lineage"
           ? `这会删除当前主稿以及其下 ${variantCount} 个定制版本，且无法自动恢复。`

@@ -1,8 +1,16 @@
 "use client";
 
 import type { Route } from "next";
-import { ArrowLeft, ExternalLink, Keyboard, MoreHorizontal, Redo2, Save, Undo2 } from "lucide-react";
 import Link from "next/link";
+import {
+  ArrowLeft,
+  ExternalLink,
+  Keyboard,
+  MoreHorizontal,
+  Redo2,
+  Save,
+  Undo2,
+} from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import type { ResumeLineageMeta } from "@/lib/resume-lineage";
@@ -82,6 +90,7 @@ export function ResumeEditorToolbar({
         <div className="editor-toolbar-left">
           <button aria-label="返回" className="btn btn-ghost editor-toolbar-back" onClick={onBack} type="button">
             <ArrowLeft className="size-4" />
+            <span>返回</span>
           </button>
 
           <div className="editor-toolbar-titleblock">

@@ -1,8 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { ResumePreviewPage } from "@/components/product/ResumePreviewPage";
+import { buildResumeExportChecklist, buildResumeQualityReport } from "@/lib/resume-analysis";
 import { buildResumeLineageMap } from "@/lib/resume-lineage";
+import { buildResumePreviewHtml } from "@/lib/resume-preview";
+import { analyzeResumeTargeting } from "@/lib/resume-targeting";
 import { listResumeSummaries, readResumeDocument } from "@/lib/storage";
+import { buildResumeWorkbenchReport } from "@/lib/resume-workbench";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -32,5 +36,24 @@ export default async function ResumePreviewRoutePage({
     notFound();
   }
 
-  return <ResumePreviewPage initialDocument={document} lineage={lineage} />;
+  const qualityReport = buildResumeQualityReport(document);
+  const targetingAnalysis = analyzeResumeTargeting(document);
+  const workbenchReport = buildResumeWorkbenchReport(document, {
+    qualityReport,
+    targetingAnalysis,
+  });
+  const checklist = buildResumeExportChecklist(document, qualityReport);
+  const html = buildResumePreviewHtml(document);
+
+  return (
+    <ResumePreviewPage
+      checklist={checklist}
+      html={html}
+      initialDocument={document}
+      lineage={lineage}
+      qualityReport={qualityReport}
+      targetingAnalysis={targetingAnalysis}
+      workbenchReport={workbenchReport}
+    />
+  );
 }

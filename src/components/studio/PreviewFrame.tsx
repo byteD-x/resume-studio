@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
-import { isPreviewNavigateTarget, type PreviewNavigateTarget } from "@/lib/resume-preview/types";
+import {
+  isPreviewNavigateTarget,
+  serializePreviewTarget,
+  type PreviewNavigateTarget,
+} from "@/lib/resume-preview/types";
 
 const FALLBACK_PREVIEW_WIDTH = 794;
 const FALLBACK_PREVIEW_HEIGHT = 1123;
@@ -16,17 +20,15 @@ export interface PreviewFrameMetrics {
 }
 
 export function PreviewFrame({
+  focusedTarget,
   html,
   zoom = "fit-width",
-  paged = false,
-  pageIndex = 0,
   onMetricsChange,
   onNavigateTarget,
 }: {
+  focusedTarget?: PreviewNavigateTarget;
   html: string;
   zoom?: PreviewZoomPreset;
-  paged?: boolean;
-  pageIndex?: number;
   onMetricsChange?: (metrics: PreviewFrameMetrics) => void;
   onNavigateTarget?: (target: PreviewNavigateTarget) => void;
 }) {
@@ -51,7 +53,9 @@ export function PreviewFrame({
         const document = iframeRef.current?.contentDocument;
         const root = document?.documentElement;
         const body = document?.body;
-        if (!shell || !root) return;
+        if (!shell || !root) {
+          return;
+        }
 
         const measureFrame = () => {
           const measuredWidth = Math.max(
@@ -102,7 +106,9 @@ export function PreviewFrame({
 
   useEffect(() => {
     const shell = shellRef.current;
-    if (!shell) return;
+    if (!shell) {
+      return;
+    }
 
     const syncSize = () => {
       const next = {
@@ -157,8 +163,37 @@ export function PreviewFrame({
         : fitWidthScale;
   const scale = Math.max(0.35, Math.min(resolvedScale, 2));
   const pageCount = Math.max(1, Math.ceil(intrinsicSize.height / FALLBACK_PREVIEW_HEIGHT));
-  const currentPage = Math.min(pageCount - 1, Math.max(0, pageIndex));
-  const visibleHeight = paged ? FALLBACK_PREVIEW_HEIGHT : intrinsicSize.height;
+
+  useEffect(() => {
+    if (!focusedTarget) {
+      return;
+    }
+
+    const shell = shellRef.current;
+    const scrollContainer = shell?.parentElement;
+    const document = iframeRef.current?.contentDocument;
+    if (!shell || !scrollContainer || !document) {
+      return;
+    }
+
+    const targetValue = serializePreviewTarget(focusedTarget);
+    const targetElement = Array.from(document.querySelectorAll<HTMLElement>("[data-preview-target]")).find(
+      (element) => element.getAttribute("data-preview-target") === targetValue,
+    );
+
+    if (!targetElement) {
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const targetRect = targetElement.getBoundingClientRect();
+    const nextScrollTop = Math.max(0, targetRect.top * scale - 24);
+
+    scrollContainer.scrollTo({
+      top: nextScrollTop,
+      behavior: prefersReducedMotion ? "auto" : "smooth",
+    });
+  }, [focusedTarget, html, intrinsicSize.height, scale]);
 
   useEffect(() => {
     onMetricsChange?.({
@@ -170,27 +205,22 @@ export function PreviewFrame({
   }, [intrinsicSize.height, intrinsicSize.width, onMetricsChange, pageCount, scale]);
 
   const shellStyle = {
-    "--preview-frame-height": `${Math.max(visibleHeight * scale, 320)}px`,
+    "--preview-frame-height": `${Math.max(intrinsicSize.height * scale, 320)}px`,
   } as CSSProperties;
   const viewportStyle = {
     width: `${intrinsicSize.width * scale}px`,
-    height: `${visibleHeight * scale}px`,
+    height: `${intrinsicSize.height * scale}px`,
   } as CSSProperties;
   const stageStyle = {
     width: `${intrinsicSize.width}px`,
     height: `${intrinsicSize.height}px`,
     transform: `scale(${scale})`,
   } as CSSProperties;
-  const frameStyle = paged
-    ? ({
-        marginTop: `-${currentPage * FALLBACK_PREVIEW_HEIGHT}px`,
-      } as CSSProperties)
-    : undefined;
 
   return (
-    <div className={`preview-frame-shell ${paged ? "preview-frame-shell-paged" : ""}`} ref={shellRef} style={shellStyle}>
+    <div className="preview-frame-shell" ref={shellRef} style={shellStyle}>
       <div className="preview-frame-fit">
-        <div className={`preview-frame-viewport ${paged ? "preview-frame-viewport-paged" : ""}`} style={viewportStyle}>
+        <div className="preview-frame-viewport" style={viewportStyle}>
           <div className="preview-frame-stage" style={stageStyle}>
             <iframe
               className="preview-frame"
@@ -198,7 +228,6 @@ export function PreviewFrame({
               ref={iframeRef}
               sandbox="allow-same-origin"
               srcDoc={html}
-              style={frameStyle}
               title="Resume preview"
             />
           </div>

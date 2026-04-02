@@ -4,11 +4,7 @@ import {
 } from "@/lib/resume-content";
 import { escapeHtml, sanitizeHref, sanitizeRichTextHtml } from "@/lib/utils";
 import type { ResumeDocument, ResumeSection, ResumeSectionItem } from "@/types/resume";
-import type { PreviewBuildOptions, PreviewNavigateTarget } from "@/lib/resume-preview/types";
-
-function serializePreviewTarget(target: PreviewNavigateTarget) {
-  return escapeHtml(JSON.stringify(target));
-}
+import { serializePreviewTarget, type PreviewBuildOptions } from "@/lib/resume-preview/types";
 
 export function renderLinks(document: ResumeDocument) {
   return document.basics.links
@@ -45,7 +41,7 @@ function renderItem(item: ResumeSectionItem, sectionType: ResumeSection["type"],
   });
 
   return `
-    <article class="resume-item resume-preview-focusable${highlighted ? " resume-item-highlighted" : ""}" data-preview-target='${target}'>
+    <article class="resume-item resume-preview-focusable${highlighted ? " resume-item-highlighted" : ""}" data-preview-target='${escapeHtml(target)}'>
       ${
         item.title
           ? `<div class="item-header">
@@ -91,7 +87,7 @@ export function renderSection(
   if (!hasBody) return "";
 
   return `
-    <section class="resume-section resume-preview-focusable${highlighted ? " resume-section-highlighted" : ""}" data-preview-target='${serializePreviewTarget({ kind: "section", sectionType: section.type })}'>
+    <section class="resume-section resume-preview-focusable${highlighted ? " resume-section-highlighted" : ""}" data-preview-target='${escapeHtml(serializePreviewTarget({ kind: "section", sectionType: section.type }))}'>
       <header class="section-header">
         <h2>${escapeHtml(section.title)}</h2>
       </header>
@@ -108,7 +104,7 @@ export function renderSection(
 export function renderSummarySection(document: ResumeDocument, options?: PreviewBuildOptions) {
   return hasMeaningfulRichText(document.basics.summaryHtml)
     ? `
-        <section class="resume-section resume-preview-focusable${options?.highlightedTarget?.kind === "basics" ? " resume-section-highlighted" : ""}" data-preview-target='${serializePreviewTarget({ kind: "basics" })}'>
+        <section class="resume-section resume-preview-focusable${options?.highlightedTarget?.kind === "basics" ? " resume-section-highlighted" : ""}" data-preview-target='${escapeHtml(serializePreviewTarget({ kind: "basics" }))}'>
           <header class="section-header">
             <h2>自我评价</h2>
           </header>

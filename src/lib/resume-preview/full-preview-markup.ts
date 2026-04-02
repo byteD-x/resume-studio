@@ -1,12 +1,8 @@
 import { escapeHtml } from "@/lib/utils";
 import { renderLinks, renderSection, renderSummarySection } from "@/lib/resume-preview/sections";
 import type { PreviewTemplateContext } from "@/lib/resume-preview/full-preview-shared";
-import type { PreviewBuildOptions, PreviewNavigateTarget } from "@/lib/resume-preview/types";
+import { serializePreviewTarget, type PreviewBuildOptions } from "@/lib/resume-preview/types";
 import type { ResumeDocument } from "@/types/resume";
-
-function serializePreviewTarget(target: PreviewNavigateTarget) {
-  return escapeHtml(JSON.stringify(target));
-}
 
 function buildPhotoMarkup(document: ResumeDocument, safePhotoSrc: string) {
   const alt = escapeHtml(document.basics.photoAlt || document.basics.name || "头像");
@@ -36,7 +32,7 @@ function buildMastheadMarkup(document: ResumeDocument, context: PreviewTemplateC
     document.basics.links.length > 0 ||
     context.hasPhoto;
 
-  return `      <header class="masthead resume-preview-focusable${hasIdentity ? "" : " masthead-empty"}" data-preview-target='${serializePreviewTarget({ kind: "basics" })}'>
+  return `      <header class="masthead resume-preview-focusable${hasIdentity ? "" : " masthead-empty"}" data-preview-target='${escapeHtml(serializePreviewTarget({ kind: "basics" }))}'>
         <div class="masthead-layout">
           ${
             context.hasPhoto && !context.photoInSidebar && document.basics.photoPosition === "top-left"

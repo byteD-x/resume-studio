@@ -8,6 +8,7 @@ import { PortfolioImportPdfPanel } from "@/components/import/portfolio-import/Po
 import { PortfolioImportResult } from "@/components/import/portfolio-import/PortfolioImportResult";
 import { PortfolioImportTabs } from "@/components/import/portfolio-import/PortfolioImportTabs";
 import { PortfolioImportTextPanel } from "@/components/import/portfolio-import/PortfolioImportTextPanel";
+import { useRouteWarmup } from "@/components/product/useRouteWarmup";
 import type {
   ImportAiMode,
   ImportSource,
@@ -40,6 +41,11 @@ function WorkspaceInner() {
   const [error, setError] = useState("");
   const [importResult, setImportResult] = useState<PortfolioImportResultValue | null>(null);
   const pdfInputRef = useRef<HTMLInputElement>(null);
+
+  useRouteWarmup({
+    includeLastResume: true,
+    routes: ["/templates", "/resumes"],
+  });
 
   useEffect(() => {
     const config = readClientAiConfig();
@@ -207,6 +213,8 @@ function WorkspaceInner() {
     if (!importResult) return;
 
     setIsExtracting(true);
+    router.prefetch(`/studio/${importResult.resumeId}`);
+    router.prefetch(`/studio/${importResult.resumeId}/preview`);
     startTransition(() => {
       const focus = importResult.isPdf ? "basics" : "content";
       router.push(`/studio/${importResult.resumeId}?onboarding=${importResult.isPdf ? "pdf" : "portfolio"}&focus=${focus}`);

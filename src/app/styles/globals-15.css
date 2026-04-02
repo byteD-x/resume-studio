@@ -10,8 +10,7 @@
   }
 
   .editor-toolbar-heading,
-  .editor-toolbar-actions,
-  .editor-preview-controls {
+  .editor-toolbar-actions {
     flex-wrap: wrap;
   }
 

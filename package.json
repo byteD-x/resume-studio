@@ -6,8 +6,8 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
+    "dev": "node scripts/dev.mjs",
+    "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint src scripts tests *.ts *.mts --ext .ts,.tsx --no-warn-ignored",
     "typecheck": "tsc --noEmit",

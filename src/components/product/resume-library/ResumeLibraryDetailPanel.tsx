@@ -53,7 +53,7 @@ function ResumeLibraryVariantList({
                 {[variant.resume.targeting.role, variant.resume.targeting.company].filter(Boolean).join(" / ") ||
                   "尚未补充岗位信息"}
               </span>
-              <span>最近更新 {formatDateTime(variant.resume.meta.updatedAt)}</span>
+              <span>最近更新：{formatDateTime(variant.resume.meta.updatedAt)}</span>
               <span>来源主稿：{variant.lineage?.parentTitle ?? sourceRow.resume.meta.title}</span>
             </div>
 
@@ -80,11 +80,7 @@ function ResumeLibraryVariantList({
                 onClick={() => onRequestDeleteResume(variant)}
                 type="button"
               >
-                {deletingVariant ? (
-                  <LoaderCircle className="size-4 animate-spin" />
-                ) : (
-                  <Trash2 className="size-4" />
-                )}
+                {deletingVariant ? <LoaderCircle className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
               </button>
             </div>
           </article>
@@ -271,8 +267,8 @@ export function ResumeLibraryDetailPanel({
           </div>
 
           <div className="library-version-card-meta">
-            <span>最近更新 {formatDateTime(selectedGroup.sourceRow.resume.meta.updatedAt)}</span>
-            <span>完成度 {selectedGroup.sourceRow.report.score}%</span>
+            <span>最近更新：{formatDateTime(selectedGroup.sourceRow.resume.meta.updatedAt)}</span>
+            <span>完成度：{selectedGroup.sourceRow.report.score}%</span>
           </div>
 
           {selectedGroup.sourceRow.resume.targeting.focusKeywords.length > 0 ? (

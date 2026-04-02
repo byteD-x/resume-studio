@@ -39,18 +39,23 @@ export function useResumeEditorPreviewBridge({
   setWorkspaceView: (value: "edit" | "split" | "preview") => void;
   workspaceView: "edit" | "split" | "preview";
 }) {
+  const highlightedTarget = useMemo<PreviewNavigateTarget | undefined>(
+    () =>
+      activePanel === "basics"
+        ? { kind: "basics" }
+        : activePanel === "markdown" || activePanel === "ai" || activePanel === "design" || activePanel === "targeting"
+          ? undefined
+          : { kind: "section", sectionType: activePanel, itemId: activeSectionItemId ?? undefined },
+    [activePanel, activeSectionItemId],
+  );
+
   const previewHtml = useMemo(
     () =>
       buildResumePreviewHtml(document, {
-        highlightedTarget:
-          activePanel === "basics"
-            ? { kind: "basics" }
-            : activePanel === "markdown" || activePanel === "ai" || activePanel === "design" || activePanel === "targeting"
-              ? undefined
-              : { kind: "section", sectionType: activePanel, itemId: activeSectionItemId ?? undefined },
+        highlightedTarget,
         interactive: true,
       }),
-    [activePanel, activeSectionItemId, document],
+    [document, highlightedTarget],
   );
 
   const previewNavigationItems = useMemo(() => {
@@ -133,6 +138,7 @@ export function useResumeEditorPreviewBridge({
 
   return {
     handlePreviewNavigate,
+    highlightedTarget,
     previewHtml,
     previewNavigationItems,
   };

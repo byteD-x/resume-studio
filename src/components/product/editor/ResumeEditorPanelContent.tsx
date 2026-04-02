@@ -1,11 +1,7 @@
 "use client";
 
-import { ResumeSectionEditor } from "@/components/product/ResumeSectionEditor";
-import { ResumeAiPanel } from "@/components/product/editor/ResumeAiPanel";
+import dynamic from "next/dynamic";
 import { ResumeBasicsPanel } from "@/components/product/editor/ResumeBasicsPanel";
-import { ResumeDesignPanel } from "@/components/product/editor/ResumeDesignPanel";
-import { ResumeMarkdownPanel } from "@/components/product/editor/ResumeMarkdownPanel";
-import { ResumeTargetingPanel } from "@/components/product/editor/ResumeTargetingPanel";
 import type { EditorPanel } from "@/components/product/editor/ResumeEditorSidebar";
 import {
   isSectionPanel,
@@ -17,6 +13,53 @@ import type { TailoredVariantPlan } from "@/lib/resume-tailoring";
 import type { ResumeAssistSuggestion } from "@/lib/resume-assistant";
 import type { ResumeDocument } from "@/types/resume";
 import type { ResumeTargetingAnalysis } from "@/lib/resume-targeting";
+
+function EditorPanelLoading({
+  label = "正在载入面板…",
+}: {
+  label?: string;
+}) {
+  return (
+    <div aria-live="polite" className="text-sm text-[var(--muted-text)]">
+      {label}
+    </div>
+  );
+}
+
+const ResumeSectionEditor = dynamic(
+  () => import("@/components/product/ResumeSectionEditor").then((module) => module.ResumeSectionEditor),
+  {
+    loading: () => <EditorPanelLoading label="正在载入内容面板…" />,
+  },
+);
+
+const ResumeAiPanel = dynamic(
+  () => import("@/components/product/editor/ResumeAiPanel").then((module) => module.ResumeAiPanel),
+  {
+    loading: () => <EditorPanelLoading label="正在载入 AI 面板…" />,
+  },
+);
+
+const ResumeDesignPanel = dynamic(
+  () => import("@/components/product/editor/ResumeDesignPanel").then((module) => module.ResumeDesignPanel),
+  {
+    loading: () => <EditorPanelLoading label="正在载入样式面板…" />,
+  },
+);
+
+const ResumeMarkdownPanel = dynamic(
+  () => import("@/components/product/editor/ResumeMarkdownPanel").then((module) => module.ResumeMarkdownPanel),
+  {
+    loading: () => <EditorPanelLoading label="正在载入 Markdown…" />,
+  },
+);
+
+const ResumeTargetingPanel = dynamic(
+  () => import("@/components/product/editor/ResumeTargetingPanel").then((module) => module.ResumeTargetingPanel),
+  {
+    loading: () => <EditorPanelLoading label="正在载入定向面板…" />,
+  },
+);
 
 export function ResumeEditorPanelContent({
   activePanel,

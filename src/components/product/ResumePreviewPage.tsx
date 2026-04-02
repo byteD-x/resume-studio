@@ -1,20 +1,33 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import Link from "next/link";
 import { ArrowLeft, Download, LoaderCircle } from "lucide-react";
-import { useMemo, useState } from "react";
-import { ResumePreviewDecisionStrip } from "@/components/product/preview/ResumePreviewDecisionStrip";
-import { ResumePreviewLineageBanner } from "@/components/product/preview/ResumePreviewLineageBanner";
-import { ResumePreviewSidebar } from "@/components/product/preview/ResumePreviewSidebar";
+import { useState } from "react";
+import type {
+  PreviewChecklistItem,
+  PreviewQualityReport,
+  PreviewTargetingAnalysis,
+  PreviewWorkbenchReport,
+} from "@/components/product/preview/shared";
 import { PreviewFrame } from "@/components/studio/PreviewFrame";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
-import { buildResumeExportChecklist, buildResumeQualityReport } from "@/lib/resume-analysis";
+import { useRouteWarmup } from "@/components/product/useRouteWarmup";
 import type { ResumeLineageMeta } from "@/lib/resume-lineage";
-import { buildResumePreviewHtml } from "@/lib/resume-preview";
-import { analyzeResumeTargeting } from "@/lib/resume-targeting";
-import { buildResumeWorkbenchReport } from "@/lib/resume-workbench";
 import type { ResumeDocument } from "@/types/resume";
+
+const ResumePreviewDecisionStrip = dynamic(
+  () => import("@/components/product/preview/ResumePreviewDecisionStrip").then((module) => module.ResumePreviewDecisionStrip),
+);
+
+const ResumePreviewLineageBanner = dynamic(
+  () => import("@/components/product/preview/ResumePreviewLineageBanner").then((module) => module.ResumePreviewLineageBanner),
+);
+
+const ResumePreviewSidebar = dynamic(
+  () => import("@/components/product/preview/ResumePreviewSidebar").then((module) => module.ResumePreviewSidebar),
+);
 
 async function downloadBlob(response: Response, fallbackName: string) {
   const blob = await response.blob();
@@ -27,27 +40,26 @@ async function downloadBlob(response: Response, fallbackName: string) {
 }
 
 export function ResumePreviewPage({
+  checklist,
+  html,
   initialDocument,
   lineage,
+  qualityReport,
+  targetingAnalysis,
+  workbenchReport,
 }: {
+  checklist: PreviewChecklistItem[];
+  html: string;
   initialDocument: ResumeDocument;
   lineage: ResumeLineageMeta | null;
+  qualityReport: PreviewQualityReport;
+  targetingAnalysis: PreviewTargetingAnalysis;
+  workbenchReport: PreviewWorkbenchReport;
 }) {
-  const qualityReport = useMemo(() => buildResumeQualityReport(initialDocument), [initialDocument]);
-  const targetingAnalysis = useMemo(() => analyzeResumeTargeting(initialDocument), [initialDocument]);
-  const workbenchReport = useMemo(
-    () =>
-      buildResumeWorkbenchReport(initialDocument, {
-        qualityReport,
-        targetingAnalysis,
-      }),
-    [initialDocument, qualityReport, targetingAnalysis],
-  );
-  const checklist = useMemo(
-    () => buildResumeExportChecklist(initialDocument, qualityReport),
-    [initialDocument, qualityReport],
-  );
-  const html = useMemo(() => buildResumePreviewHtml(initialDocument), [initialDocument]);
+  useRouteWarmup({
+    resumeId: initialDocument.meta.id,
+    routes: ["/resumes", "/templates"],
+  });
   const hasBlockingIssues = qualityReport.blockingIssues.length > 0;
   const completedChecklistCount = checklist.filter((item) => item.done).length;
   const optionalPendingItems = checklist.filter((item) => !item.done && !item.required);

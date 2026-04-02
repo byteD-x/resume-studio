@@ -61,7 +61,7 @@
 .library-master-detail {
   display: grid;
   gap: 1rem;
-  margin-top: 1.25rem;
+  margin-top: 1.5rem;
 }
 
 .library-master-list,
@@ -75,17 +75,17 @@
 .library-detail-hero,
 .library-detail-section,
 .library-version-card {
-  border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
-  border-radius: 1rem;
-  background: rgba(255, 255, 255, 0.88);
-  box-shadow: var(--shadow-soft);
+  border: 1px solid rgba(229, 230, 235, 0.94);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.92);
+  box-shadow: 0 10px 26px rgba(15, 35, 95, 0.06);
 }
 
 .library-master-card {
   display: grid;
-  gap: 0.85rem;
+  gap: 0.9rem;
   width: 100%;
-  padding: 0.95rem 1rem;
+  padding: 1.05rem 1.1rem;
   text-align: left;
   cursor: pointer;
   transition:
@@ -97,13 +97,14 @@
 
 .library-master-card:hover {
   transform: translateY(-1px);
-  border-color: color-mix(in srgb, var(--line-strong) 56%, white);
+  border-color: #bed0ff;
+  box-shadow: 0 14px 28px rgba(15, 35, 95, 0.08);
 }
 
 .library-master-card-active {
-  border-color: color-mix(in srgb, var(--accent-strong) 18%, white);
-  background: color-mix(in srgb, var(--accent-soft) 52%, white);
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.05);
+  border-color: rgba(22, 93, 255, 0.28);
+  background: linear-gradient(180deg, #f7faff, #ffffff);
+  box-shadow: 0 14px 28px rgba(22, 93, 255, 0.1);
 }
 
 .library-master-card-head,
@@ -126,8 +127,8 @@
 .library-detail-section-head strong,
 .library-version-card-head strong {
   color: var(--ink-strong);
-  font-size: 0.95rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
 }
 
 .library-master-card-titleline svg {
@@ -138,10 +139,10 @@
 .library-master-card-head p,
 .library-version-card-head p,
 .library-detail-section-head span {
-  margin: 0.28rem 0 0;
+  margin: 0.32rem 0 0;
   color: var(--ink-soft);
-  font-size: 0.84rem;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  line-height: 1.62;
 }
 
 .library-master-meta,
@@ -159,7 +160,7 @@
 
 .library-detail-hero,
 .library-detail-section {
-  padding: 1rem 1.05rem;
+  padding: 1.1rem 1.15rem;
 }
 
 .library-detail-actions,
@@ -175,11 +176,11 @@
 
 .library-version-card {
   gap: 0.85rem;
-  padding: 0.95rem 1rem;
+  padding: 1rem 1.05rem;
 }
 
 .library-version-card-source {
-  background: color-mix(in srgb, var(--paper-soft) 56%, white);
+  background: linear-gradient(180deg, #f7faff, #ffffff);
 }
 
 .library-version-card-actions {

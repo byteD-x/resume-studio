@@ -5,11 +5,11 @@ import { ButtonLink } from "@/components/ui/Button";
 
 export function ResumeLibraryEmptyState() {
   return (
-    <section className="mt-8 rounded-xl border border-dashed border-[color:var(--line)] bg-[rgba(255,255,255,0.6)] px-6 py-12 text-center shadow-sm">
+    <section className="mt-8 rounded-[20px] border border-dashed border-[color:var(--line)] bg-[rgba(255,255,255,0.76)] px-6 py-12 text-center shadow-sm">
       <FilePlus2 className="mx-auto mb-4 size-8 text-[color:var(--ink-muted)]" />
-      <h2 className="text-xl font-bold text-[color:var(--ink-strong)]">还没有任何简历</h2>
+      <h2 className="text-xl font-semibold text-[color:var(--ink-strong)]">还没有任何简历</h2>
       <p className="mx-auto mt-3 max-w-[28rem] text-[0.92rem] text-[color:var(--ink-soft)]">
-        先从模板创建一份主稿，或导入已有 PDF、Markdown 与文本内容，再继续补全和定制。
+        先从模板创建一份主稿，或导入现有内容，再继续补全和定向。
       </p>
       <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
         <ButtonLink href="/templates">从模板开始</ButtonLink>
@@ -20,7 +20,7 @@ export function ResumeLibraryEmptyState() {
           导入内容
         </ButtonLink>
         <ButtonLink
-          className="bg-transparent px-3 text-[color:var(--ink-muted)] shadow-none hover:text-[color:var(--ink)]"
+          className="bg-transparent px-3 text-[color:var(--ink-muted)] shadow-none hover:text-[color:var(--ink-strong)]"
           href="/import?tab=pdf"
         >
           导入 PDF

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { useRouteWarmup } from "@/components/product/useRouteWarmup";
 import { ResumeLibraryDetailPanel } from "@/components/product/resume-library/ResumeLibraryDetailPanel";
 import { ResumeLibraryEmptyState } from "@/components/product/resume-library/ResumeLibraryEmptyState";
 import { ResumeLibraryHeader } from "@/components/product/resume-library/ResumeLibraryHeader";
@@ -38,6 +39,12 @@ export function ResumeLibraryPage({
     versionGroups.find((group) => group.id === resolvedSelectedGroupId) ?? versionGroups[0] ?? null;
   const deletingSourceInSelectedGroup =
     selectedGroup !== null && activeDeleteId === selectedGroup.sourceRow.resume.meta.id;
+
+  useRouteWarmup({
+    includeLastResume: true,
+    resumeId: latestResume?.resume.meta.id ?? selectedGroup?.sourceRow.resume.meta.id ?? null,
+    routes: ["/templates", "/import"],
+  });
 
   return (
     <main className="page-wrap">

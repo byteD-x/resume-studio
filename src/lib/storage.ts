@@ -8,20 +8,30 @@ import {
   validateResumeDocument,
   withUpdatedTimestamp,
 } from "@/lib/resume-document";
-import type { ResumeDocument } from "@/types/resume";
-import type { ResumeDashboardSummary } from "@/types/resume-manager";
-import type { ResumeWriterProfile } from "@/types/resume";
 import { nowIso, slugify } from "@/lib/utils";
+import type { ResumeDocument, ResumeWriterProfile } from "@/types/resume";
+import type { ResumeDashboardSummary } from "@/types/resume-manager";
+
+const PROJECT_ROOT = process.cwd();
+const PROJECT_DATA_ROOT = path.join(PROJECT_ROOT, "data");
+const DEFAULT_RESUME_STORAGE_ROOT = path.join(PROJECT_DATA_ROOT, "resumes");
 
 function resolveStorageRoot() {
   const configuredRoot = process.env.RESUME_STUDIO_DATA_DIR?.trim();
-  if (configuredRoot) {
-    return path.isAbsolute(configuredRoot)
-      ? configuredRoot
-      : path.join(/*turbopackIgnore: true*/ process.cwd(), configuredRoot);
+
+  if (!configuredRoot) {
+    return DEFAULT_RESUME_STORAGE_ROOT;
   }
 
-  return path.join(/*turbopackIgnore: true*/ process.cwd(), "data", "resumes");
+  if (path.isAbsolute(configuredRoot)) {
+    return configuredRoot;
+  }
+
+  if (process.env.NODE_ENV !== "production") {
+    return path.join(PROJECT_ROOT, configuredRoot);
+  }
+
+  return DEFAULT_RESUME_STORAGE_ROOT;
 }
 
 export function getStorageRoot() {
@@ -71,7 +81,7 @@ async function resolveResumeDir(id: string) {
   }
 
   const legacyDir = getLegacyResumeDir(id);
-  if (legacyDir !== currentDir && await pathExists(legacyDir)) {
+  if (legacyDir !== currentDir && (await pathExists(legacyDir))) {
     return legacyDir;
   }
 
@@ -129,12 +139,9 @@ export async function listResumeDocuments() {
         .filter((entry) => entry.isDirectory())
         .map(async (entry) => readResumeDocument(entry.name)),
     )
-  )
-    .flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
+  ).flatMap((result) => (result.status === "fulfilled" ? [result.value] : []));
 
-  return documents.sort((left, right) =>
-    right.meta.updatedAt.localeCompare(left.meta.updatedAt),
-  );
+  return documents.sort((left, right) => right.meta.updatedAt.localeCompare(left.meta.updatedAt));
 }
 
 export async function createResumeDocument(
@@ -150,11 +157,11 @@ export async function createResumeDocument(
     options.starter === "template-sample"
       ? createTemplateStarterDocument(id, title, options.writerProfile, options.template)
       : options.starter === "guided"
-      ? createGuidedResumeDocument(id, title, options.writerProfile, options.template)
-      : createEmptyResumeDocument(id, title, {
-          writerProfile: options.writerProfile,
-          template: options.template,
-        });
+        ? createGuidedResumeDocument(id, title, options.writerProfile, options.template)
+        : createEmptyResumeDocument(id, title, {
+            writerProfile: options.writerProfile,
+            template: options.template,
+          });
   return writeResumeDocument(document);
 }
 
@@ -214,5 +221,5 @@ export async function deleteResumeDocument(id: string) {
 
 export async function deleteResumeDocuments(ids: string[]) {
   const uniqueIds = Array.from(new Set(ids));
-  await Promise.all(uniqueIds.map((id) => deleteResumeDocument(id)));
+  await Promise.all(uniqueIds.map(async (id) => deleteResumeDocument(id)));
 }

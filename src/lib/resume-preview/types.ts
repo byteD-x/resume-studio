@@ -9,6 +9,10 @@ export interface PreviewBuildOptions {
   interactive?: boolean;
 }
 
+export function serializePreviewTarget(target: PreviewNavigateTarget) {
+  return JSON.stringify(target);
+}
+
 export function isPreviewNavigateTarget(value: unknown): value is PreviewNavigateTarget {
   if (!value || typeof value !== "object") {
     return false;

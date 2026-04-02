@@ -1,35 +1,38 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronDown, LayoutTemplate, SlidersHorizontal, ZoomIn } from "lucide-react";
 import { PreviewFrame, type PreviewFrameMetrics, type PreviewZoomPreset } from "@/components/studio/PreviewFrame";
-import { resumeTemplateOptions } from "@/data/template-catalog";
-import type { ResumeTemplate } from "@/types/resume";
-import type { PreviewNavigateTarget } from "@/lib/resume-preview/types";
 import type { PreviewNavigationItem } from "@/components/product/editor/useResumeEditorPreviewBridge";
+import { resumeTemplateOptions } from "@/data/template-catalog";
+import type { PreviewNavigateTarget } from "@/lib/resume-preview/types";
+import type { ResumeTemplate } from "@/types/resume";
 
 type WorkspaceView = "edit" | "split" | "preview";
 type DesignPreset = "balanced" | "compact" | "editorial";
+type PreviewSaveState = "saved" | "dirty" | "saving" | "error";
 
 const zoomOptions: Array<{ value: PreviewZoomPreset; label: string }> = [
-  { value: "fit-width", label: "适应宽度" },
-  { value: "fit-page", label: "适应整页" },
+  { value: "fit-width", label: "\u9002\u5e94\u5bbd\u5ea6" },
+  { value: "fit-page", label: "\u9002\u5e94\u5355\u9875" },
   { value: 80, label: "80%" },
   { value: 100, label: "100%" },
   { value: 120, label: "120%" },
 ];
 
 const presetOptions: Array<{ value: DesignPreset; label: string }> = [
-  { value: "balanced", label: "平衡" },
-  { value: "compact", label: "紧凑" },
-  { value: "editorial", label: "编辑感" },
+  { value: "balanced", label: "\u5e73\u8861" },
+  { value: "compact", label: "\u7d27\u51d1" },
+  { value: "editorial", label: "\u7f16\u8f91\u611f" },
 ];
 
 export function ResumePreviewPanel({
   activeTargetLabel,
+  focusedTarget,
   html,
   navigationItems,
   saveLabel,
+  saveState = "saved",
   template,
   workspaceView = "split",
   onNavigateTarget,
@@ -37,9 +40,11 @@ export function ResumePreviewPanel({
   onApplyPreset,
 }: {
   activeTargetLabel?: string;
+  focusedTarget?: PreviewNavigateTarget;
   html: string;
   navigationItems?: PreviewNavigationItem[];
   saveLabel: string;
+  saveState?: PreviewSaveState;
   template?: ResumeTemplate;
   workspaceView?: WorkspaceView;
   onNavigateTarget?: (target: PreviewNavigateTarget) => void;
@@ -47,7 +52,6 @@ export function ResumePreviewPanel({
   onApplyPreset?: (preset: DesignPreset) => void;
 }) {
   const [zoom, setZoom] = useState<PreviewZoomPreset>("fit-width");
-  const [pageIndex, setPageIndex] = useState(0);
   const [metrics, setMetrics] = useState<PreviewFrameMetrics>({
     pageCount: 1,
     scale: 1,
@@ -55,15 +59,12 @@ export function ResumePreviewPanel({
     intrinsicHeight: 1123,
   });
 
-  const pagedMode = workspaceView === "split";
-  const currentPage = Math.min(pageIndex, Math.max(0, metrics.pageCount - 1));
   const resolvedZoom = workspaceView === "preview" && zoom === "fit-width" ? 100 : zoom;
-  const previewMeta =
-    workspaceView === "preview"
-      ? "连续校对"
-      : pagedMode
-        ? `第 ${currentPage + 1} 页 / 共 ${metrics.pageCount} 页`
-        : "实时排版";
+  const previewMeta = `\u8fde\u7eed\u6eda\u52a8 \u00b7 \u7ea6 ${metrics.pageCount} \u9875`;
+  const pageHint = `A4 \u00b7 \u8fde\u7eed\u6eda\u52a8 \u00b7 \u7ea6 ${metrics.pageCount} \u9875`;
+  const outlineCopy = activeTargetLabel
+    ? `\u5f53\u524d\u8054\u52a8\uff1a${activeTargetLabel}`
+    : "\u70b9\u51fb\u9884\u89c8\u5185\u5bb9\u6216\u6807\u7b7e\uff0c\u4f1a\u540c\u6b65\u5230\u5bf9\u5e94\u7f16\u8f91\u4f4d\u7f6e\u3002";
 
   return (
     <aside className="editor-preview-panel">
@@ -72,97 +73,95 @@ export function ResumePreviewPanel({
           <div className="editor-preview-heading">
             <span className="editor-preview-eyebrow">Preview</span>
             <div>
-              <strong className="editor-preview-title">A4 页面预览</strong>
+              <strong className="editor-preview-title">A4 \u9884\u89c8</strong>
               <p className="editor-preview-copy">{previewMeta}</p>
             </div>
           </div>
 
-          <span className="editor-preview-save">{saveLabel}</span>
+          <span className={`editor-preview-save editor-preview-save-${saveState}`}>{saveLabel}</span>
         </div>
 
         <div className="editor-preview-controls">
           {template && onTemplateChange ? (
-            <label className="editor-preview-select">
-              <span>模板</span>
-              <select onChange={(event) => onTemplateChange(event.target.value as ResumeTemplate)} value={template}>
-                {resumeTemplateOptions.map((item) => (
-                  <option key={item.value} value={item.value}>
+            <label className="editor-preview-control" htmlFor="editor-preview-template">
+              <span className="editor-preview-control-label">\u6a21\u677f</span>
+              <span className="editor-preview-select-shell">
+                <LayoutTemplate className="editor-preview-select-icon size-4" />
+                <select
+                  className="editor-preview-select-input"
+                  id="editor-preview-template"
+                  onChange={(event) => onTemplateChange(event.target.value as ResumeTemplate)}
+                  value={template}
+                >
+                  {resumeTemplateOptions.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="editor-preview-select-caret size-4" />
+              </span>
+            </label>
+          ) : null}
+
+          <label className="editor-preview-control" htmlFor="editor-preview-zoom">
+            <span className="editor-preview-control-label">\u7f29\u653e</span>
+            <span className="editor-preview-select-shell">
+              <ZoomIn className="editor-preview-select-icon size-4" />
+              <select
+                className="editor-preview-select-input"
+                id="editor-preview-zoom"
+                onChange={(event) => {
+                  const selected = zoomOptions.find((item) => String(item.value) === event.target.value);
+                  if (selected) {
+                    setZoom(selected.value);
+                  }
+                }}
+                value={String(resolvedZoom)}
+              >
+                {zoomOptions.map((item) => (
+                  <option key={String(item.value)} value={String(item.value)}>
                     {item.label}
                   </option>
                 ))}
               </select>
-            </label>
-          ) : null}
-
-          <label className="editor-preview-select">
-            <span>缩放</span>
-            <select
-              onChange={(event) => {
-                const selected = zoomOptions.find((item) => String(item.value) === event.target.value);
-                if (selected) setZoom(selected.value);
-              }}
-              value={String(resolvedZoom)}
-            >
-              {zoomOptions.map((item) => (
-                <option key={String(item.value)} value={String(item.value)}>
-                  {item.label}
-                </option>
-              ))}
-            </select>
+              <ChevronDown className="editor-preview-select-caret size-4" />
+            </span>
           </label>
 
           {onApplyPreset ? (
-            <label className="editor-preview-select">
-              <span>版式</span>
-              <select defaultValue="" onChange={(event) => onApplyPreset(event.target.value as DesignPreset)}>
-                <option disabled value="">
-                  选择预设
-                </option>
-                {presetOptions.map((item) => (
-                  <option key={item.value} value={item.value}>
-                    {item.label}
+            <label className="editor-preview-control" htmlFor="editor-preview-preset">
+              <span className="editor-preview-control-label">\u7248\u5f0f</span>
+              <span className="editor-preview-select-shell">
+                <SlidersHorizontal className="editor-preview-select-icon size-4" />
+                <select
+                  className="editor-preview-select-input"
+                  defaultValue=""
+                  id="editor-preview-preset"
+                  onChange={(event) => onApplyPreset(event.target.value as DesignPreset)}
+                >
+                  <option disabled value="">
+                    {"\u9009\u62e9\u9884\u8bbe"}
                   </option>
-                ))}
-              </select>
+                  {presetOptions.map((item) => (
+                    <option key={item.value} value={item.value}>
+                      {item.label}
+                    </option>
+                  ))}
+                </select>
+                <ChevronDown className="editor-preview-select-caret size-4" />
+              </span>
             </label>
           ) : null}
 
-          {pagedMode ? (
-            <div className="editor-preview-pagination">
-              <button
-                aria-label="上一页"
-                className="editor-preview-pagebutton"
-                disabled={currentPage === 0}
-                onClick={() => setPageIndex((value) => Math.max(0, value - 1))}
-                type="button"
-              >
-                <ChevronLeft className="size-4" />
-              </button>
-              <span className="editor-preview-pagecount">
-                {currentPage + 1}/{metrics.pageCount}
-              </span>
-              <button
-                aria-label="下一页"
-                className="editor-preview-pagebutton"
-                disabled={currentPage >= metrics.pageCount - 1}
-                onClick={() => setPageIndex((value) => Math.min(metrics.pageCount - 1, value + 1))}
-                type="button"
-              >
-                <ChevronRight className="size-4" />
-              </button>
-            </div>
-          ) : (
-            <span className="editor-preview-pagehint">A4 / {metrics.pageCount} 页</span>
-          )}
+          <span className="editor-preview-pagehint">{pageHint}</span>
         </div>
 
         {navigationItems && navigationItems.length > 0 ? (
           <div className="editor-preview-outline">
             <div className="editor-preview-outline-meta">
-              <span className="editor-preview-outline-label">双向定位</span>
-              <span className="editor-preview-outline-copy">
-                {activeTargetLabel ? `当前联动：${activeTargetLabel}` : "点击预览区块可回到对应编辑位置"}
-              </span>
+              <span className="editor-preview-outline-label">{"\u53cc\u5411\u5b9a\u4f4d"}</span>
+              <span className="editor-preview-outline-copy">{outlineCopy}</span>
             </div>
 
             <div className="editor-preview-outline-chips">
@@ -182,13 +181,12 @@ export function ResumePreviewPanel({
       </div>
 
       <div className="editor-preview-canvas">
-        <div className={`editor-preview-canvas-body ${pagedMode ? "editor-preview-canvas-body-paged" : ""}`}>
+        <div className="editor-preview-canvas-body">
           <PreviewFrame
+            focusedTarget={focusedTarget}
             html={html}
             onMetricsChange={setMetrics}
             onNavigateTarget={onNavigateTarget}
-            pageIndex={currentPage}
-            paged={pagedMode}
             zoom={resolvedZoom}
           />
         </div>

@@ -11,6 +11,7 @@ type DesignPreset = "balanced" | "compact" | "editorial";
 
 export function ResumeEditorPreviewPane({
   activeTargetLabel,
+  focusedTarget,
   html,
   navigationItems,
   onApplyPreset,
@@ -21,6 +22,7 @@ export function ResumeEditorPreviewPane({
   workspaceView,
 }: {
   activeTargetLabel?: string;
+  focusedTarget?: PreviewNavigateTarget;
   html: string;
   navigationItems: PreviewNavigationItem[];
   onApplyPreset: (preset: DesignPreset) => void;
@@ -34,12 +36,14 @@ export function ResumeEditorPreviewPane({
     <div className="resume-editor-right">
       <ResumePreviewPanel
         activeTargetLabel={activeTargetLabel}
+        focusedTarget={focusedTarget}
         html={html}
         navigationItems={navigationItems}
         onApplyPreset={onApplyPreset}
         onNavigateTarget={onNavigateTarget}
         onTemplateChange={onTemplateChange}
         saveLabel={resolveSaveLabel(saveState)}
+        saveState={saveState}
         template={template}
         workspaceView={workspaceView}
       />

@@ -1,9 +1,9 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import type { Route } from "next";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useDeferredValue, useMemo, useRef, useState } from "react";
-import { EditorShortcutDialog } from "@/components/product/editor/EditorShortcutDialog";
 import { ResumeEditorNoticeList } from "@/components/product/editor/ResumeEditorNoticeList";
 import { ResumeEditorPanelContent } from "@/components/product/editor/ResumeEditorPanelContent";
 import { ResumeEditorPreviewPane } from "@/components/product/editor/ResumeEditorPreviewPane";
@@ -14,13 +14,13 @@ import { useResumeEditorKeyboardShortcuts } from "@/components/product/editor/us
 import { useResumeEditorPageActions } from "@/components/product/editor/useResumeEditorPageActions";
 import { useResumeEditorPreviewBridge } from "@/components/product/editor/useResumeEditorPreviewBridge";
 import { useResumeEditorPersistence } from "@/components/product/editor/useResumeEditorPersistence";
+import { useRouteWarmup } from "@/components/product/useRouteWarmup";
 import type { PendingEditorConfirmation, RecentDeletion } from "@/components/product/editor/useResumeEditorSectionActions";
 import {
   buildImportReview, buildSidebarGroups, buildSidebarItems, createMarkdownStarter,
   isSectionPanel, resolveInitialEditorPanel, resolveInitialStatusMessage,
 } from "@/components/product/editor/resume-editor-workspace";
 import { buildResumeEditorNotices } from "@/components/product/editor/resume-editor-notices";
-import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
 import type { ResumeLineageMeta } from "@/lib/resume-lineage";
 import { useEditorHistory } from "@/lib/editor-history";
 import { ensureEditorDocument, getEditorSection } from "@/lib/resume-editor";
@@ -33,6 +33,14 @@ import type { ResumeDocument } from "@/types/resume";
 
 type SaveState = "saved" | "dirty" | "saving" | "error";
 type FormPanel = Exclude<EditorPanel, "markdown">;
+
+const ConfirmDialog = dynamic(
+  () => import("@/components/ui/ConfirmDialog").then((module) => module.ConfirmDialog),
+);
+
+const EditorShortcutDialog = dynamic(
+  () => import("@/components/product/editor/EditorShortcutDialog").then((module) => module.EditorShortcutDialog),
+);
 
 interface ResumeEditorSnapshot {
   document: ResumeDocument;
@@ -51,6 +59,10 @@ export function ResumeEditorPage({
   const focusParam = searchParams.get("focus");
   const onboardingParam = searchParams.get("onboarding");
   const seededDocument = ensureEditorDocument(initialDocument);
+  useRouteWarmup({
+    resumeId: seededDocument.meta.id,
+    routes: ["/resumes", "/templates"],
+  });
   const seededMarkdown = serializeResumeToMarkdown(seededDocument);
   const initialPanel = resolveInitialEditorPanel(focusParam);
   const seededStatusMessage = resolveInitialStatusMessage(seededDocument, focusParam, onboardingParam);
@@ -216,6 +228,7 @@ export function ResumeEditorPage({
 
   const {
     handlePreviewNavigate,
+    highlightedTarget,
     previewHtml,
     previewNavigationItems,
   } = useResumeEditorPreviewBridge({
@@ -365,6 +378,7 @@ export function ResumeEditorPage({
 
         <ResumeEditorPreviewPane
           activeTargetLabel={activePreviewTargetLabel}
+          focusedTarget={highlightedTarget}
           html={previewHtml}
           navigationItems={previewNavigationItems}
           onApplyPreset={applyStylePreset}

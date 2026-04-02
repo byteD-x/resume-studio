@@ -51,7 +51,7 @@ export function ResumeLibraryMasterList({
             </div>
 
             <div className="library-master-meta">
-              <span>最近更新 {formatDateTime(source.resume.meta.updatedAt)}</span>
+              <span>最近更新：{formatDateTime(source.resume.meta.updatedAt)}</span>
               <span>下一步：{source.report.openTasks[0]?.title ?? "进入预览检查交付质量"}</span>
             </div>
 

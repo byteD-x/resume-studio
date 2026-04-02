@@ -182,35 +182,6 @@
   line-height: 1.55;
 }
 
-.preview-frame-shell {
-  width: 100%;
-  min-width: 0;
-}
-
-.preview-frame-fit {
-  display: flex;
-  justify-content: center;
-  align-items: start;
-  width: 100%;
-  min-height: var(--preview-frame-height, 320px);
-  height: var(--preview-frame-height, 320px);
-}
-
-.preview-frame-stage {
-  flex: none;
-  transform-origin: top center;
-}
-
-.preview-frame {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border: 0;
-  background: white;
-}
-
-
-
 .resume-editor-workspace .btn {
   min-height: 2.3rem;
   padding: 0.34rem 0.7rem;

@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import type { Route } from "next";
-import { FileArchive, LoaderCircle } from "lucide-react";
+import { ArrowLeft, FileArchive, LoaderCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
+import { useRouteWarmup } from "@/components/product/useRouteWarmup";
 import { Badge } from "@/components/ui/Badge";
 import { Button, ButtonLink } from "@/components/ui/Button";
 import {
@@ -22,17 +23,17 @@ const writerProfiles: Array<{
   {
     value: "experienced",
     label: "有经验求职",
-    description: "突出业务影响、职责范围和结果表达。",
+    description: "强调业务影响、职责范围和结果表达。",
   },
   {
     value: "campus",
     label: "校招 / 应届",
-    description: "教育、项目和实习应该更靠前展示。",
+    description: "让教育、项目和实习更靠前展示。",
   },
   {
     value: "career-switch",
     label: "转岗 / 跨行业",
-    description: "强调相关经历、迁移能力和转向动机。",
+    description: "突出相关经历、迁移能力和转向动机。",
   },
 ];
 
@@ -72,6 +73,11 @@ export function TemplateGalleryPage() {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [status, setStatus] = useState("");
 
+  useRouteWarmup({
+    includeLastResume: true,
+    routes: ["/import", "/resumes"],
+  });
+
   const activeCategory =
     templateCategories.find((category) => category === searchParams.get("category")) ?? "全部";
   const writerProfile =
@@ -81,12 +87,15 @@ export function TemplateGalleryPage() {
 
   const updateTemplateRoute = (updates: Partial<Record<"category" | "profile", string | null>>) => {
     const params = new URLSearchParams(searchParams.toString());
-    (Object.entries(updates) as Array<["category" | "profile", string | null]>).forEach(
-      ([key, value]) => {
-        if (!value) params.delete(key);
-        else params.set(key, value);
-      },
-    );
+    (Object.entries(updates) as Array<["category" | "profile", string | null]>).forEach(([key, value]) => {
+      if (!value) {
+        params.delete(key);
+        return;
+      }
+
+      params.set(key, value);
+    });
+
     const query = params.toString();
     const href = (query ? `/templates?${query}` : "/templates") as Route;
     router.replace(href, { scroll: false });
@@ -123,6 +132,8 @@ export function TemplateGalleryPage() {
         }),
       );
 
+      router.prefetch(`/studio/${document.meta.id}`);
+      router.prefetch(`/studio/${document.meta.id}/preview`);
       startTransition(() => {
         router.push(`/studio/${document.meta.id}?onboarding=template&focus=basics`);
       });
@@ -136,15 +147,17 @@ export function TemplateGalleryPage() {
     <main className="page-wrap">
       <section className="mb-5 flex flex-col items-start justify-between gap-4 border-b border-[color:var(--line)] pb-5 sm:flex-row sm:items-end">
         <div>
-          <h1 className="text-[1.8rem] font-bold tracking-tight text-[color:var(--ink-strong)]">
-            新建简历
-          </h1>
+          <h1 className="text-[1.8rem] font-bold tracking-tight text-[color:var(--ink-strong)]">新建简历</h1>
           <p aria-live="polite" className="mt-2 text-[0.85rem] text-[color:var(--accent-strong)] empty:hidden">
             {status}
           </p>
         </div>
 
         <div className="flex flex-wrap gap-3">
+          <ButtonLink href="/" variant="ghost">
+            <ArrowLeft aria-hidden="true" className="size-4" />
+            返回
+          </ButtonLink>
           <ButtonLink href="/import" variant="secondary">
             <FileArchive aria-hidden="true" className="size-4" />
             导入简历
@@ -163,9 +176,10 @@ export function TemplateGalleryPage() {
               return (
                 <button
                   aria-pressed={active}
-                  key={profile.value}
                   className={`filter-chip ${active ? "filter-chip-active" : ""}`}
+                  key={profile.value}
                   onClick={() => updateTemplateRoute({ profile: profile.value })}
+                  title={profile.description}
                   type="button"
                 >
                   {profile.label}
@@ -185,8 +199,8 @@ export function TemplateGalleryPage() {
             {templateCategories.map((category) => (
               <button
                 aria-pressed={activeCategory === category}
-                key={category}
                 className={`filter-chip ${activeCategory === category ? "filter-chip-active" : ""}`}
+                key={category}
                 onClick={() => updateTemplateRoute({ category: category === "全部" ? null : category })}
                 type="button"
               >
@@ -237,7 +251,7 @@ export function TemplateGalleryPage() {
                       {selectedId === template.id && isPending ? (
                         <LoaderCircle className="size-4 animate-spin" />
                       ) : null}
-                      {selectedId === template.id ? "准备进入工作区..." : "选择此排版"}
+                      {selectedId === template.id ? "准备进入工作区..." : "选择此模板"}
                     </Button>
                   </div>
                 </div>
@@ -247,7 +261,7 @@ export function TemplateGalleryPage() {
         </section>
       ) : (
         <section className="empty-surface mt-6">
-          <p className="empty-surface-title">没有匹配的排版</p>
+          <p className="empty-surface-title">没有匹配的模板</p>
           <p className="empty-surface-text">换一个分类试试。</p>
         </section>
       )}
