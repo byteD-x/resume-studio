@@ -38,7 +38,7 @@ export function buildPreviewTemplateContext(document: ResumeDocument): PreviewTe
       : "transparent";
   const sectionHeaderPadding =
     document.layout.sectionTitleStyle === "filled" ? "1.8mm 2.2mm" : isModern ? "0 0 2mm" : "2.2mm 0 0";
-  const asideSectionTypes = new Set(["summary", "skills", "education"]);
+  const asideSectionTypes = new Set(["summary", "skills"]);
   const asideSections = isModern
     ? density.visibleSections.filter((section) => asideSectionTypes.has(section.type))
     : [];

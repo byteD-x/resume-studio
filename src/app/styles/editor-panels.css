@@ -1,11 +1,3 @@
-.editor-sidebar-block,
-.resume-editor-panel {
-  border: none;
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
 .editor-sidebar-block {
   display: flex;
   flex-direction: column;
@@ -24,9 +16,13 @@
 }
 
 .resume-editor-panel {
+  display: grid;
+  gap: 8px;
   padding: 0;
-  border: 0;
+  border: none;
+  border-radius: 0;
   background: transparent;
+  box-shadow: none;
 }
 
 .resume-editor-panel-head {
@@ -84,9 +80,48 @@
   gap: 0.4rem;
 }
 
+.resume-import-review-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.resume-import-review-dismiss {
+  flex: 0 0 auto;
+  min-height: 2rem;
+  padding-inline: 0.7rem;
+  border-radius: 999px;
+  font-size: 0.74rem;
+}
+
 .resume-import-review-list {
   display: grid;
   gap: 0.4rem;
+}
+
+.resume-import-review-task-list {
+  display: grid;
+  gap: 0.4rem;
+}
+
+.resume-import-review-task {
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0.7rem;
+}
+
+.resume-import-review-row {
+  display: grid;
+  gap: 0.14rem;
+}
+
+.resume-import-review-task {
+  display: grid;
+  padding: 0.58rem 0.62rem;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-radius: 0.72rem;
+  background: rgba(255, 255, 255, 0.8);
 }
 
 .resume-import-review-row {
@@ -96,6 +131,35 @@
   border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
   border-radius: 0.72rem;
   background: rgba(248, 246, 241, 0.72);
+}
+
+.resume-import-review-task-copy,
+.resume-import-review-row-copy {
+  min-width: 0;
+}
+
+.resume-import-review-task-copy {
+  display: grid;
+  gap: 0.12rem;
+}
+
+.resume-import-review-task-copy strong {
+  color: var(--ink-strong);
+  font-size: 0.8rem;
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+.resume-import-review-task-copy p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.resume-import-review-row-copy {
+  display: grid;
+  gap: 0.14rem;
 }
 
 .resume-import-review-label {
@@ -111,6 +175,32 @@
   font-size: 0.78rem;
   font-weight: 600;
   line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.resume-import-review-action {
+  min-height: 2rem;
+  padding-inline: 0.72rem;
+  border-radius: 0.7rem;
+  font-size: 0.74rem;
+  white-space: nowrap;
+}
+
+@media (max-width: 1200px) {
+  .resume-import-review-head,
+  .resume-import-review-task,
+  .resume-import-review-row {
+    grid-template-columns: 1fr;
+  }
+
+  .resume-import-review-head {
+    display: grid;
+  }
+
+  .resume-import-review-dismiss,
+  .resume-import-review-action {
+    justify-self: flex-start;
+  }
 }
 
 .editor-preset-grid {
@@ -127,7 +217,7 @@
   border-radius: 0.92rem;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.98), rgba(248, 246, 241, 0.92)),
-    #fff;
+    var(--paper);
   text-align: left;
   cursor: pointer;
 }
@@ -141,7 +231,7 @@
   border-color: color-mix(in srgb, var(--accent-strong) 30%, white);
   background:
     linear-gradient(180deg, color-mix(in srgb, var(--accent-soft) 24%, white), rgba(248, 246, 241, 0.96)),
-    #fff;
+    var(--paper);
   box-shadow: 0 14px 28px rgba(15, 23, 42, 0.08);
 }
 

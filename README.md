@@ -68,6 +68,8 @@ npx playwright install chromium
 npm run dev
 ```
 
+开发模式默认不再主动预热关键路由；如果你明确需要预编译这些页面，可以在启动前设置 `NEXT_DEV_ROUTE_WARMUP=1`。
+
 然后访问 `http://localhost:3000/login`，注册一个本地账号。
 
 如果项目里已经存在旧版 `data/resumes/*` 数据，第一个注册成功的用户会自动把这些旧数据迁移到自己的工作区下。

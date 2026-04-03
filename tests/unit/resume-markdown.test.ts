@@ -78,5 +78,24 @@ Built delivery tooling.
     expect(document.basics.links[0]?.label).toBe("GitHub");
     expect(document.sections[0]?.items[0]?.title).toBe("Example Corp");
     expect(document.sections[0]?.items[0]?.bulletPoints[0]).toBe("Cut deploy time by 40%");
+    expect(document.importTrace.pendingReview).toEqual([]);
+  });
+
+  it("does not append markdown import review tasks onto an existing document", () => {
+    const existingDocument = createEmptyResumeDocument("default", "Primary Resume");
+    existingDocument.importTrace.portfolioImportedAt = new Date().toISOString();
+    existingDocument.importTrace.pendingReview = ["Existing import review item"];
+
+    const document = parseResumeFromMarkdown(`# Jane Doe
+> Platform Engineer
+
+## Summary [summary]
+Builds resilient systems.
+`, {
+      existingDocument,
+      resumeId: existingDocument.meta.id,
+    });
+
+    expect(document.importTrace.pendingReview).toEqual(["Existing import review item"]);
   });
 });

@@ -3,8 +3,10 @@ import { createEmptyResumeDocument } from "@/lib/resume-document";
 import {
   buildBasicsImportFieldSuggestions,
   buildResumeImportReviewTasks,
+  clearImportReview,
   getActiveUnmappedItems,
 } from "@/lib/resume-import-review";
+import { buildImportReview } from "@/components/product/editor/workspace/import-review";
 
 describe("resume import review tasks", () => {
   it("creates high-priority basics tasks for sparse imported drafts", () => {
@@ -80,10 +82,9 @@ describe("resume import review tasks", () => {
 
     const tasks = buildResumeImportReviewTasks(document);
 
-    expect(tasks.some((task) => task.id === "review-contact")).toBe(true);
+    expect(tasks).toEqual([]);
     expect(tasks.some((task) => task.id === "review-pending-items")).toBe(false);
     expect(tasks.some((task) => task.id === "review-source-snapshots")).toBe(false);
-    expect(tasks.some((task) => task.id === "review-identity")).toBe(true);
   });
 
   it("creates field suggestions only when import replaces existing basics", () => {
@@ -138,5 +139,20 @@ describe("resume import review tasks", () => {
     document.importTrace.reviewState.reviewedUnmappedItems = ["Dynamic content was not preserved."];
 
     expect(getActiveUnmappedItems(document)).toEqual(["Visual annotations need manual cleanup."]);
+  });
+
+  it("clears import review state entirely when the review is dismissed", () => {
+    const document = createEmptyResumeDocument("imported", "Imported");
+    document.basics.name = "Jane Doe";
+    document.basics.headline = "Frontend Engineer";
+    document.importTrace.portfolioImportedAt = new Date().toISOString();
+    document.importTrace.pendingReview = ["Check imported basics"];
+
+    const cleared = clearImportReview(document);
+
+    expect(cleared.importTrace.portfolioImportedAt).toBe("");
+    expect(cleared.importTrace.pdfImportedAt).toBe("");
+    expect(cleared.importTrace.pendingReview).toEqual([]);
+    expect(buildImportReview(cleared)).toBeNull();
   });
 });

@@ -38,7 +38,7 @@ const writerProfiles: Array<{
   },
 ];
 
-const cardClassName = "border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-white/90 rounded-[var(--radius-md)] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-medium)]";
+const cardClassName = "border border-[color:color-mix(in srgb,var(--line)_90%,transparent)] bg-white/90 rounded-[var(--radius-md)] shadow-[var(--shadow-soft)] transition hover:shadow-[var(--shadow-medium)]";
 
 function TemplatePreview({
   priority = false,

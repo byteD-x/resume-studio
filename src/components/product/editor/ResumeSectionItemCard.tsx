@@ -46,6 +46,7 @@ export function ResumeSectionItemCard({
   const [remoteError, setRemoteError] = useState<string | null>(null);
   const [remoteLoading, setRemoteLoading] = useState(false);
   const usesRemoteProvider = document.ai.provider === "openai-compatible";
+  const isSkillsSection = sectionType === "skills";
   const targetingKeywordsKey = document.targeting.focusKeywords.join("|");
   const itemBulletsKey = item.bulletPoints.join("|");
   const itemTagsKey = item.tags.join("|");
@@ -182,137 +183,196 @@ export function ResumeSectionItemCard({
         </div>
       </div>
 
-      <div className="editor-field-grid editor-item-primary-fields">
-        <label className="field-shell">
-          <span className="field-label">{sectionType === "education" ? "学校 / 机构" : "标题"}</span>
-          <input
-            className="input-control"
-            onChange={(event) => onChange({ ...item, title: event.target.value })}
-            onPaste={(event) =>
-              handleSanitizedPaste(event, {
-                currentValue: item.title,
-                mode: "single-line",
-                onValueChange: (nextValue) => onChange({ ...item, title: nextValue }),
-              })
-            }
-            ref={registerTitleInput}
-            value={item.title}
-          />
-        </label>
-        <label className="field-shell">
-          <span className="field-label">{sectionType === "education" ? "专业 / 学位" : "副标题 / 角色"}</span>
-          <input
-            className="input-control"
-            onChange={(event) => onChange({ ...item, subtitle: event.target.value })}
-            onPaste={(event) =>
-              handleSanitizedPaste(event, {
-                currentValue: item.subtitle,
-                mode: "single-line",
-                onValueChange: (nextValue) => onChange({ ...item, subtitle: nextValue }),
-              })
-            }
-            value={item.subtitle}
-          />
-        </label>
-        <label className="field-shell">
-          <span className="field-label">时间</span>
-          <input
-            className="input-control"
-            onChange={(event) => onChange({ ...item, dateRange: event.target.value })}
-            onPaste={(event) =>
-              handleSanitizedPaste(event, {
-                currentValue: item.dateRange,
-                mode: "single-line",
-                onValueChange: (nextValue) => onChange({ ...item, dateRange: nextValue }),
-              })
-            }
-            placeholder="2023.06 - 2024.02"
-            value={item.dateRange}
-          />
-        </label>
-        <label className="field-shell">
-          <span className="field-label">地点 / 远程</span>
-          <input
-            className="input-control"
-            onChange={(event) => onChange({ ...item, location: event.target.value })}
-            onPaste={(event) =>
-              handleSanitizedPaste(event, {
-                currentValue: item.location,
-                mode: "single-line",
-                onValueChange: (nextValue) => onChange({ ...item, location: nextValue }),
-              })
-            }
-            value={item.location}
-          />
-        </label>
-      </div>
+      {isSkillsSection ? (
+        <div className="editor-field-grid editor-item-primary-fields editor-item-skill-grid">
+          <label className="field-shell">
+            <span className="field-label">技能组</span>
+            <input
+              className="input-control"
+              onChange={(event) => onChange({ ...item, title: event.target.value })}
+              onPaste={(event) =>
+                handleSanitizedPaste(event, {
+                  currentValue: item.title,
+                  mode: "single-line",
+                  onValueChange: (nextValue) => onChange({ ...item, title: nextValue }),
+                })
+              }
+              placeholder="前端工程 / AI 应用 / 数据分析"
+              ref={registerTitleInput}
+              value={item.title}
+            />
+          </label>
+          <label className="field-shell">
+            <span className="field-label">重点方向</span>
+            <input
+              className="input-control"
+              onChange={(event) => onChange({ ...item, subtitle: event.target.value })}
+              onPaste={(event) =>
+                handleSanitizedPaste(event, {
+                  currentValue: item.subtitle,
+                  mode: "single-line",
+                  onValueChange: (nextValue) => onChange({ ...item, subtitle: nextValue }),
+                })
+              }
+              placeholder="工程化 / 平台建设 / 交付场景"
+              value={item.subtitle}
+            />
+          </label>
+          <label className="field-shell">
+            <span className="field-label">熟练度 / 使用场景</span>
+            <input
+              className="input-control"
+              onChange={(event) => onChange({ ...item, meta: event.target.value })}
+              onPaste={(event) =>
+                handleSanitizedPaste(event, {
+                  currentValue: item.meta,
+                  mode: "single-line",
+                  onValueChange: (nextValue) => onChange({ ...item, meta: nextValue }),
+                })
+              }
+              placeholder="熟练使用 / 核心栈 / 常用在项目交付"
+              value={item.meta}
+            />
+          </label>
+        </div>
+      ) : (
+        <>
+          <div className="editor-field-grid editor-item-primary-fields">
+            <label className="field-shell">
+              <span className="field-label">{sectionType === "education" ? "学校 / 机构" : "标题"}</span>
+              <input
+                className="input-control"
+                onChange={(event) => onChange({ ...item, title: event.target.value })}
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.title,
+                    mode: "single-line",
+                    onValueChange: (nextValue) => onChange({ ...item, title: nextValue }),
+                  })
+                }
+                ref={registerTitleInput}
+                value={item.title}
+              />
+            </label>
+            <label className="field-shell">
+              <span className="field-label">{sectionType === "education" ? "专业 / 学位" : "副标题 / 角色"}</span>
+              <input
+                className="input-control"
+                onChange={(event) => onChange({ ...item, subtitle: event.target.value })}
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.subtitle,
+                    mode: "single-line",
+                    onValueChange: (nextValue) => onChange({ ...item, subtitle: nextValue }),
+                  })
+                }
+                value={item.subtitle}
+              />
+            </label>
+            <label className="field-shell">
+              <span className="field-label">时间</span>
+              <input
+                className="input-control"
+                onChange={(event) => onChange({ ...item, dateRange: event.target.value })}
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.dateRange,
+                    mode: "single-line",
+                    onValueChange: (nextValue) => onChange({ ...item, dateRange: nextValue }),
+                  })
+                }
+                placeholder="2023.06 - 2024.02"
+                value={item.dateRange}
+              />
+            </label>
+            <label className="field-shell">
+              <span className="field-label">地点 / 远程</span>
+              <input
+                className="input-control"
+                onChange={(event) => onChange({ ...item, location: event.target.value })}
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.location,
+                    mode: "single-line",
+                    onValueChange: (nextValue) => onChange({ ...item, location: nextValue }),
+                  })
+                }
+                value={item.location}
+              />
+            </label>
+          </div>
 
-      <div className="editor-item-secondary-fields">
-        <label className="field-shell">
-          <span className="field-label">补充信息</span>
-          <input
-            className="input-control"
-            onChange={(event) => onChange({ ...item, meta: event.target.value })}
-            onPaste={(event) =>
-              handleSanitizedPaste(event, {
-                currentValue: item.meta,
-                mode: "single-line",
-                onValueChange: (nextValue) => onChange({ ...item, meta: nextValue }),
-              })
-            }
-            placeholder={sectionType === "skills" ? "分类 / 熟练度" : "团队 / 技术栈"}
-            value={item.meta}
-          />
-        </label>
-      </div>
+          <div className="editor-item-secondary-fields">
+            <label className="field-shell">
+              <span className="field-label">补充信息</span>
+              <input
+                className="input-control"
+                onChange={(event) => onChange({ ...item, meta: event.target.value })}
+                onPaste={(event) =>
+                  handleSanitizedPaste(event, {
+                    currentValue: item.meta,
+                    mode: "single-line",
+                    onValueChange: (nextValue) => onChange({ ...item, meta: nextValue }),
+                  })
+                }
+                placeholder="团队 / 技术栈"
+                value={item.meta}
+              />
+            </label>
+          </div>
+        </>
+      )}
 
       <RichTextField
         ariaLabel="条目摘要"
         helper=""
-        label="摘要"
-        minHeight={124}
+        label={isSkillsSection ? "补充说明" : "摘要"}
+        minHeight={isSkillsSection ? 108 : 124}
         onChange={(nextValue) =>
           onChange({
             ...item,
             summaryHtml: nextValue,
           })
         }
-        placeholder="背景 / 职责 / 方法"
+        placeholder={isSkillsSection ? "说明这组技能主要服务的方向、项目或交付场景" : "背景 / 职责 / 方法"}
         value={item.summaryHtml}
       />
 
-      {sectionType === "skills" ? (
-        <label className="field-shell editor-item-block">
-          <span className="field-label">技能标签</span>
-          <textarea
-            className="textarea-control min-h-24"
-            onChange={(event) =>
-              onChange({
-                ...item,
-                tags: event.target.value
-                  .split(/[，,\n、]/)
-                  .map((value) => value.trim())
-                  .filter(Boolean),
-              })
-            }
-            onPaste={(event) =>
-              handleSanitizedPaste(event, {
-                currentValue: item.tags.join(", "),
-                mode: "skills",
-                onValueChange: (nextValue) =>
-                  onChange({
-                    ...item,
-                    tags: nextValue
-                      .split(/[，,]/)
-                      .map((value) => value.trim())
-                      .filter(Boolean),
-                  }),
-              })
-            }
-            placeholder="React, TypeScript, Node.js"
-            value={item.tags.join(", ")}
-          />
-        </label>
+      {isSkillsSection ? (
+        <div className="editor-item-block">
+          <label className="field-shell">
+            <span className="field-label">技能关键词</span>
+            <textarea
+              className="textarea-control min-h-24"
+              onChange={(event) =>
+                onChange({
+                  ...item,
+                  tags: event.target.value
+                    .split(/[，\n、/]/)
+                    .map((value) => value.trim())
+                    .filter(Boolean),
+                })
+              }
+              onPaste={(event) =>
+                handleSanitizedPaste(event, {
+                  currentValue: item.tags.join(", "),
+                  mode: "skills",
+                  onValueChange: (nextValue) =>
+                    onChange({
+                      ...item,
+                      tags: nextValue
+                        .split(/[，]/)
+                        .map((value) => value.trim())
+                        .filter(Boolean),
+                    }),
+                })
+              }
+              placeholder="React, TypeScript, Node.js, LLM, Prompt Engineering"
+              value={item.tags.join(", ")}
+            />
+          </label>
+          <p className="editor-item-inline-note">按“技能组 + 关键词”录入，预览会按同一组聚合展示。</p>
+        </div>
       ) : (
         <div className="editor-item-block">
           <div className="editor-item-block-head">
@@ -420,7 +480,7 @@ export function ResumeSectionItemCard({
         remoteLabel="生成"
         remoteLoading={remoteLoading}
         suggestions={combinedSuggestions}
-        title={sectionType === "skills" ? "技能优化" : "条目优化"}
+        title={isSkillsSection ? "技能优化" : "条目优化"}
       />
     </article>
   );

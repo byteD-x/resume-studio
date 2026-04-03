@@ -66,10 +66,12 @@ export function buildPreviewStyles(document: ResumeDocument, context: PreviewTem
       }
       .resume-shell {
         display: ${context.isModern ? "grid" : "block"};
-        grid-template-columns: ${context.isModern ? "0.84fr 1.16fr" : "1fr"};
+        grid-template-columns: ${context.isModern ? "0.74fr 1.26fr" : "1fr"};
+        grid-template-areas: ${context.isModern ? '"masthead masthead" "sidebar main"' : '"main"'};
         gap: var(--shell-gap);
       }
       .masthead {
+        grid-area: ${context.isModern ? "masthead" : "auto"};
         border-bottom: ${context.isModern ? "1px solid var(--line)" : "0"};
         margin-bottom: ${context.isModern ? "8mm" : "6mm"};
         padding-bottom: ${context.isModern ? "6mm" : "0"};
@@ -164,6 +166,7 @@ export function buildPreviewStyles(document: ResumeDocument, context: PreviewTem
         gap: var(--section-gap);
       }
       .sidebar-column {
+        grid-area: ${context.isModern ? "sidebar" : "auto"};
         ${context.isModern
           ? `background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 5%, white), transparent 24%);
         border-right: 1px solid var(--line);
@@ -171,6 +174,7 @@ export function buildPreviewStyles(document: ResumeDocument, context: PreviewTem
           : ""}
       }
       .main-column {
+        grid-area: ${context.isModern ? "main" : "auto"};
         ${context.isModern ? "padding-left: 1mm;" : ""}
       }
       .resume-section {
@@ -330,6 +334,33 @@ export function buildPreviewStyles(document: ResumeDocument, context: PreviewTem
         flex-wrap: wrap;
         gap: 6px;
       }
+      .skill-grid {
+        display: grid;
+        gap: calc(var(--item-gap) * 0.78);
+      }
+      .resume-skill-item {
+        display: grid;
+        gap: 2.2mm;
+        padding: 3mm;
+        border: 1px solid color-mix(in srgb, var(--accent) 14%, var(--line));
+        border-radius: 6px;
+        background: color-mix(in srgb, var(--accent) 3%, white);
+      }
+      .resume-skill-head {
+        display: grid;
+        gap: 0.8mm;
+      }
+      .resume-skill-title {
+        margin: 0;
+        font-size: var(--item-title-size);
+        line-height: 1.2;
+      }
+      .resume-skill-meta {
+        margin: 0;
+        color: var(--ink-soft);
+        font-size: var(--meta-size);
+        line-height: 1.35;
+      }
       .tag {
         border: 1px solid ${context.isModern ? "color-mix(in srgb, var(--accent) 24%, var(--line))" : "var(--line)"};
         border-radius: ${context.isModern ? "999px" : "4px"};
@@ -371,6 +402,10 @@ export function buildPreviewStyles(document: ResumeDocument, context: PreviewTem
       }
       .density-compact .tag-row {
         gap: 5px;
+      }
+      .density-compact .resume-skill-item {
+        gap: 1.8mm;
+        padding: 2.4mm;
       }
       .template-aurora-grid .masthead::after,
       .template-campus-line .masthead::after,

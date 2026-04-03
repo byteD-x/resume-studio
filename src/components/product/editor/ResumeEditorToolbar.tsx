@@ -90,7 +90,7 @@ export function ResumeEditorToolbar({
         <div className="editor-toolbar-left">
           <button aria-label="返回" className="btn btn-ghost editor-toolbar-back" onClick={onBack} type="button">
             <ArrowLeft className="size-4" />
-            <span>返回</span>
+            <span className="editor-toolbar-back-label">返回</span>
           </button>
 
           <div className="editor-toolbar-titleblock">
@@ -113,18 +113,11 @@ export function ResumeEditorToolbar({
                   ) : null}
                 </div>
               ) : null}
-            </div>
 
-            <div className="editor-toolbar-meta">
-              <span className={`editor-toolbar-save editor-toolbar-save-${saveState}`}>
+              <span className={`editor-toolbar-save editor-toolbar-save-${saveState}`} title={statusMessage || undefined}>
                 <span aria-hidden className="editor-toolbar-save-dot" />
                 {saveStateLabel(saveState)}
               </span>
-              {statusMessage ? (
-                <span className="editor-toolbar-message" title={statusMessage}>
-                  {statusMessage}
-                </span>
-              ) : null}
             </div>
           </div>
         </div>
@@ -149,7 +142,7 @@ export function ResumeEditorToolbar({
         </div>
 
         <div className="editor-toolbar-actions">
-          <Button className="editor-toolbar-export" onClick={onOpenPreview}>
+          <Button className="editor-toolbar-export" onClick={onOpenPreview} variant="secondary">
             <ExternalLink className="size-4 shrink-0" />
             导出
           </Button>
@@ -160,6 +153,12 @@ export function ResumeEditorToolbar({
             </summary>
 
             <div className="editor-toolbar-menu-popover">
+              {statusMessage ? (
+                <div className="editor-toolbar-menu-status" title={statusMessage}>
+                  {statusMessage}
+                </div>
+              ) : null}
+
               <button className="editor-toolbar-menu-item" onClick={onSave} type="button">
                 <Save className="size-4" />
                 保存

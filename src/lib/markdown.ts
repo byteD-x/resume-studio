@@ -22,7 +22,8 @@ function shouldPreserveHtmlInMarkdown(html: string) {
 }
 
 export function markdownToHtml(markdown: string) {
-  return sanitizeRichTextHtml(marked.parse(markdown) as string);
+  const result = marked.parse(markdown, { async: false }) as string;
+  return sanitizeRichTextHtml(result);
 }
 
 export function htmlToMarkdown(html: string) {

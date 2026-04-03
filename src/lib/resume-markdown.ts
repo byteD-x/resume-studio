@@ -337,15 +337,6 @@ export function parseResumeFromMarkdown(
         (summarySection?.items[0]?.summaryHtml ?? baseDocument.basics.summaryHtml),
     },
     sections: remainingSections.length > 0 ? remainingSections : baseDocument.sections,
-    importTrace: {
-      ...baseDocument.importTrace,
-      pendingReview: Array.from(
-        new Set([
-          ...baseDocument.importTrace.pendingReview,
-          "Review markdown-imported section structure and item grouping.",
-        ]),
-      ),
-    },
   });
 }
 

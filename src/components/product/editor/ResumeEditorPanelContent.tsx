@@ -23,7 +23,7 @@ function EditorPanelLoading({
   label?: string;
 }) {
   return (
-    <div aria-live="polite" className="text-sm text-[var(--muted-text)]">
+    <div aria-live="polite" className="text-sm" style={{ color: "var(--ink-muted)" }}>
       {label}
     </div>
   );
@@ -86,10 +86,12 @@ export function ResumeEditorPanelContent({
   onAiPresetApply,
   onApplyCurrentOptimization,
   onApplyGeneratedSummary,
+  onCompleteImportReviewTask,
   onApplyStylePreset,
   onApplySuggestedKeywords,
   onBasicsChange,
   onClearMarkdown,
+  onDismissImportReview,
   onCopySectionItem,
   onDeleteSectionItem,
   onDeriveOptimizedDocument,
@@ -105,6 +107,10 @@ export function ResumeEditorPanelContent({
   onOptimizationTargetChange,
   onPhotoChange,
   onPreviewOptimization,
+  onReviewImportFieldSuggestion,
+  onReviewImportPendingItem,
+  onReviewImportSnapshot,
+  onReviewImportUnmappedItem,
   onRestoreOptimizationPreview,
   onSectionChange,
   onSummaryHtmlChange,
@@ -137,6 +143,7 @@ export function ResumeEditorPanelContent({
   onAiPresetApply: (presetId: string) => void;
   onApplyCurrentOptimization: () => void;
   onApplyGeneratedSummary: (suggestion: ResumeAssistSuggestion) => void;
+  onCompleteImportReviewTask: (taskId: string) => void;
   onApplyStylePreset: (presetId: ResumeEditorStylePreset) => void;
   onApplySuggestedKeywords: () => void;
   onBasicsChange: (
@@ -144,6 +151,7 @@ export function ResumeEditorPanelContent({
     value: string,
   ) => void;
   onClearMarkdown: () => void;
+  onDismissImportReview: () => void;
   onCopySectionItem: (sectionType: ResumeEditorSectionPanel, itemId: string) => void;
   onDeleteSectionItem: (sectionType: ResumeEditorSectionPanel, itemId: string) => void;
   onDeriveOptimizedDocument: () => void | Promise<void>;
@@ -164,6 +172,10 @@ export function ResumeEditorPanelContent({
     value: ResumeDocument["basics"][K],
   ) => void;
   onPreviewOptimization: () => void;
+  onReviewImportFieldSuggestion: (suggestionId: string) => void;
+  onReviewImportPendingItem: (item: string) => void;
+  onReviewImportSnapshot: (snapshotId: string) => void;
+  onReviewImportUnmappedItem: (item: string) => void;
   onRestoreOptimizationPreview: () => void;
   onSectionChange: (nextSection: ResumeDocument["sections"][number], title: string) => void;
   onSummaryHtmlChange: (value: string) => void;
@@ -193,6 +205,12 @@ export function ResumeEditorPanelContent({
         document={document}
         importReview={importReview}
         onBasicsChange={onBasicsChange}
+        onCompleteImportReviewTask={onCompleteImportReviewTask}
+        onDismissImportReview={onDismissImportReview}
+        onReviewImportFieldSuggestion={onReviewImportFieldSuggestion}
+        onReviewImportPendingItem={onReviewImportPendingItem}
+        onReviewImportSnapshot={onReviewImportSnapshot}
+        onReviewImportUnmappedItem={onReviewImportUnmappedItem}
         onSummaryHtmlChange={onSummaryHtmlChange}
       />
     );

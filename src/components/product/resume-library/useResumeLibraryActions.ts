@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useState } from "react";
 import { readClientAiConfig } from "@/lib/client-ai-config";
 import { getJsonOrThrow, getResponseError } from "@/lib/client-auth";
 import { getResumeDerivativeLabel } from "@/lib/resume-lineage";
@@ -21,7 +21,6 @@ export function useResumeLibraryActions(resumeCount: number) {
     resumeCount > 0 ? `已加载 ${resumeCount} 份简历` : "简历库还是空的",
   );
   const [confirmation, setConfirmation] = useState<PendingLibraryConfirmation | null>(null);
-  const [, startTransition] = useTransition();
 
   const activeDeleteId = pendingKey?.startsWith("delete:") ? pendingKey.slice("delete:".length) : null;
   const generatingInProgress = pendingKey?.startsWith("generate:") ?? false;
@@ -58,9 +57,7 @@ export function useResumeLibraryActions(resumeCount: number) {
           ? `已删除 ${title} 及其 ${deletedCount - 1} 个派生版本`
           : `已删除 ${title}`,
       );
-      startTransition(() => {
-        router.refresh();
-      });
+      await router.refresh();
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "删除失败");
     } finally {

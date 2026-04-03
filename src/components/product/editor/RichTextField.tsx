@@ -11,8 +11,8 @@ import {
 import { Mark } from "@tiptap/core";
 import { EditorContent, useEditor } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
-import { startTransition, useEffect, useState } from "react";
-import { sanitizeRichTextHtml, stripHtml } from "@/lib/utils";
+import { startTransition, useEffect, useId, useState } from "react";
+import { cn, sanitizeRichTextHtml, stripHtml } from "@/lib/utils";
 
 type InlineStyleAttributes = {
   color?: string | null;
@@ -92,6 +92,8 @@ function hasVisualContent(value: string) {
 
 export function RichTextField({
   ariaLabel,
+  className,
+  density = "default",
   helper,
   label,
   minHeight = 152,
@@ -100,6 +102,8 @@ export function RichTextField({
   value,
 }: {
   ariaLabel?: string;
+  className?: string;
+  density?: "default" | "compact";
   helper?: string;
   label?: string;
   minHeight?: number;
@@ -108,6 +112,7 @@ export function RichTextField({
   value: string;
 }) {
   const resolvedAriaLabel = ariaLabel ?? label ?? "Rich text field";
+  const labelId = useId();
   const [isFocused, setIsFocused] = useState(false);
   const [, setRevision] = useState(0);
 
@@ -117,6 +122,7 @@ export function RichTextField({
       attributes: {
         "aria-label": resolvedAriaLabel,
         class: "rich-text-field-prosemirror",
+        ...(label ? { "aria-labelledby": labelId } : {}),
       },
     },
     extensions: [
@@ -207,12 +213,16 @@ export function RichTextField({
   }
 
   return (
-    <label className="field-shell field-shell-rich">
-      {label ? <span className="field-label">{label}</span> : null}
+    <div className={cn("field-shell field-shell-rich", className)}>
+      {label ? (
+        <span className="field-label" id={labelId}>
+          {label}
+        </span>
+      ) : null}
 
-      <div className="rich-text-field">
+      <div className={cn("rich-text-field", density === "compact" && "rich-text-field-compact")}>
         <div aria-label={`${resolvedAriaLabel} toolbar`} className="rich-text-toolbar" role="toolbar">
-          <div className="rich-text-toolbar-group">
+          <div className="rich-text-toolbar-group rich-text-toolbar-group-style">
             <select
               aria-label="字体"
               className="rich-text-select"
@@ -263,7 +273,7 @@ export function RichTextField({
             </label>
           </div>
 
-          <div className="rich-text-toolbar-group">
+          <div className="rich-text-toolbar-group rich-text-toolbar-group-format">
             <button
               aria-pressed={editor?.isActive("bold") ?? false}
               className={`rich-text-button ${editor?.isActive("bold") ? "rich-text-button-active" : ""}`}
@@ -293,7 +303,7 @@ export function RichTextField({
             </button>
           </div>
 
-          <div className="rich-text-toolbar-group">
+          <div className="rich-text-toolbar-group rich-text-toolbar-group-list">
             <button
               aria-pressed={editor?.isActive("bulletList") ?? false}
               className={`rich-text-button ${editor?.isActive("bulletList") ? "rich-text-button-active" : ""}`}
@@ -328,6 +338,6 @@ export function RichTextField({
       </div>
 
       {helper ? <span className="field-help">{helper}</span> : null}
-    </label>
+    </div>
   );
 }

@@ -40,32 +40,37 @@ export const editorSectionDefinitions: EditorSectionDefinition[] = [
   },
   {
     type: "skills",
-    title: "技能",
+    title: "核心技能",
     description: "按分组整理",
     layout: "tag-grid",
     emptyState: "还没有技能",
   },
 ];
 
+const defaultSectionTitleAliases: Partial<Record<EditorSectionDefinition["type"], string[]>> = {
+  skills: ["技能", "技能清单", "核心技能"],
+};
+
+function resolveSectionTitle(definition: EditorSectionDefinition, currentTitle: string) {
+  const trimmedTitle = currentTitle.trim();
+  if (!trimmedTitle) {
+    return definition.title;
+  }
+
+  const aliases = defaultSectionTitleAliases[definition.type];
+  if (aliases?.includes(trimmedTitle)) {
+    return definition.title;
+  }
+
+  return trimmedTitle;
+}
+
 export function cloneResumeDocument(document: ResumeDocument) {
   return JSON.parse(JSON.stringify(document)) as ResumeDocument;
 }
 
-export function createEditorItem(type: EditorSectionDefinition["type"]): ResumeSectionItem {
-  if (type === "skills") {
-    return {
-      id: createId("item"),
-      title: "",
-      subtitle: "",
-      location: "",
-      dateRange: "",
-      meta: "",
-      summaryHtml: "",
-      bulletPoints: [],
-      tags: [],
-    };
-  }
-
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function createEditorItem(_type: EditorSectionDefinition["type"]): ResumeSectionItem {
   return {
     id: createId("item"),
     title: "",
@@ -103,7 +108,7 @@ export function ensureEditorDocument(document: ResumeDocument) {
       continue;
     }
 
-    current.title = current.title.trim() || definition.title;
+    current.title = resolveSectionTitle(definition, current.title);
     current.layout = definition.layout;
   }
 

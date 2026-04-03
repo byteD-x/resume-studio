@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode, RefObject } from "react";
-import { Badge } from "@/components/ui/Badge";
+import { BellDot, MoreHorizontal } from "lucide-react";
 import type { EditorPanelGroup, EditorPanelItem } from "@/components/product/editor/ResumeEditorSidebar";
 
 function resolveStatusTone(status: EditorPanelItem["status"]): "neutral" | "accent" | "success" | "warning" {
@@ -26,6 +26,10 @@ function resolveStatusLabel(status: EditorPanelItem["status"]) {
   }
 }
 
+function shouldShowInlineStatus(status: EditorPanelItem["status"]) {
+  return status !== "ready";
+}
+
 export function ResumeEditorWorkbench({
   activePanelGroup,
   activePanelMeta,
@@ -33,6 +37,7 @@ export function ResumeEditorWorkbench({
   editorMode,
   editorSurfaceRef,
   focusLabel,
+  noticeCount = 0,
   notices,
   onModeChange,
   onSurfaceFocusCapture,
@@ -43,26 +48,48 @@ export function ResumeEditorWorkbench({
   editorMode: "visual" | "markdown";
   editorSurfaceRef: RefObject<HTMLElement | null>;
   focusLabel?: string;
+  noticeCount?: number;
   notices?: ReactNode;
   onModeChange: (mode: "visual" | "markdown") => void;
   onSurfaceFocusCapture: () => void;
 }) {
+  const resolvedStatus = activePanelMeta?.status ?? "empty";
+
   return (
     <div className="resume-editor-stack flex min-h-0 flex-1 flex-col overflow-hidden">
       <section className="editor-workbench-header shrink-0">
         <div className="editor-workbench-row">
           <div className="editor-workbench-caption">
-            <strong className="editor-workbench-title">{activePanelMeta?.label ?? focusLabel ?? "编辑"}</strong>
-            <div className="editor-workbench-tagrow">
-              {activePanelGroup?.label ? <Badge tone="neutral">{activePanelGroup.label}</Badge> : null}
-              <Badge tone={resolveStatusTone(activePanelMeta?.status ?? "empty")}>
-                {resolveStatusLabel(activePanelMeta?.status ?? "empty")}
-              </Badge>
-              {activePanelMeta?.countLabel ? <Badge tone="neutral">{activePanelMeta.countLabel}</Badge> : null}
+            <strong className="editor-workbench-title" title={activePanelGroup?.label}>
+              {activePanelMeta?.label ?? focusLabel ?? "编辑"}
+            </strong>
+
+            <div className="editor-workbench-meta">
+              {activePanelMeta?.countLabel ? (
+                <span className="editor-workbench-count">{activePanelMeta.countLabel}</span>
+              ) : null}
+              {shouldShowInlineStatus(resolvedStatus) ? (
+                <span className={`editor-workbench-status editor-workbench-status-${resolveStatusTone(resolvedStatus)}`}>
+                  {resolveStatusLabel(resolvedStatus)}
+                </span>
+              ) : null}
             </div>
           </div>
 
           <div className="editor-workbench-controls">
+            {notices ? (
+              <details className="editor-workbench-menu">
+                <summary aria-label="提示与版本信息" className="editor-workbench-menu-trigger">
+                  <BellDot className="size-3.5" />
+                  <span>提示</span>
+                  {noticeCount > 0 ? <span className="editor-workbench-menu-count">{noticeCount}</span> : null}
+                  <MoreHorizontal className="size-3.5" />
+                </summary>
+
+                <div className="editor-workbench-menu-popover">{notices}</div>
+              </details>
+            ) : null}
+
             <div aria-label="编辑模式" className="editor-input-mode">
               <button
                 aria-pressed={editorMode === "visual"}
@@ -83,8 +110,6 @@ export function ResumeEditorWorkbench({
             </div>
           </div>
         </div>
-
-        {notices ? <div className="editor-workbench-notices">{notices}</div> : null}
       </section>
 
       <section

@@ -77,6 +77,10 @@ export function buildImportReview(document: ResumeDocument) {
     fieldSuggestions.length +
     unmappedItems.length;
 
+  if (remainingCount === 0 && reviewTasks.length === 0) {
+    return null;
+  }
+
   return {
     kind,
     title: kind === "pdf" ? "PDF 导入已完成" : "作品集导入已完成",
@@ -111,9 +115,9 @@ export function resolveInitialStatusMessage(
   focus: string | null,
   onboarding: string | null,
 ) {
-  const importedKind = resolveLatestImportKind(document);
-  if (importedKind) {
-    return resolveImportStatusMessage(importedKind);
+  const importReview = buildImportReview(document);
+  if (importReview) {
+    return resolveImportStatusMessage(importReview.kind);
   }
 
   if (onboarding === "pdf") {

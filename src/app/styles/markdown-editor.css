@@ -11,7 +11,7 @@
   border: 0;
   background:
     linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(255, 255, 255, 0.96)),
-    #fff;
+    var(--paper);
   color: var(--ink-strong);
   font-family: "SFMono-Regular", "Cascadia Code", "JetBrains Mono", monospace;
   font-size: var(--text-base);
@@ -20,19 +20,6 @@
   resize: vertical;
   outline: none;
   tab-size: 2;
-}
-
-.resume-editor-source-footer {
-  display: flex;
-  align-items: start;
-  justify-content: space-between;
-  gap: var(--space-4);
-}
-
-.resume-editor-source-stats {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
 }
 
 .resume-editor-source-note {
@@ -51,6 +38,95 @@
 .ai-config-stack {
   display: grid;
   gap: 0.9rem;
+}
+
+.ai-config-disclosure,
+.resume-ai-disclosure {
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-radius: 0.9rem;
+  background: rgba(255, 255, 255, 0.84);
+  overflow: hidden;
+  transition: border-color 140ms ease, box-shadow 140ms ease;
+}
+
+.ai-config-disclosure:hover,
+.resume-ai-disclosure:hover {
+  border-color: color-mix(in srgb, var(--line-strong) 60%, transparent);
+}
+
+.ai-config-disclosure[open],
+.resume-ai-disclosure[open] {
+  border-color: color-mix(in srgb, var(--accent-strong) 20%, transparent);
+  box-shadow: 0 4px 16px rgba(22, 93, 255, 0.06);
+}
+
+.ai-config-disclosure-summary,
+.resume-ai-disclosure-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  list-style: none;
+  cursor: pointer;
+  padding: 0.82rem 0.92rem;
+  transition: background-color 140ms ease;
+}
+
+.ai-config-disclosure-summary:hover,
+.resume-ai-disclosure-summary:hover {
+  background: rgba(237, 244, 255, 0.4);
+}
+
+.ai-config-disclosure-summary::-webkit-details-marker,
+.resume-ai-disclosure-summary::-webkit-details-marker {
+  display: none;
+}
+
+.ai-config-disclosure-title,
+.resume-ai-disclosure-heading {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  color: var(--ink-strong);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.ai-config-disclosure-meta,
+.resume-ai-disclosure-meta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.ai-config-disclosure-chevron,
+.resume-ai-disclosure-chevron {
+  color: var(--ink-muted);
+  transition: transform 160ms ease;
+}
+
+.ai-config-disclosure-body,
+.resume-ai-disclosure-body {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0 0.92rem 0.92rem;
+  animation: disclosure-open 180ms ease-out;
+}
+
+@keyframes disclosure-open {
+  from {
+    opacity: 0.7;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.ai-config-disclosure[open] .ai-config-disclosure-chevron,
+.resume-ai-disclosure[open] .resume-ai-disclosure-chevron {
+  transform: rotate(180deg);
 }
 
 .ai-config-provider-grid,
@@ -365,6 +441,11 @@
   color: var(--ink-strong);
   font-size: 1.1rem;
   font-weight: 700;
+}
+
+.resume-ai-disclosure-body .resume-ai-surface:first-child,
+.resume-ai-disclosure-body .resume-ai-metric-grid:first-child {
+  margin-top: 0;
 }
 
 .editor-shortcut-overlay {

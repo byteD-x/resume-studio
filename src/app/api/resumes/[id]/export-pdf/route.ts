@@ -4,7 +4,6 @@ import { buildResumeQualityReport } from "@/lib/resume-analysis";
 import { validateResumeDocument } from "@/lib/resume-document";
 import { exportResumePdf } from "@/lib/pdf-export";
 import { writeUserExportedPdf } from "@/lib/user-storage";
-import { slugify } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -30,7 +29,7 @@ export async function POST(
   return new Response(pdf, {
     headers: {
       "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename="${slugify(document.meta.title)}.pdf"`,
+      "Content-Disposition": `attachment; filename="${id}.pdf"`,
     },
   });
 }

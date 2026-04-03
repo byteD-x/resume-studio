@@ -23,20 +23,20 @@
   display: inline-flex;
   align-items: center;
   white-space: nowrap;
-  color: #9a6700;
+  color: var(--warning);
   font-size: var(--text-sm);
   font-weight: 700;
 }
 
 .workspace-check-tag-done {
-  color: #0f766e;
+  color: var(--success);
 }
 
 .preview-stage {
   overflow: hidden;
   border-radius: var(--radius-md);
   border: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
-  background: #f0ede6;
+  background: var(--neutral-warm);
   box-shadow: var(--shadow-soft);
 }
 
@@ -50,14 +50,14 @@
 
 .preview-paper-shell {
   padding: var(--space-4);
-  background: #ebe7df;
+  background: var(--neutral-warm-muted);
 }
 
 .preview-stage-topbar span {
   width: 0.62rem;
   height: 0.62rem;
   border-radius: var(--radius-full);
-  background: #d2d6de;
+  background: var(--neutral-warm-deep);
 }
 
 @media (max-width: 767px) {

@@ -9,7 +9,9 @@ const require = createRequire(import.meta.url);
 const DEFAULT_MAX_CACHE_MB = 512;
 const DEFAULT_WARMUP_ROUTES = ["/login", "/", "/templates", "/resumes", "/import"];
 const DEFAULT_WARMUP_CONCURRENCY = 3;
-const HOLD_OUTPUT_UNTIL_WARMUP = process.env.NEXT_DEV_HOLD_OUTPUT_UNTIL_WARMUP !== "0";
+const ROUTE_WARMUP_ENABLED =
+  process.env.NEXT_DEV_ROUTE_WARMUP === "1" && process.env.NEXT_DEV_SKIP_ROUTE_WARMUP !== "1";
+const HOLD_OUTPUT_UNTIL_WARMUP = process.env.NEXT_DEV_HOLD_OUTPUT_UNTIL_WARMUP === "1";
 const CACHE_PRUNE_THRESHOLD_MB = Number.parseInt(
   process.env.NEXT_DEV_CACHE_MAX_MB ?? `${DEFAULT_MAX_CACHE_MB}`,
   10,
@@ -196,7 +198,7 @@ async function warmRoute(baseUrl, route) {
 }
 
 async function warmCriticalRoutes(baseUrl) {
-  if (process.env.NEXT_DEV_SKIP_ROUTE_WARMUP === "1") {
+  if (!ROUTE_WARMUP_ENABLED) {
     return;
   }
 

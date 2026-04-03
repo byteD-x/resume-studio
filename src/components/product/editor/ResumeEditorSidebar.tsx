@@ -83,6 +83,8 @@ export function ResumeEditorSidebar({
                 const Icon = iconMap[item.key];
                 const statusLabel = panelStatusLabel(item.status);
 
+                const tooltipContent = [item.label, item.hint || statusLabel, item.countLabel].filter(Boolean).join(" · ");
+
                 return (
                   <button
                     aria-label={[item.label, statusLabel, item.countLabel].filter(Boolean).join("，")}
@@ -90,6 +92,7 @@ export function ResumeEditorSidebar({
                     className={`editor-sidebar-item ${active ? "editor-sidebar-item-active" : ""}`}
                     key={item.key}
                     onClick={() => onSelect(item.key)}
+                    title={tooltipContent}
                     type="button"
                   >
                     <span className="editor-sidebar-item-index" aria-hidden="true">
@@ -100,12 +103,6 @@ export function ResumeEditorSidebar({
                       aria-hidden="true"
                       className={`editor-sidebar-item-dot editor-sidebar-item-dot-${item.status}`}
                     />
-
-                    <span className="editor-sidebar-tooltip" role="presentation">
-                      <strong>{item.label}</strong>
-                      <span>{item.hint || statusLabel}</span>
-                      <em>{item.countLabel ?? statusLabel}</em>
-                    </span>
                   </button>
                 );
               })}

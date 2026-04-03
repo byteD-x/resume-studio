@@ -60,6 +60,37 @@ function renderItem(item: ResumeSectionItem, sectionType: ResumeSection["type"],
   `;
 }
 
+function renderSkillItem(item: ResumeSectionItem, highlightedItemId?: string) {
+  const highlighted = highlightedItemId === item.id;
+  const target = serializePreviewTarget({
+    kind: "section",
+    sectionType: "skills",
+    itemId: item.id,
+  });
+  const skillMeta = [item.subtitle, item.meta].filter(Boolean).join(" · ");
+  const tags =
+    item.tags.length > 0
+      ? `<div class="tag-row">${item.tags
+          .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
+          .join("")}</div>`
+      : "";
+
+  return `
+    <article class="resume-item resume-skill-item resume-preview-focusable${highlighted ? " resume-item-highlighted" : ""}" data-preview-target='${escapeHtml(target)}'>
+      ${
+        item.title || skillMeta
+          ? `<div class="resume-skill-head">
+              ${item.title ? `<h3 class="resume-skill-title">${escapeHtml(item.title)}</h3>` : ""}
+              ${skillMeta ? `<p class="resume-skill-meta">${escapeHtml(skillMeta)}</p>` : ""}
+            </div>`
+          : ""
+      }
+      ${hasMeaningfulRichText(item.summaryHtml) ? `<div class="rich-text">${sanitizeRichTextHtml(item.summaryHtml)}</div>` : ""}
+      ${tags}
+    </article>
+  `;
+}
+
 export function renderSection(
   section: ResumeSection,
   options?: PreviewBuildOptions,
@@ -71,18 +102,8 @@ export function renderSection(
 
   const items = section.items.filter(hasResumeSectionItemContent);
   const itemsHtml = items.map((item) => renderItem(item, section.type, highlightedItemId)).join("");
-  const tagsHtml =
-    section.layout === "tag-grid"
-      ? items
-          .flatMap((item) => item.tags)
-          .filter(Boolean)
-          .map((tag) => `<span class="tag">${escapeHtml(tag)}</span>`)
-          .join("")
-      : "";
-  const hasBody =
-    hasMeaningfulRichText(section.contentHtml) ||
-    items.length > 0 ||
-    (section.layout === "tag-grid" && tagsHtml.length > 0);
+  const skillItemsHtml = section.layout === "tag-grid" ? items.map((item) => renderSkillItem(item, highlightedItemId)).join("") : "";
+  const hasBody = hasMeaningfulRichText(section.contentHtml) || items.length > 0;
 
   if (!hasBody) return "";
 
@@ -96,7 +117,7 @@ export function renderSection(
           ? `<div class="rich-text">${sanitizeRichTextHtml(section.contentHtml)}</div>`
           : ""
       }
-      ${section.layout === "tag-grid" ? `<div class="tag-row">${tagsHtml}</div>` : itemsHtml}
+      ${section.layout === "tag-grid" && skillItemsHtml ? `<div class="skill-grid">${skillItemsHtml}</div>` : itemsHtml}
     </section>
   `;
 }

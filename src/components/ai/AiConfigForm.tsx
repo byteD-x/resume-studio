@@ -1,7 +1,7 @@
 "use client";
 
 import { CheckCircle2, ChevronDown, ExternalLink, LoaderCircle, PlugZap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { handleSanitizedPaste } from "@/lib/editor-input";
@@ -51,10 +51,36 @@ function getSelectionDescription(selectedPreset: ResumeAiPresetOption | null, us
   }
 
   if (usesLocalOllama) {
-    return "当前为本地兼容接口，不需要云端 Key，可先检查模型是否已安装。";
+    return "当前是本地兼容接口，不需要云端 Key，可先检查模型是否已安装。";
   }
 
   return "当前使用自定义兼容 OpenAI 的接口配置，可在高级设置里继续覆盖模型和接口地址。";
+}
+
+function AiConfigDisclosure({
+  badge,
+  children,
+  defaultOpen = false,
+  title,
+}: {
+  badge?: ReactNode;
+  children: ReactNode;
+  defaultOpen?: boolean;
+  title: string;
+}) {
+  return (
+    <details className="ai-config-disclosure" {...(defaultOpen ? { open: true } : {})}>
+      <summary className="ai-config-disclosure-summary">
+        <span className="ai-config-disclosure-title">{title}</span>
+        <span className="ai-config-disclosure-meta">
+          {badge}
+          <ChevronDown className="ai-config-disclosure-chevron size-4" />
+        </span>
+      </summary>
+
+      <div className="ai-config-disclosure-body">{children}</div>
+    </details>
+  );
 }
 
 export function AiConfigForm({
@@ -148,187 +174,188 @@ export function AiConfigForm({
       </div>
 
       {showProvider ? (
-        <div className="ai-config-provider-grid">
-          <button
-            className={`ai-config-provider-card ${
-              provider === "local"
-                ? "ai-config-provider-card-active"
-                : "ai-config-provider-card-idle"
-            }`}
-            disabled={disabled}
-            onClick={() => onProviderChange?.("local")}
-            type="button"
-          >
-            <strong>本地规则</strong>
-          </button>
-          <button
-            className={`ai-config-provider-card ${
-              provider === "openai-compatible"
-                ? "ai-config-provider-card-active"
-                : "ai-config-provider-card-idle"
-            }`}
-            disabled={disabled}
-            onClick={() => onProviderChange?.("openai-compatible")}
-            type="button"
-          >
-            <strong>AI 模型</strong>
-          </button>
-        </div>
+        <AiConfigDisclosure title="接入方式">
+          <div className="ai-config-provider-grid">
+            <button
+              className={`ai-config-provider-card ${
+                provider === "local" ? "ai-config-provider-card-active" : "ai-config-provider-card-idle"
+              }`}
+              disabled={disabled}
+              onClick={() => onProviderChange?.("local")}
+              type="button"
+            >
+              <strong>本地规则</strong>
+            </button>
+            <button
+              className={`ai-config-provider-card ${
+                provider === "openai-compatible" ? "ai-config-provider-card-active" : "ai-config-provider-card-idle"
+              }`}
+              disabled={disabled}
+              onClick={() => onProviderChange?.("openai-compatible")}
+              type="button"
+            >
+              <strong>AI 模型</strong>
+            </button>
+          </div>
+        </AiConfigDisclosure>
       ) : null}
 
       {usesRemoteProvider ? (
         <>
-          <div className="ai-config-surface ai-config-surface-soft">
-            <div className="ai-config-head">
-              <p className="ai-config-heading">选择方案</p>
-              {selectedPreset ? (
+          <AiConfigDisclosure
+            badge={
+              selectedPreset ? (
                 <Badge tone={getKindTone(selectedPreset.kind)}>{selectedPreset.freeLabel}</Badge>
               ) : (
                 <Badge tone="neutral">自定义</Badge>
-              )}
-            </div>
-
-            <div className="ai-config-preset-list">
-              {enhancedResumeAiPresets.map((preset) => {
-                const active = selectedPresetId === preset.id;
-
-                return (
-                  <button
-                    className={`ai-config-preset-card ${
-                      active
-                        ? "ai-config-preset-card-active"
-                        : "ai-config-preset-card-idle"
-                    }`}
-                    disabled={disabled}
-                    key={preset.id}
-                    onClick={() => onApplyPreset(preset.id)}
-                    type="button"
-                  >
-                    <div className="ai-config-preset-head">
-                      <div className="ai-config-preset-copy">
-                        <strong>{preset.label}</strong>
-                        <span>{preset.providerName}</span>
-                        {preset.description ? <p className="ai-config-preset-description">{preset.description}</p> : null}
-                      </div>
-                      <div className="ai-config-preset-meta">
-                        <Badge tone={getKindTone(preset.kind)}>{preset.freeLabel}</Badge>
-                        {active ? <Badge tone="accent">已选</Badge> : null}
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div
-            aria-live="polite"
-            className="ai-config-surface ai-config-surface-emphasis"
+              )
+            }
+            title="选择方案"
           >
-            <div className="ai-config-head ai-config-head-wrap">
-              <div>
-                <p className="ai-config-heading">当前方案</p>
-                <div className="ai-config-current-title-row">
-                  <strong className="ai-config-current-title">{selectedPreset?.label ?? "自定义方案"}</strong>
-                  {selectedPreset ? (
-                    <Badge tone="accent" className="ai-config-current-badge">
-                      <CheckCircle2 className="size-3.5" />
-                      已同步
-                    </Badge>
-                  ) : (
-                    <Badge tone="neutral">手动覆盖</Badge>
-                  )}
-                </div>
-                <p className="ai-config-current-copy">{selectionDescription}</p>
-              </div>
+            <div className="ai-config-surface ai-config-surface-soft">
+              <div className="ai-config-preset-list">
+                {enhancedResumeAiPresets.map((preset) => {
+                  const active = selectedPresetId === preset.id;
 
-              <div className="ai-config-inline-actions">
-                {selectedPreset?.apiKeyUrl ? (
-                  <a className="btn btn-secondary" href={selectedPreset.apiKeyUrl} rel="noreferrer" target="_blank">
-                    获取 Key
-                    <ExternalLink className="size-3.5" />
-                  </a>
-                ) : usesLocalOllama ? (
-                  <Badge tone="neutral">本地方案无需云端 Key</Badge>
-                ) : null}
-                {selectedPreset?.docsUrl ? (
-                  <a className="btn btn-ghost" href={selectedPreset.docsUrl} rel="noreferrer" target="_blank">
-                    文档
-                    <ExternalLink className="size-3.5" />
-                  </a>
-                ) : null}
+                  return (
+                    <button
+                      className={`ai-config-preset-card ${
+                        active ? "ai-config-preset-card-active" : "ai-config-preset-card-idle"
+                      }`}
+                      disabled={disabled}
+                      key={preset.id}
+                      onClick={() => onApplyPreset(preset.id)}
+                      type="button"
+                    >
+                      <div className="ai-config-preset-head">
+                        <div className="ai-config-preset-copy">
+                          <strong>{preset.label}</strong>
+                          <span>{preset.providerName}</span>
+                          {preset.description ? <p className="ai-config-preset-description">{preset.description}</p> : null}
+                        </div>
+                        <div className="ai-config-preset-meta">
+                          <Badge tone={getKindTone(preset.kind)}>{preset.freeLabel}</Badge>
+                          {active ? <Badge tone="accent">已选</Badge> : null}
+                        </div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
+          </AiConfigDisclosure>
 
-            <div className="ai-config-current-grid">
-              <div className="ai-config-current-item">
-                <span>服务商</span>
-                <strong>{selectedPreset?.providerName ?? "自定义接口"}</strong>
-              </div>
-              <div className="ai-config-current-item">
-                <span>模型</span>
-                <strong>{model.trim() || "未设置"}</strong>
-              </div>
-              <div className="ai-config-current-item ai-config-current-item-wide">
-                <span>接口地址</span>
-                <strong className="ai-config-current-code">{baseUrl.trim() || "未设置"}</strong>
-              </div>
-            </div>
-          </div>
-
-          <div className="ai-config-surface">
-            <div className="ai-config-head">
-              <p className="ai-config-heading">API Key</p>
-            </div>
-
-            <div className="ai-config-connection-row">
-              <label className="field-shell ai-config-field-grow">
-                <span className="field-label">Key</span>
-                <input
-                  className="input-control"
-                  disabled={disabled}
-                  onChange={(event) => onApiKeyChange(event.target.value)}
-                  onPaste={(event) =>
-                    handleSanitizedPaste(event, {
-                      currentValue: apiKey,
-                      mode: "single-line",
-                      onValueChange: onApiKeyChange,
-                    })
-                  }
-                  placeholder={usesLocalOllama ? "可留空" : "输入 API Key"}
-                  type="password"
-                  value={apiKey}
-                />
-              </label>
-
-              <div className="ai-config-action-slot">
-                <Button
-                  disabled={disabled || isChecking}
-                  onClick={() => void handleCheckConnection()}
-                  type="button"
-                  variant="secondary"
-                >
-                  {isChecking ? <LoaderCircle className="size-4 animate-spin" /> : <PlugZap className="size-4" />}
-                  检查连接
-                </Button>
-              </div>
-            </div>
-
-            {healthState ? (
-              <div className="ai-config-health">
-                <Badge tone={healthState.tone}>
-                  {"result" in healthState
-                    ? healthState.result.modelFound
-                      ? "已连接"
-                      : "模型不可用"
-                    : "连接失败"}
+          <AiConfigDisclosure
+            badge={
+              selectedPreset ? (
+                <Badge tone="accent" className="ai-config-current-badge">
+                  <CheckCircle2 className="size-3.5" />
+                  已同步
                 </Badge>
-                <p className="ai-config-health-copy">
-                  {"result" in healthState ? healthState.result.message : healthState.message}
-                </p>
+              ) : (
+                <Badge tone="neutral">手动覆盖</Badge>
+              )
+            }
+            title="当前方案"
+          >
+            <div aria-live="polite" className="ai-config-surface ai-config-surface-emphasis">
+              <div className="ai-config-head ai-config-head-wrap">
+                <div>
+                  <div className="ai-config-current-title-row">
+                    <strong className="ai-config-current-title">{selectedPreset?.label ?? "自定义方案"}</strong>
+                  </div>
+                  <p className="ai-config-current-copy">{selectionDescription}</p>
+                </div>
+
+                <div className="ai-config-inline-actions">
+                  {selectedPreset?.apiKeyUrl ? (
+                    <a className="btn btn-secondary" href={selectedPreset.apiKeyUrl} rel="noreferrer" target="_blank">
+                      获取 Key
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  ) : usesLocalOllama ? (
+                    <Badge tone="neutral">本地方案无需云端 Key</Badge>
+                  ) : null}
+                  {selectedPreset?.docsUrl ? (
+                    <a className="btn btn-ghost" href={selectedPreset.docsUrl} rel="noreferrer" target="_blank">
+                      文档
+                      <ExternalLink className="size-3.5" />
+                    </a>
+                  ) : null}
+                </div>
               </div>
-            ) : null}
-          </div>
+
+              <div className="ai-config-current-grid">
+                <div className="ai-config-current-item">
+                  <span>服务商</span>
+                  <strong>{selectedPreset?.providerName ?? "自定义接口"}</strong>
+                </div>
+                <div className="ai-config-current-item">
+                  <span>模型</span>
+                  <strong>{model.trim() || "未设置"}</strong>
+                </div>
+                <div className="ai-config-current-item ai-config-current-item-wide">
+                  <span>接口地址</span>
+                  <strong className="ai-config-current-code">{baseUrl.trim() || "未设置"}</strong>
+                </div>
+              </div>
+            </div>
+          </AiConfigDisclosure>
+
+          <AiConfigDisclosure
+            badge={healthState ? <Badge tone={healthState.tone}>连接状态</Badge> : undefined}
+            title="API Key"
+          >
+            <div className="ai-config-surface">
+              <div className="ai-config-connection-row">
+                <label className="field-shell ai-config-field-grow">
+                  <span className="field-label">Key</span>
+                  <input
+                    className="input-control"
+                    disabled={disabled}
+                    onChange={(event) => onApiKeyChange(event.target.value)}
+                    onPaste={(event) =>
+                      handleSanitizedPaste(event, {
+                        currentValue: apiKey,
+                        mode: "single-line",
+                        onValueChange: onApiKeyChange,
+                      })
+                    }
+                    placeholder={usesLocalOllama ? "可留空" : "输入 API Key"}
+                    type="password"
+                    value={apiKey}
+                  />
+                </label>
+
+                <div className="ai-config-action-slot">
+                  <Button
+                    disabled={disabled || isChecking}
+                    onClick={() => void handleCheckConnection()}
+                    type="button"
+                    variant="secondary"
+                  >
+                    {isChecking ? <LoaderCircle className="size-4 animate-spin" /> : <PlugZap className="size-4" />}
+                    检查连接
+                  </Button>
+                </div>
+              </div>
+
+              {healthState ? (
+                <div className="ai-config-health">
+                  <Badge tone={healthState.tone}>
+                    {"result" in healthState
+                      ? healthState.result.modelFound
+                        ? "已连接"
+                        : "模型不可用"
+                      : "连接失败"}
+                  </Badge>
+                  <p className="ai-config-health-copy">
+                    {"result" in healthState ? healthState.result.message : healthState.message}
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </AiConfigDisclosure>
 
           <details className="ai-config-advanced">
             <summary className="ai-config-advanced-summary">
@@ -379,9 +406,7 @@ export function AiConfigForm({
           </details>
         </>
       ) : (
-        <div className="ai-config-empty">
-          当前无需配置。
-        </div>
+        <div className="ai-config-empty">当前无需配置。</div>
       )}
     </div>
   );

@@ -100,7 +100,7 @@ function createBlankSections(writerProfile: ResumeWriterProfile) {
     }),
     createStarterSection({
       type: "skills",
-      title: "技能清单",
+      title: "核心技能",
       layout: "tag-grid",
     }),
   );

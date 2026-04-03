@@ -10,8 +10,7 @@
   }
 
   .editor-toolbar-heading,
-  .editor-toolbar-actions,
-  .editor-toolbar-meta {
+  .editor-toolbar-actions {
     flex-wrap: wrap;
   }
 
@@ -19,8 +18,8 @@
     width: 100%;
   }
 
-  .editor-toolbar-message {
-    white-space: normal;
+  .editor-toolbar-back-label {
+    display: none;
   }
 
   .editor-compact-alert {
@@ -37,5 +36,15 @@
   .resume-editor-right,
   .resume-editor-right .editor-preview-panel {
     border-radius: 16px;
+  }
+
+  .editor-workbench-caption,
+  .editor-workbench-controls {
+    flex-wrap: wrap;
+  }
+
+  .editor-preview-control,
+  .editor-preview-control-section {
+    flex: 1 1 9.5rem;
   }
 }

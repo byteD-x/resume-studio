@@ -7,7 +7,8 @@ import { AiConfigForm } from "@/components/ai/AiConfigForm";
 import { enhancedResumeAiPresets } from "@/lib/resume-ai";
 
 function AiConfigHarness() {
-  const initialPreset = enhancedResumeAiPresets.find((preset) => preset.id === "groq-qwen3-32b") ?? enhancedResumeAiPresets[0];
+  const initialPreset =
+    enhancedResumeAiPresets.find((preset) => preset.id === "groq-qwen3-32b") ?? enhancedResumeAiPresets[0];
   const [provider, setProvider] = useState<"local" | "openai-compatible">(initialPreset.settings.provider);
   const [model, setModel] = useState(initialPreset.settings.model);
   const [baseUrl, setBaseUrl] = useState(initialPreset.settings.baseUrl);
@@ -40,8 +41,10 @@ describe("ai config form", () => {
   it("syncs model and support links when switching presets", () => {
     render(<AiConfigHarness />);
 
+    fireEvent.click(screen.getByText("选择方案"));
     fireEvent.click(screen.getByRole("button", { name: /OpenRouter Free/i }));
 
+    fireEvent.click(screen.getByText("当前方案"));
     expect(screen.getByText("openrouter/free")).toBeTruthy();
 
     const apiKeyLink = screen.getByRole("link", { name: /获取 Key/i });

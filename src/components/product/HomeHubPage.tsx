@@ -50,7 +50,7 @@ export function HomeHubPage() {
         <div className="absolute inset-x-0 top-0 h-[200px] bg-[linear-gradient(90deg,color-mix(in srgb, var(--accent-strong) 8%, transparent),color-mix(in srgb, var(--accent-strong) 2%, transparent),transparent)]" />
         <div className="relative flex flex-col gap-6 p-6 sm:p-7 lg:flex-row lg:items-center lg:justify-between">
           <div className="space-y-4">
-            <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-[color:var(--accent-surface)] px-3 py-1 text-[12px] font-semibold text-[color:var(--accent-strong)]">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[color:var(--line)] bg-[color:var(--accent-soft)] px-3 py-1 text-[12px] font-semibold text-[color:var(--accent-strong)]">
               <Sparkles className="size-3.5" />
               Workspace
             </div>
@@ -92,15 +92,15 @@ export function HomeHubPage() {
             return (
               <Link
                 aria-label={`进入${entry.title}`}
-                className={`group relative overflow-hidden rounded-[var(--radius-xl)] border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-gradient-to-br ${entry.tone} p-6 shadow-[var(--shadow-soft)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]`}
+                className={`group relative overflow-hidden rounded-[var(--radius-xl)] border border-[color:color-mix(in srgb,var(--line)_90%,transparent)] bg-gradient-to-br ${entry.tone} p-6 shadow-[var(--shadow-soft)] transition duration-200 hover:-translate-y-0.5 hover:shadow-[var(--shadow-medium)]`}
                 href={entry.href}
                 key={entry.href}
               >
                 <div className="flex items-start justify-between gap-4">
-                  <span className="rounded-[var(--radius-sm)] border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-white/90 px-3 py-1 text-[var(--text-xs)] font-semibold text-[color:var(--ink-soft)]">
+                  <span className="rounded-[var(--radius-sm)] border border-[color:color-mix(in srgb,var(--line)_90%,transparent)] bg-white/90 px-3 py-1 text-[var(--text-xs)] font-semibold text-[color:var(--ink-soft)]">
                     {entry.tag}
                   </span>
-                  <span className="inline-flex size-12 items-center justify-center rounded-[var(--radius-md)] border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-white text-[color:var(--accent-strong)] shadow-[0_6px_14px_rgba(22,93,255,0.12)]">
+                  <span className="inline-flex size-12 items-center justify-center rounded-[var(--radius-md)] border border-[color:color-mix(in srgb,var(--line)_90%,transparent)] bg-white text-[color:var(--accent-strong)] shadow-[0_6px_14px_rgba(22,93,255,0.12)]">
                     <Icon className="size-5" />
                   </span>
                 </div>
@@ -117,7 +117,7 @@ export function HomeHubPage() {
           })}
         </div>
 
-        <aside className="rounded-[var(--radius-xl)] border border-[color:color-mix(in_srgb,var(--line)_90%,transparent)] bg-white p-5 shadow-[var(--shadow-soft)]">
+        <aside className="rounded-[var(--radius-xl)] border border-[color:color-mix(in srgb,var(--line)_90%,transparent)] bg-white p-5 shadow-[var(--shadow-soft)]">
           <div className="flex items-center justify-between">
             <p className="text-[var(--text-lg)] font-semibold text-[color:var(--ink-strong)]">Quick Entry</p>
           </div>
@@ -129,7 +129,7 @@ export function HomeHubPage() {
               return (
                 <Link
                   aria-label={entry.title}
-                  className="group flex items-center justify-between rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[color:var(--paper-soft)] px-4 py-4 transition hover:border-[color:color-mix(in_srgb,var(--accent-strong)_16%,white)] hover:bg-[color:var(--accent-soft)]"
+                  className="group flex items-center justify-between rounded-[var(--radius-lg)] border border-[color:var(--line)] bg-[color:var(--paper-soft)] px-4 py-4 transition hover:border-[color:color-mix(in srgb,var(--accent-strong)_16%,white)] hover:bg-[color:var(--accent-soft)]"
                   href={entry.href}
                   key={entry.href}
                 >

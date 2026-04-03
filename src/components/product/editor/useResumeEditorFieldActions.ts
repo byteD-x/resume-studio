@@ -13,6 +13,14 @@ import {
 } from "@/components/product/editor/resume-editor-workspace";
 import { sanitizeRichTextHtml } from "@/lib/utils";
 import { tagsToList } from "@/lib/resume-editor";
+import {
+  clearImportReview,
+  markImportFieldSuggestionReviewed,
+  markImportReviewTaskCompleted,
+  markImportSnapshotReviewed,
+  markPendingReviewItemReviewed,
+  markUnmappedImportItemReviewed,
+} from "@/lib/resume-import-review";
 
 export type BasicsTextField =
   | "name"
@@ -79,21 +87,32 @@ export function useResumeEditorFieldActions({
         }
 
         if (field === "links") {
+          const parsedLinks = value
+            .split("\n")
+            .map((line) => line.trim())
+            .filter(Boolean)
+            .map((line) => {
+              // Try to find a URL pattern in the line
+              const urlMatch = line.match(/https?:\/\/[^\s]+/);
+              if (urlMatch) {
+                const url = urlMatch[0];
+                const label = line.slice(0, urlMatch.index!).trim();
+                return {
+                  label: label || url,
+                  url,
+                };
+              }
+              // No URL found, use the whole line as both label and URL
+              return {
+                label: line,
+                url: line,
+              };
+            });
           return {
             ...current,
             basics: {
               ...current.basics,
-              links: value
-                .split("\n")
-                .map((line) => line.trim())
-                .filter(Boolean)
-                .map((line) => {
-                  const [label, ...rest] = line.split(" ");
-                  return {
-                    label,
-                    url: rest.join(" ") || label,
-                  };
-                }),
+              links: parsedLinks,
             },
           };
         }
@@ -243,6 +262,19 @@ export function useResumeEditorFieldActions({
       baseUrl: latestDocumentRef.current.ai.baseUrl,
       apiKey: value,
     });
+    updateDocument(
+      (current) => ({
+        ...current,
+        ai: {
+          ...current.ai,
+          apiKey: value,
+        },
+      }),
+      {
+        historyLabel: "更新 AI Key",
+        clearDeletion: true,
+      },
+    );
   };
 
   const applyAiPreset = (presetId: string) => {
@@ -303,11 +335,83 @@ export function useResumeEditorFieldActions({
     );
   };
 
+  const completeImportReviewTask = (taskId: string) => {
+    updateDocument(
+      (current) => markImportReviewTaskCompleted(current, taskId),
+      {
+        historyLabel: "完成导入校对任务",
+        clearDeletion: true,
+        message: "已完成导入校对任务",
+      },
+    );
+  };
+
+  const reviewImportPendingItem = (item: string) => {
+    updateDocument(
+      (current) => markPendingReviewItemReviewed(current, item),
+      {
+        historyLabel: "确认导入提示",
+        clearDeletion: true,
+        message: "已确认导入提示",
+      },
+    );
+  };
+
+  const reviewImportSnapshot = (snapshotId: string) => {
+    updateDocument(
+      (current) => markImportSnapshotReviewed(current, snapshotId),
+      {
+        historyLabel: "确认来源片段",
+        clearDeletion: true,
+        message: "已核对来源片段",
+      },
+    );
+  };
+
+  const reviewImportFieldSuggestion = (suggestionId: string) => {
+    updateDocument(
+      (current) => markImportFieldSuggestionReviewed(current, suggestionId),
+      {
+        historyLabel: "确认字段替换",
+        clearDeletion: true,
+        message: "已确认字段替换",
+      },
+    );
+  };
+
+  const reviewImportUnmappedItem = (item: string) => {
+    updateDocument(
+      (current) => markUnmappedImportItemReviewed(current, item),
+      {
+        historyLabel: "确认未映射内容",
+        clearDeletion: true,
+        message: "已处理未映射内容",
+      },
+    );
+  };
+
+  const dismissImportReview = () => {
+    updateDocument(
+      (current) => clearImportReview(current),
+      {
+        historyLabel: "清空导入校对",
+        clearDeletion: true,
+        message: "已清空导入校对提示",
+      },
+    );
+  };
+
   return {
     applyAiPreset,
     applyGeneratedAiSummarySuggestion,
     applyStylePreset,
     applySuggestedKeywords,
+    completeImportReviewTask,
+    dismissImportReview,
+    reviewImportFieldSuggestion,
+    reviewImportPendingItem,
+    reviewImportSnapshot,
+    reviewImportUnmappedItem,
     updateAiApiKey,
     updateAiField,
     updateBasicsField,

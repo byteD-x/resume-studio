@@ -37,13 +37,13 @@ export function ResumeDesignColorSection({
             <span className="field-label">{label}</span>
             <div className="color-control">
               <input
-                className="color-input"
+                className="color-input color-input-swatch"
                 onChange={(event) => onLayoutChange(field, event.target.value)}
                 type="color"
                 value={String(layout[field]).startsWith("#") ? String(layout[field]) : "#3559b7"}
               />
               <input
-                className="input-control"
+                className="input-control color-input-text"
                 onChange={(event) => onLayoutChange(field, event.target.value)}
                 value={String(layout[field])}
               />

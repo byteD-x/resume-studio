@@ -30,11 +30,23 @@ export function ResumeBasicsPanel({
   document,
   importReview,
   onBasicsChange,
+  onCompleteImportReviewTask,
+  onDismissImportReview,
+  onReviewImportFieldSuggestion,
+  onReviewImportPendingItem,
+  onReviewImportSnapshot,
+  onReviewImportUnmappedItem,
   onSummaryHtmlChange,
 }: {
   document: ResumeDocument;
   importReview: ResumeEditorImportReview | null;
   onBasicsChange: (field: BasicsTextField, value: string) => void;
+  onCompleteImportReviewTask: (taskId: string) => void;
+  onDismissImportReview: () => void;
+  onReviewImportFieldSuggestion: (suggestionId: string) => void;
+  onReviewImportPendingItem: (item: string) => void;
+  onReviewImportSnapshot: (snapshotId: string) => void;
+  onReviewImportUnmappedItem: (item: string) => void;
   onSummaryHtmlChange: (value: string) => void;
 }) {
   const linksValue = document.basics.links.map((link) => `${link.label} ${link.url}`).join("\n");
@@ -58,26 +70,42 @@ export function ResumeBasicsPanel({
         key: `pending-${item}`,
         label: "待确认",
         value: item,
+        actionLabel: "已核对",
+        onResolve: () => onReviewImportPendingItem(item),
       })),
       ...importReview.fieldSuggestions.map((suggestion) => ({
         key: suggestion.id,
-        label: suggestion.label,
+        label: `${suggestion.label} / ${suggestion.sourceLabel || "导入字段"}`,
         value: summarizeImportValue(suggestion.importedValue),
+        actionLabel: "已确认",
+        onResolve: () => onReviewImportFieldSuggestion(suggestion.id),
       })),
       ...importReview.unmappedItems.map((item) => ({
         key: `unmapped-${item}`,
         label: "未映射",
         value: item,
+        actionLabel: "已处理",
+        onResolve: () => onReviewImportUnmappedItem(item),
       })),
       ...importReview.snapshots.map((snapshot) => ({
         key: snapshot.id,
         label: snapshot.label || "来源片段",
-        value: snapshot.mappedTo || summarizeImportValue(snapshot.excerpt),
+        value: snapshot.mappedTo
+          ? `${snapshot.mappedTo} · ${summarizeImportValue(snapshot.excerpt)}`
+          : summarizeImportValue(snapshot.excerpt),
+        actionLabel: "已比对",
+        onResolve: () => onReviewImportSnapshot(snapshot.id),
       })),
     ];
 
     return rows.slice(0, 6);
-  }, [importReview]);
+  }, [
+    importReview,
+    onReviewImportFieldSuggestion,
+    onReviewImportPendingItem,
+    onReviewImportSnapshot,
+    onReviewImportUnmappedItem,
+  ]);
 
   useEffect(() => {
     setRemoteSuggestions([]);
@@ -136,8 +164,14 @@ export function ResumeBasicsPanel({
           data-editor-anchor="import-review"
           tabIndex={-1}
         >
-          <div className="resume-editor-group-head">
-            <h3>导入校对</h3>
+          <div className="resume-import-review-head">
+            <div className="resume-editor-group-head">
+              <h3>导入校对</h3>
+              <p>{importReview.description}</p>
+            </div>
+            <button className="btn btn-ghost resume-import-review-dismiss" onClick={onDismissImportReview} type="button">
+              清空校对
+            </button>
           </div>
 
           <div className="resume-import-review-meta">
@@ -150,12 +184,37 @@ export function ResumeBasicsPanel({
             {importReview.unmappedItemCount > 0 ? <Badge tone="neutral">未映射 {importReview.unmappedItemCount}</Badge> : null}
           </div>
 
+          {importReview.reviewTasks.length > 0 ? (
+            <div className="resume-import-review-task-list">
+              {importReview.reviewTasks.map((task) => (
+                <div className="resume-import-review-task" key={task.id}>
+                  <div className="resume-import-review-task-copy">
+                    <strong>{task.title}</strong>
+                    <p>{task.detail}</p>
+                  </div>
+                  <button
+                    className="btn btn-secondary resume-import-review-action"
+                    onClick={() => onCompleteImportReviewTask(task.id)}
+                    type="button"
+                  >
+                    已完成
+                  </button>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
           {importHighlights.length > 0 ? (
             <div className="resume-import-review-list">
               {importHighlights.map((item) => (
                 <div className="resume-import-review-row" key={item.key}>
-                  <span className="resume-import-review-label">{item.label}</span>
-                  <strong className="resume-import-review-value">{item.value}</strong>
+                  <div className="resume-import-review-row-copy">
+                    <span className="resume-import-review-label">{item.label}</span>
+                    <strong className="resume-import-review-value">{item.value}</strong>
+                  </div>
+                  <button className="btn btn-secondary resume-import-review-action" onClick={item.onResolve} type="button">
+                    {item.actionLabel}
+                  </button>
                 </div>
               ))}
             </div>

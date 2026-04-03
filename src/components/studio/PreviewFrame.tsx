@@ -10,7 +10,7 @@ import {
 const FALLBACK_PREVIEW_WIDTH = 794;
 const FALLBACK_PREVIEW_HEIGHT = 1123;
 
-export type PreviewZoomPreset = "fit-width" | "fit-page" | 80 | 100 | 110;
+export type PreviewZoomPreset = "fit-width" | "fit-page" | number;
 
 export interface PreviewFrameMetrics {
   pageCount: number;
@@ -157,7 +157,7 @@ export function PreviewFrame({
   const fitPageScale = Math.min(fitWidthScale, availableSize.height / FALLBACK_PREVIEW_HEIGHT);
   const resolvedScale =
     typeof zoom === "number"
-      ? Math.min(zoom / 100, fitWidthScale)
+      ? zoom / 100
       : zoom === "fit-page"
         ? fitPageScale
         : fitWidthScale;
@@ -175,7 +175,7 @@ export function PreviewFrame({
     }
 
     const shell = shellRef.current;
-    const scrollContainer = shell?.closest(".editor-preview-panel");
+    const scrollContainer = shell?.closest(".editor-preview-canvas-body");
     const document = iframeRef.current?.contentDocument;
     if (!shell || !scrollContainer || !document) {
       return;
@@ -198,7 +198,7 @@ export function PreviewFrame({
       top: nextScrollTop,
       behavior: prefersReducedMotion ? "auto" : "smooth",
     });
-  }, [focusedTarget, html, intrinsicSize.height, scale]);
+  }, [focusedTarget, intrinsicSize.height, scale]);
 
   useEffect(() => {
     onMetricsChange?.({

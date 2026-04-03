@@ -192,11 +192,17 @@ export function ResumeEditorPage({
     applyMarkdownDraft,
     applyStylePreset,
     applySuggestedKeywords,
+    completeImportReviewTask,
     copySectionItem,
     deleteSectionItem,
+    dismissImportReview,
     insertSectionItem,
     moveSectionItem,
     redoLastChange,
+    reviewImportFieldSuggestion,
+    reviewImportPendingItem,
+    reviewImportSnapshot,
+    reviewImportUnmappedItem,
     restoreDeletedItem,
     saveDocument,
     undoLastChange,
@@ -411,6 +417,7 @@ export function ResumeEditorPage({
             editorMode={editorMode}
             editorSurfaceRef={editorSurfaceRef}
             focusLabel={activeWorkbenchFocusLabel}
+            noticeCount={notices.length}
             notices={notices.length > 0 ? <ResumeEditorNoticeList notices={notices} /> : null}
             onModeChange={handleModeChange}
             onSurfaceFocusCapture={() => setActivePanel(activePanel)}
@@ -442,6 +449,7 @@ export function ResumeEditorPage({
               onAiPresetApply={applyAiPreset}
               onApplyCurrentOptimization={handleApplyCurrentOptimization}
               onApplyGeneratedSummary={applyGeneratedAiSummarySuggestion}
+              onCompleteImportReviewTask={completeImportReviewTask}
               onApplyStylePreset={applyStylePreset}
               onApplySuggestedKeywords={applySuggestedKeywords}
               onBasicsChange={updateBasicsField}
@@ -457,6 +465,7 @@ export function ResumeEditorPage({
                   },
                 });
               }}
+              onDismissImportReview={dismissImportReview}
               onCopySectionItem={(sectionType, itemId) => void copySectionItem(sectionType, itemId)}
               onDeleteSectionItem={deleteSectionItem}
               onDeriveOptimizedDocument={() => void handleDeriveOptimizedDocument()}
@@ -481,6 +490,10 @@ export function ResumeEditorPage({
               onOptimizationTargetChange={setOptimizationTarget}
               onPhotoChange={updateBasicsVisualField}
               onPreviewOptimization={handlePreviewOptimization}
+              onReviewImportFieldSuggestion={reviewImportFieldSuggestion}
+              onReviewImportPendingItem={reviewImportPendingItem}
+              onReviewImportSnapshot={reviewImportSnapshot}
+              onReviewImportUnmappedItem={reviewImportUnmappedItem}
               onRestoreOptimizationPreview={handleRestoreOptimizationPreview}
               onSectionChange={(nextSection, title) =>
                 updateDocument(

@@ -59,6 +59,7 @@ function buildShellMarkup(document: ResumeDocument, context: PreviewTemplateCont
 
   if (context.isModern) {
     return `      <div class="resume-shell">
+        ${buildMastheadMarkup(document, context)}
         <aside class="column sidebar-column">${
           context.photoInSidebar ? buildPhotoMarkup(document, context.safePhotoSrc) : ""
         }${summarySection}${context.asideSections.map((section) => renderSection(section, options)).join("")}</aside>
@@ -103,7 +104,7 @@ export function buildPreviewBodyMarkup(
   options?: PreviewBuildOptions,
 ) {
   return `    <div class="page resume-document template-${escapeHtml(document.meta.template)} density-${context.density.mode}">
-${buildMastheadMarkup(document, context)}
+${context.isModern ? "" : buildMastheadMarkup(document, context)}
 ${buildShellMarkup(document, context, options)}
     </div>
 ${options?.interactive ? buildPreviewBridgeScript() : ""}`;

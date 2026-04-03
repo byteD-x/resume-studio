@@ -26,10 +26,6 @@ export async function POST(request: NextRequest) {
       return new Response("PDF file size must be between 1 byte and 10 MB.", { status: 400 });
     }
 
-    if (file.type && file.type !== "application/pdf") {
-      return new Response("Only PDF files can be imported.", { status: 400 });
-    }
-
     const existingDocument = await ensureUserResumeDocument(auth.user.id, resumeId, "未命名简历");
     const result = await importPdfToResume(Buffer.from(await file.arrayBuffer()), {
       existingDocument,

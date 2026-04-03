@@ -79,6 +79,100 @@ export function getActiveUnmappedItems(document: ResumeDocument) {
   return document.importTrace.unmapped.filter((item) => !reviewedItems.has(item));
 }
 
+function appendUnique(values: string[], value: string) {
+  if (values.includes(value)) {
+    return values;
+  }
+  return [...values, value];
+}
+
+export function markImportReviewTaskCompleted(document: ResumeDocument, taskId: string) {
+  return {
+    ...document,
+    importTrace: {
+      ...document.importTrace,
+      reviewState: {
+        ...document.importTrace.reviewState,
+        completedTaskIds: appendUnique(document.importTrace.reviewState.completedTaskIds, taskId),
+      },
+    },
+  };
+}
+
+export function markPendingReviewItemReviewed(document: ResumeDocument, item: string) {
+  return {
+    ...document,
+    importTrace: {
+      ...document.importTrace,
+      reviewState: {
+        ...document.importTrace.reviewState,
+        reviewedPendingItems: appendUnique(document.importTrace.reviewState.reviewedPendingItems, item),
+      },
+    },
+  };
+}
+
+export function markImportSnapshotReviewed(document: ResumeDocument, snapshotId: string) {
+  return {
+    ...document,
+    importTrace: {
+      ...document.importTrace,
+      reviewState: {
+        ...document.importTrace.reviewState,
+        reviewedSnapshotIds: appendUnique(document.importTrace.reviewState.reviewedSnapshotIds, snapshotId),
+      },
+    },
+  };
+}
+
+export function markImportFieldSuggestionReviewed(document: ResumeDocument, suggestionId: string) {
+  return {
+    ...document,
+    importTrace: {
+      ...document.importTrace,
+      reviewState: {
+        ...document.importTrace.reviewState,
+        reviewedFieldSuggestionIds: appendUnique(document.importTrace.reviewState.reviewedFieldSuggestionIds, suggestionId),
+      },
+    },
+  };
+}
+
+export function markUnmappedImportItemReviewed(document: ResumeDocument, item: string) {
+  return {
+    ...document,
+    importTrace: {
+      ...document.importTrace,
+      reviewState: {
+        ...document.importTrace.reviewState,
+        reviewedUnmappedItems: appendUnique(document.importTrace.reviewState.reviewedUnmappedItems, item),
+      },
+    },
+  };
+}
+
+export function clearImportReview(document: ResumeDocument) {
+  return {
+    ...document,
+    importTrace: {
+      ...document.importTrace,
+      portfolioImportedAt: "",
+      pdfImportedAt: "",
+      pendingReview: [],
+      unmapped: [],
+      snapshots: [],
+      fieldSuggestions: [],
+      reviewState: {
+        completedTaskIds: [],
+        reviewedPendingItems: [],
+        reviewedSnapshotIds: [],
+        reviewedFieldSuggestionIds: [],
+        reviewedUnmappedItems: [],
+      },
+    },
+  };
+}
+
 function countVisibleItems(document: ResumeDocument, type: "experience" | "projects" | "education" | "skills") {
   return document.sections
     .filter((section) => section.type === type)
@@ -102,6 +196,22 @@ export function buildResumeImportReviewTasks(document: ResumeDocument) {
   const remainingSnapshots = getActiveImportSnapshots(document);
   const remainingFieldSuggestions = getActiveImportFieldSuggestions(document);
   const remainingUnmappedItems = getActiveUnmappedItems(document);
+  const hasImportedContent =
+    Boolean(document.basics.name.trim()) ||
+    Boolean(document.basics.headline.trim()) ||
+    Boolean(stripHtml(document.basics.summaryHtml)) ||
+    contactCount > 0 ||
+    experienceCount + projectCount + educationCount + skillCount > 0;
+  const hasImportSignals =
+    hasImportedContent ||
+    remainingPendingReviewItems.length > 0 ||
+    remainingSnapshots.length > 0 ||
+    remainingFieldSuggestions.length > 0 ||
+    remainingUnmappedItems.length > 0;
+
+  if (!hasImportSignals) {
+    return [];
+  }
 
   if (!document.basics.name.trim() || !document.basics.headline.trim()) {
     tasks.push({
